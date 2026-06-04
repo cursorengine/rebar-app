@@ -115,9 +115,10 @@ body.delmode .del-col{display:table-cell}
 
 /* BUILDER */
 #view-builder{background:#161616}
-.bbar{padding:8px 14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.6);position:sticky;top:var(--nav-h);z-index:50}
-.bbar-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#2a2a2a;flex:1;min-width:60px}
-#qdoc{max-width:760px;margin:16px auto;background:#fff;color:#111;box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+.bbar{padding:8px 14px;display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.92);position:sticky;top:var(--nav-h);z-index:50}
+.bbar .btn{flex-shrink:0}
+.bbar-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#2a2a2a;flex-shrink:0;white-space:nowrap}
+#qdoc{max-width:760px;margin:16px auto;background:#fff;color:#111;box-shadow:0 12px 40px rgba(0,0,0,0.5);position:relative;z-index:1}
 @media(max-width:790px){#qdoc{margin:10px}}
 .pdf-hdr{background:#000;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .pdf-logo{height:36px;object-fit:contain}
@@ -157,8 +158,8 @@ body.delmode .del-col{display:table-cell}
 .qtrow.grand{border-top:2px solid #111;border-bottom:none;margin-top:3px;padding-top:7px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;text-transform:uppercase;color:#111}
 .qt-in{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:12px;color:#111;font-weight:600;text-align:right;width:100px;outline:none}
 .qt-in.grand{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800}
-.qpage2{padding:20px 28px;border-top:3px solid #f0f0f0}
-@media(max-width:580px){.qpage2{padding:14px 14px}}
+.qpage2{padding:20px 28px;margin-top:8px;border-top:8px solid #e8e8e8;position:relative}
+@media(max-width:580px){.qpage2{padding:18px 14px;margin-top:6px}}
 .qtermbox{background:#f8f8f8;border-left:3px solid #ddd;padding:10px 12px;margin-bottom:14px}
 .qta{width:100%;border:none;background:transparent;resize:vertical;font-family:'Barlow',sans-serif;font-size:12px;color:#444;line-height:1.7;outline:none;min-height:56px}
 .qta::placeholder{color:#ccc}
@@ -276,6 +277,14 @@ body.delmode .del-col{display:table-cell}
     <div class="stat"><div class="stat-lbl">Accepted</div><div class="stat-val" id="s-acc">0</div><div class="stat-sub" id="s-rate">0% close rate</div></div>
     <div class="stat"><div class="stat-lbl">Pending</div><div class="stat-val" id="s-pend">0</div><div class="stat-sub">Awaiting response</div></div>
   </div>
+  <div id="followup-banner" onclick="document.getElementById('f-time').value='';document.getElementById('f-status').value='Pending';renderTbl();window.scrollTo(0,300)" style="display:none;cursor:pointer;background:rgba(241,196,15,0.12);border-bottom:1px solid rgba(241,196,15,0.25);color:#f1c40f;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.05em"></div>
+  <div id="chart-section" style="padding:16px 14px;border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#444">Revenue by Month</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;color:#2ecc71" id="chart-total">$0</div>
+    </div>
+    <div id="revchart" style="display:flex;align-items:flex-end;gap:6px;height:90px"></div>
+  </div>
   <div class="toolbar">
     <input class="tb-search" id="tb-search" type="search" placeholder="Search..." oninput="renderTbl()">
     <select class="tb-sel" id="f-status" onchange="renderTbl()"><option value="">All</option><option>Pending</option><option>Sent</option><option>Accepted</option><option>Declined</option></select>
@@ -354,6 +363,8 @@ body.delmode .del-col{display:table-cell}
           <div class="qf"><div class="qf-lbl">Delivery Location</div><input class="qf-in" id="s-delivery" placeholder="City, Province"></div>
           <div class="qf"><div class="qf-lbl">Pickup Date</div><input class="qf-in" id="s-date" type="date"></div>
           <div class="qf"><div class="qf-lbl">Pickup Time</div><input class="qf-in" id="s-time" type="time"></div>
+          <div class="qf"><div class="qf-lbl">Delivery Date</div><input class="qf-in" id="s-ddate" type="date"></div>
+          <div class="qf"><div class="qf-lbl">Delivery Time</div><input class="qf-in" id="s-dtime" type="time"></div>
           <div class="qf"><div class="qf-lbl">Load Type</div>
             <select class="qf-sel" id="s-load"><option value="">Select...</option><option>Flatdeck</option><option>Step Deck</option><option>Lowboy</option><option>Dry Van</option><option>Refrigerated</option><option>Tanker</option><option>Oversized</option><option>General Freight</option><option>Other</option></select>
           </div>
@@ -402,10 +413,11 @@ body.delmode .del-col{display:table-cell}
     <button class="mclose" onclick="closeM('m-form')">x</button>
     <h2 id="m-form-title">New Quote</h2>
     <input type="hidden" id="eid">
+    <datalist id="cust-list"></datalist>
     <div class="fg">
       <div class="fgrp"><label class="flbl">Quote #</label><input class="fin" id="m-num" placeholder="RB-001"></div>
       <div class="fgrp"><label class="flbl">Date</label><input class="fin" id="m-date" type="date"></div>
-      <div class="fgrp"><label class="flbl">Customer</label><input class="fin" id="m-co" placeholder="Company name"></div>
+      <div class="fgrp"><label class="flbl">Customer</label><input class="fin" id="m-co" placeholder="Company name" list="cust-list" onchange="autofillCustomer(this.value)"></div>
       <div class="fgrp"><label class="flbl">Phone</label><input class="fin" id="m-phone" type="tel" placeholder="780.000.0000"></div>
       <div class="fgrp"><label class="flbl">Email</label><input class="fin" id="m-email" type="email" placeholder="email@co.com"></div>
       <div class="fgrp"><label class="flbl">Pickup</label><input class="fin" id="m-pickup" placeholder="City, AB"></div>
@@ -416,6 +428,7 @@ body.delmode .del-col{display:table-cell}
       <div class="fgrp"><label class="flbl">Weight</label><input class="fin" id="m-weight" placeholder="e.g. 20,000 lbs"></div>
       <div class="fgrp"><label class="flbl">Pickup Date</label><input class="fin" id="m-pdate" type="date"></div>
       <div class="fgrp"><label class="flbl">Total ($)</label><input class="fin" id="m-total" type="number" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="fgrp"><label class="flbl">Follow-up Date</label><input class="fin" id="m-followup" type="date"></div>
     </div>
     <div class="fgrp" style="margin-bottom:10px">
       <label class="flbl">Status</label>
@@ -424,6 +437,12 @@ body.delmode .del-col{display:table-cell}
     <div class="fgrp">
       <label class="flbl">Notes</label>
       <textarea class="fta" id="m-notes" placeholder="Any notes..."></textarea>
+    </div>
+    <div class="fgrp" style="margin-top:10px">
+      <label class="flbl">Photos (BOL / Load)</label>
+      <input type="file" id="m-photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('m-photo-input').click()" style="width:100%;margin-bottom:8px">+ Add Photos</button>
+      <div id="m-photo-preview" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
     <div class="macts">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-form')">Cancel</button>
@@ -438,13 +457,13 @@ body.delmode .del-col{display:table-cell}
     <button class="mclose" onclick="closeM('m-detail')">x</button>
     <h2 id="d-title">Quote</h2>
     <div id="d-body"></div>
-    <div class="macts" style="flex-wrap:wrap;justify-content:space-between">
+    <div class="macts" style="flex-wrap:wrap;gap:6px;justify-content:flex-start">
+      <button class="btn btn-green btn-sm" id="d-email">Email Quote</button>
+      <button class="btn btn-blue btn-sm" id="d-dupe">Duplicate</button>
+      <button class="btn btn-ghost btn-sm" id="d-edit">Edit</button>
+      <button class="btn btn-chrome btn-sm" id="d-open-builder">Open in Builder</button>
       <button class="btn btn-danger btn-xs" id="d-del">Delete</button>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="closeM('m-detail')">Close</button>
-        <button class="btn btn-ghost btn-sm" id="d-edit">Edit</button>
-        <button class="btn btn-chrome btn-sm" id="d-open-builder">Open in Builder</button>
-      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeM('m-detail')">Close</button>
     </div>
   </div>
 </div>
@@ -578,9 +597,13 @@ function dbToLocal(r) {
     weight: r.weight || "",
     pdate: r.pdate || "",
     ptime: r.ptime || "",
+    ddate: r.ddate || "",
+    dtime: r.dtime || "",
     total: r.total ? r.total.toString() : "",
     status: r.status || "Pending",
     notes: r.notes || "",
+    followup: r.followup || "",
+    photos: r.photos || [],
     created: r.created_at || new Date().toISOString()
   };
 }
@@ -600,9 +623,13 @@ function localToDb(q) {
     weight: q.weight,
     pdate: q.pdate || null,
     ptime: q.ptime || "",
+    ddate: q.ddate || null,
+    dtime: q.dtime || "",
     total: parseFloat(q.total) || null,
     status: q.status,
     notes: q.notes,
+    followup: q.followup || null,
+    photos: q.photos || null,
     updated_at: new Date().toISOString()
   };
 }
@@ -649,6 +676,59 @@ function inTime(q, f) {
 function fmtDate(v) { return v ? new Date(v + "T12:00:00").toLocaleDateString("en-CA", {month:"short",day:"numeric",year:"numeric"}) : "--"; }
 function fmtAmt(v) { return v ? "$" + parseFloat(v).toLocaleString("en-CA", {minimumFractionDigits:2}) : "--"; }
 function genNum() { var t = new Date().toISOString().slice(0,10).replace(/-/g,"").slice(2); return "RB-" + t + "-" + String(quotes.length + 1).padStart(2,"0"); }
+
+// FOLLOW-UP REMINDERS
+function checkFollowups() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var due = quotes.filter(function(q) {
+    if (!q.followup) return false;
+    if (q.status === "Accepted" || q.status === "Declined") return false;
+    var f = new Date(q.followup + "T12:00:00");
+    return f <= today;
+  });
+  var banner = document.getElementById("followup-banner");
+  if (due.length > 0) {
+    banner.style.display = "block";
+    banner.innerHTML = `<strong>${due.length}</strong> quote${due.length>1?"s":""} need follow-up: ` +
+      due.map(function(q){ return q.co + " (" + (q.num||"") + ")"; }).join(", ");
+  } else {
+    banner.style.display = "none";
+  }
+}
+
+// REVENUE CHART
+function renderChart() {
+  var box = document.getElementById("revchart");
+  if (!box) return;
+  // Group accepted+sent quote totals by month (last 6 months)
+  var now = new Date();
+  var months = [];
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: d.getFullYear() + "-" + d.getMonth(), label: d.toLocaleDateString("en-CA", {month:"short"}), total: 0 });
+  }
+  quotes.forEach(function(q) {
+    if (!q.date && !q.created) return;
+    var d = new Date((q.date || q.created.slice(0,10)) + "T12:00:00");
+    var key = d.getFullYear() + "-" + d.getMonth();
+    var m = months.find(function(x){ return x.key === key; });
+    if (m) m.total += parseFloat(q.total) || 0;
+  });
+  var max = Math.max.apply(null, months.map(function(m){return m.total;}).concat([1]));
+  var grand = months.reduce(function(s,m){return s+m.total;},0);
+  document.getElementById("chart-total").textContent = "$" + grand.toLocaleString("en-CA",{maximumFractionDigits:0}) + " (6 mo)";
+  var html = "";
+  months.forEach(function(m) {
+    var h = Math.max(4, Math.round((m.total / max) * 70));
+    var lbl = m.total > 0 ? ("$" + (m.total >= 1000 ? (m.total/1000).toFixed(1) + "k" : m.total.toFixed(0))) : "";
+    html += `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">`
+      + `<div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:#666;margin-bottom:3px;white-space:nowrap">${lbl}</div>`
+      + `<div style="width:100%;height:${h}px;background:linear-gradient(180deg,#d8d8d8,#888);border-radius:2px 2px 0 0"></div>`
+      + `<div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#444;margin-top:4px">${m.label}</div>`
+      + `</div>`;
+  });
+  box.innerHTML = html;
+}
 
 // RENDER TABLE
 function renderTbl() {
@@ -701,10 +781,40 @@ function renderTbl() {
   document.getElementById("s-pend").textContent = pend;
   document.getElementById("s-rate").textContent = rate + "% close rate";
   document.getElementById("xinfo").textContent = quotes.length + " quote" + (quotes.length!==1?"s":"") + " - cloud synced";
+  renderChart();
+  checkFollowups();
+}
+
+// CUSTOMER AUTO-FILL
+function buildCustomerList() {
+  var seen = {};
+  var customers = [];
+  quotes.forEach(function(q) {
+    if (q.co && !seen[q.co.toLowerCase()]) {
+      seen[q.co.toLowerCase()] = true;
+      customers.push(q);
+    }
+  });
+  var dl = document.getElementById("cust-list");
+  if (dl) dl.innerHTML = customers.map(function(c){ return `<option value="${c.co.replace(/"/g,"&quot;")}">`; }).join("");
+}
+
+function autofillCustomer(name) {
+  if (!name) return;
+  // Find most recent quote for this customer
+  var match = quotes.filter(function(q){ return q.co && q.co.toLowerCase() === name.toLowerCase(); })
+    .sort(function(a,b){ return new Date(b.created) - new Date(a.created); })[0];
+  if (!match) return;
+  if (!document.getElementById("m-phone").value) document.getElementById("m-phone").value = match.phone || "";
+  if (!document.getElementById("m-email").value) document.getElementById("m-email").value = match.email || "";
+  showToast("Filled from last quote");
 }
 
 // NEW QUOTE
 function openNewQuote() {
+  buildCustomerList();
+  currentPhotos = [];
+  renderPhotoPreview();
   document.getElementById("eid").value = "";
   document.getElementById("m-form-title").textContent = "New Quote";
   document.getElementById("m-num").value = genNum();
@@ -713,6 +823,7 @@ function openNewQuote() {
   document.getElementById("m-load").value = "";
   document.getElementById("m-total").value = "";
   document.getElementById("m-pdate").value = "";
+  document.getElementById("m-followup").value = "";
   document.getElementById("m-status").value = "Pending";
   document.getElementById("save-btn").disabled = false;
   document.getElementById("save-btn").textContent = "Save Quote";
@@ -746,6 +857,8 @@ function saveQ() {
     total: document.getElementById("m-total").value,
     status: document.getElementById("m-status").value,
     notes: document.getElementById("m-notes").value.trim(),
+    followup: document.getElementById("m-followup").value,
+    photos: currentPhotos.slice(),
     created: eid ? (quotes.find(function(x){return x.id===eid;})||{}).created || new Date().toISOString() : new Date().toISOString()
   };
   var dbData = localToDb(q);
@@ -787,6 +900,9 @@ function editQ(id) {
   document.getElementById("m-total").value = q.total || "";
   document.getElementById("m-status").value = q.status || "Pending";
   document.getElementById("m-notes").value = q.notes || "";
+  document.getElementById("m-followup").value = q.followup || "";
+  currentPhotos = (q.photos || []).slice();
+  renderPhotoPreview();
   document.getElementById("save-btn").disabled = false;
   document.getElementById("save-btn").textContent = "Save Quote";
   setTimeout(function() {
@@ -813,12 +929,16 @@ function viewQ(id) {
     + `<div class="drow"><span class="dlbl">Load</span><span class="dval">${q.load||"--"}</span></div>`
     + `<div class="drow"><span class="dlbl">Weight</span><span class="dval">${q.weight||"--"}</span></div>`
     + `<div class="drow"><span class="dlbl">Status</span><span class="dval"><span class="badge b-${(q.status||"pending").toLowerCase()}">${q.status||"Pending"}</span></span></div>`
+    + ( q.followup ? `<div class="drow"><span class="dlbl">Follow-up</span><span class="dval" style="color:#f1c40f">${fmtDate(q.followup)}</span></div>` : "" )
     + `<div class="drow"><span class="dlbl">Total</span><span class="dval" style="font-family:'Barlow Condensed';font-size:20px;font-weight:800;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${fmtAmt(q.total)}</span></div>`
-    + ( q.notes ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="dlbl">Notes</span><span class="dval" style="text-align:left;color:#666;font-size:12px;line-height:1.6">${q.notes}</span></div>` : "" );
+    + ( q.notes ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="dlbl">Notes</span><span class="dval" style="text-align:left;color:#666;font-size:12px;line-height:1.6">${q.notes}</span></div>` : "" )
+    + ( (q.photos && q.photos.length) ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:6px"><span class="dlbl">Photos</span><div style="display:flex;gap:6px;flex-wrap:wrap">${q.photos.map(function(p){return `<a href="${p}" target="_blank"><img src="${p}" style="width:60px;height:60px;object-fit:cover;border:1px solid #333"></a>`;}).join("")}</div></div>` : "" );
   document.getElementById("d-body").innerHTML = html;
   document.getElementById("d-del").onclick = function() { delQ(id); };
   document.getElementById("d-edit").onclick = function() { editQ(id); };
   document.getElementById("d-open-builder").onclick = function() { openInBuilder(id); };
+  document.getElementById("d-email").onclick = function() { emailQuote(id); };
+  document.getElementById("d-dupe").onclick = function() { duplicateQuote(id); };
   document.getElementById("m-detail").classList.add("open");
 }
 
@@ -842,6 +962,8 @@ function openInBuilder(id) {
   document.getElementById("s-delivery").value = q.delivery || "";
   document.getElementById("s-date").value = q.pdate || "";
   document.getElementById("s-time").value = q.ptime || "";
+  document.getElementById("s-ddate").value = q.ddate || "";
+  document.getElementById("s-dtime").value = q.dtime || "";
   document.getElementById("s-load").value = q.load || "";
   document.getElementById("s-weight").value = q.weight || "";
   if (q.total) {
@@ -852,6 +974,117 @@ function openInBuilder(id) {
     calcRow(row.cells[3].querySelector("input"));
   }
   window.scrollTo(0, 0);
+}
+
+// PHOTO ATTACHMENTS
+var currentPhotos = [];
+
+function handlePhotoUpload(event) {
+  var files = event.target.files;
+  if (!files || !files.length) return;
+  Array.from(files).forEach(function(file) {
+    if (!file.type.startsWith("image/")) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      compressImage(e.target.result, function(compressed) {
+        currentPhotos.push(compressed);
+        renderPhotoPreview();
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = "";
+}
+
+function compressImage(dataUrl, cb) {
+  var img = new Image();
+  img.onload = function() {
+    var maxDim = 1000;
+    var w = img.width, h = img.height;
+    if (w > h && w > maxDim) { h = h * maxDim / w; w = maxDim; }
+    else if (h > maxDim) { w = w * maxDim / h; h = maxDim; }
+    var canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+    cb(canvas.toDataURL("image/jpeg", 0.6));
+  };
+  img.src = dataUrl;
+}
+
+function renderPhotoPreview() {
+  var box = document.getElementById("m-photo-preview");
+  box.innerHTML = currentPhotos.map(function(p, i) {
+    return `<div style="position:relative;width:54px;height:54px">`
+      + `<img src="${p}" style="width:54px;height:54px;object-fit:cover;border:1px solid #333">`
+      + `<button type="button" onclick="removePhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:#e74c3c;color:#fff;border:none;border-radius:50%;font-size:11px;cursor:pointer;line-height:1;font-family:monospace">x</button>`
+      + `</div>`;
+  }).join("");
+}
+
+function removePhoto(i) {
+  currentPhotos.splice(i, 1);
+  renderPhotoPreview();
+}
+
+// EMAIL QUOTE
+function emailQuote(id) {
+  var q = quotes.find(function(x){return x.id===id;}); if (!q) return;
+  if (!q.email) { showToast("No email on this quote - add one via Edit"); return; }
+  var subject = "Freight Quote " + (q.num || "") + " - ReBar Transportation Services Ltd";
+  var lines = [];
+  lines.push("Hi" + (q.co ? " " + q.co : "") + ",");
+  lines.push("");
+  lines.push("Please find your freight quote details below from ReBar Transportation Services Ltd.");
+  lines.push("");
+  if (q.num) lines.push("Quote #: " + q.num);
+  if (q.pickup) lines.push("Pickup: " + q.pickup);
+  if (q.delivery) lines.push("Delivery: " + q.delivery);
+  if (q.load) lines.push("Load Type: " + q.load);
+  if (q.weight) lines.push("Weight: " + q.weight);
+  if (q.pdate) lines.push("Pickup Date: " + fmtDate(q.pdate));
+  if (q.total) lines.push("Total: " + fmtAmt(q.total) + " (incl. GST)");
+  lines.push("");
+  lines.push("This quote is valid for 7 days. To accept, simply reply to this email or call us at 780.387.1747.");
+  lines.push("");
+  lines.push("Thank you,");
+  lines.push("Reg Nicolas");
+  lines.push("ReBar Transportation Services Ltd");
+  lines.push("780.387.1747 | rebartransport.ca");
+  var body = lines.join("\n");
+  var mailto = "mailto:" + encodeURIComponent(q.email) +
+    "?subject=" + encodeURIComponent(subject) +
+    "&body=" + encodeURIComponent(body);
+  window.location.href = mailto;
+  showToast("Opening email - attach the PDF if needed");
+}
+
+// DUPLICATE QUOTE
+function duplicateQuote(id) {
+  var q = quotes.find(function(x){return x.id===id;}); if (!q) return;
+  closeM("m-detail");
+  buildCustomerList();
+  document.getElementById("eid").value = "";
+  document.getElementById("m-form-title").textContent = "New Quote (Copy)";
+  document.getElementById("m-num").value = genNum();
+  document.getElementById("m-date").value = new Date().toISOString().slice(0,10);
+  document.getElementById("m-co").value = q.co || "";
+  document.getElementById("m-phone").value = q.phone || "";
+  document.getElementById("m-email").value = q.email || "";
+  document.getElementById("m-pickup").value = q.pickup || "";
+  document.getElementById("m-delivery").value = q.delivery || "";
+  document.getElementById("m-load").value = q.load || "";
+  document.getElementById("m-weight").value = q.weight || "";
+  document.getElementById("m-pdate").value = "";
+  document.getElementById("m-followup").value = "";
+  document.getElementById("m-total").value = q.total || "";
+  document.getElementById("m-status").value = "Pending";
+  document.getElementById("m-notes").value = q.notes || "";
+  currentPhotos = (q.photos || []).slice();
+  renderPhotoPreview();
+  document.getElementById("save-btn").disabled = false;
+  document.getElementById("save-btn").textContent = "Save Quote";
+  setTimeout(function(){ document.getElementById("m-form").classList.add("open"); }, 100);
+  showToast("Duplicated - edit and save");
 }
 
 // DELETE
@@ -875,9 +1108,9 @@ document.querySelectorAll(".mbg").forEach(function(bg) {
 // CSV
 function exportCSV() {
   if (!quotes.length) { showToast("No quotes to export"); return; }
-  var h = ["Quote #","Date","Customer","Phone","Email","Pickup","Delivery","Load","Weight","Pickup Date","Total","Status","Notes"];
+  var h = ["Quote #","Date","Customer","Phone","Email","Pickup","Delivery","Load","Weight","Pickup Date","Total","Status","Follow-up","Notes"];
   var rows = quotes.map(function(q) {
-    return [q.num,q.date,q.co,q.phone,q.email,q.pickup,q.delivery,q.load,q.weight,q.pdate,q.total?parseFloat(q.total).toFixed(2):"",q.status,q.notes]
+    return [q.num,q.date,q.co,q.phone,q.email,q.pickup,q.delivery,q.load,q.weight,q.pdate,q.total?parseFloat(q.total).toFixed(2):"",q.status,q.followup||"",q.notes]
       .map(function(v){var s=(v||"").toString();var dq=String.fromCharCode(34);return dq+s.split(dq).join(dq+dq)+dq;}).join(",")
   });
   var a = document.createElement("a");
@@ -969,6 +1202,8 @@ function saveToTracker() {
     weight: document.getElementById("s-weight").value.trim(),
     pdate: document.getElementById("s-date").value,
     ptime: document.getElementById("s-time").value,
+    ddate: document.getElementById("s-ddate").value,
+    dtime: document.getElementById("s-dtime").value,
     total: (parseFloat(grand)||0).toFixed(2),
     status: document.getElementById("q-status").value,
     notes: document.getElementById("q-notes").value.trim(),
