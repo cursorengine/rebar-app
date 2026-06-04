@@ -484,12 +484,21 @@ function doLogin() {
   if (!email || !pass) { err.textContent = "Please enter email and password."; return; }
   btn.disabled = true;
   btn.textContent = "Signing in...";
-  err.textContent = "";
+  err.textContent = "Connecting...";
   fetch(SB_URL + "/auth/v1/token?grant_type=password", {
     method: "POST",
-    headers: { "apikey": SB_KEY, "Content-Type": "application/json" },
+    headers: {
+      "apikey": SB_KEY,
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({ email: email, password: pass })
-  }).then(function(r) { return r.json(); }).then(function(data) {
+  }).then(function(r) {
+    err.textContent = "Got response: " + r.status;
+    return r.text();
+  }).then(function(text) {
+    err.textContent = "Raw: " + text.slice(0, 200);
+    var data;
+    try { data = JSON.parse(text); } catch(e) { err.textContent = "Parse error: " + text.slice(0,100); btn.disabled=false; btn.textContent="Sign In"; return; }
     if (data.access_token) {
       currentUser = data;
       localStorage.setItem("rebar_session", JSON.stringify({ access_token: data.access_token, user: data.user }));
@@ -498,12 +507,12 @@ function doLogin() {
       loadQuotes();
       showToast("Welcome back");
     } else {
-      err.textContent = data.error_description || data.msg || "Invalid email or password.";
+      err.textContent = "Error: " + (data.error_description || data.msg || data.error || JSON.stringify(data).slice(0,150));
       btn.disabled = false;
       btn.textContent = "Sign In";
     }
-  }).catch(function() {
-    err.textContent = "Connection error. Check your internet.";
+  }).catch(function(e) {
+    err.textContent = "Network error: " + e.toString();
     btn.disabled = false;
     btn.textContent = "Sign In";
   });
