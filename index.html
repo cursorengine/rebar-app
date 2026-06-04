@@ -74,6 +74,20 @@ a{color:inherit}
 .stat-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#333;margin-bottom:3px}
 .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:clamp(22px,3vw,34px);font-weight:800;background:var(--chrome);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
 .stat-sub{font-size:10px;color:#2e2e2e;margin-top:2px}
+.status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+.status-box{background:var(--card);padding:12px 8px;text-align:center;cursor:pointer;transition:background 0.15s;border-top:2px solid transparent}
+.status-box:hover{background:var(--card2)}
+.status-box.active{background:var(--card2)}
+.status-box[data-st="Pending"].active{border-top-color:#f1c40f}
+.status-box[data-st="Sent"].active{border-top-color:#3498db}
+.status-box[data-st="Accepted"].active{border-top-color:#2ecc71}
+.status-box[data-st="Declined"].active{border-top-color:#e74c3c}
+.status-num{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;line-height:1}
+.status-box[data-st="Pending"] .status-num{color:#f1c40f}
+.status-box[data-st="Sent"] .status-num{color:#3498db}
+.status-box[data-st="Accepted"] .status-num{color:#2ecc71}
+.status-box[data-st="Declined"] .status-num{color:#e74c3c}
+.status-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#444;margin-top:3px}
 
 /* TOOLBAR */
 .toolbar{padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
@@ -193,6 +207,8 @@ body.delmode .del-col{display:table-cell}
 /* DETAIL MODAL */
 .drow{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;gap:10px}
 .drow:last-child{border:none}
+.qs-btn{flex:1;min-width:64px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);padding:7px 4px;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.15s}
+.qs-btn:hover{background:rgba(255,255,255,0.1)}
 .dlbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#333;flex-shrink:0;min-width:72px;padding-top:1px}
 .dval{color:#ccc;text-align:right;word-break:break-word;font-size:13px}
 .dval a{color:#aaa;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
@@ -204,6 +220,25 @@ body.delmode .del-col{display:table-cell}
 /* TOAST */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;border:1px solid var(--border2);color:#fff;padding:10px 20px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;z-index:9999;transition:transform 0.3s ease;white-space:nowrap;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
+
+
+/* REVENUE CHART */
+#chart-section{border-bottom:1px solid var(--border)}
+#chart-header{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;user-select:none;transition:background 0.15s}
+#chart-header:hover{background:rgba(255,255,255,0.02)}
+.chart-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#555}
+.chart-title span{color:#2ecc71;margin-left:6px}
+.chart-caret{font-family:monospace;font-size:11px;color:#444;transition:transform 0.2s;line-height:1}
+#chart-section.collapsed .chart-caret{transform:rotate(-90deg)}
+#chart-body{max-height:120px;overflow:hidden;transition:max-height 0.25s ease,opacity 0.2s,padding 0.2s;opacity:1;padding:0 14px 14px}
+#chart-section.collapsed #chart-body{max-height:0;opacity:0;padding:0 14px}
+#revchart{display:flex;align-items:flex-end;gap:6px;height:84px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bar-val{font-family:'Barlow Condensed',sans-serif;font-size:8px;color:#555;margin-bottom:3px;white-space:nowrap;height:10px}
+.bar-fill{width:100%;background:linear-gradient(180deg,#d8d8d8,#888);border-radius:2px 2px 0 0;transition:height 0.3s,background 0.2s}
+.bar-col.current .bar-fill{background:linear-gradient(180deg,#3de883,#27a35d)}
+.bar-lbl{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#3a3a3a;margin-top:4px}
+.bar-col.current .bar-lbl{color:#2ecc71}
 
 /* PRINT */
 @media print{
@@ -272,18 +307,26 @@ body.delmode .del-col{display:table-cell}
 <!-- TRACKER -->
 <div id="view-tracker" class="view active">
   <div class="stats-grid">
-    <div class="stat"><div class="stat-lbl">Total Quotes</div><div class="stat-val" id="s-total">0</div><div class="stat-sub">All time</div></div>
-    <div class="stat"><div class="stat-lbl">Total Value</div><div class="stat-val" id="s-val">$0</div><div class="stat-sub">Current filter</div></div>
-    <div class="stat"><div class="stat-lbl">Accepted</div><div class="stat-val" id="s-acc">0</div><div class="stat-sub" id="s-rate">0% close rate</div></div>
-    <div class="stat"><div class="stat-lbl">Pending</div><div class="stat-val" id="s-pend">0</div><div class="stat-sub">Awaiting response</div></div>
+    <div class="stat"><div class="stat-lbl">Won Revenue</div><div class="stat-val" id="s-won">$0</div><div class="stat-sub" id="s-won-sub">Accepted value</div></div>
+    <div class="stat"><div class="stat-lbl">Pipeline</div><div class="stat-val" id="s-pipe">$0</div><div class="stat-sub" id="s-pipe-sub">Pending + sent</div></div>
+    <div class="stat"><div class="stat-lbl">Outstanding</div><div class="stat-val" id="s-owed">$0</div><div class="stat-sub" id="s-owed-sub">Unpaid</div></div>
+    <div class="stat"><div class="stat-lbl">Close Rate</div><div class="stat-val" id="s-rate2">0%</div><div class="stat-sub" id="s-avg-sub">Avg $0</div></div>
+  </div>
+  <div class="status-grid">
+    <div class="status-box" data-st="Pending" onclick="filterStatus('Pending')"><div class="status-num" id="sb-pending">0</div><div class="status-lbl">Pending</div></div>
+    <div class="status-box" data-st="Sent" onclick="filterStatus('Sent')"><div class="status-num" id="sb-sent">0</div><div class="status-lbl">Sent</div></div>
+    <div class="status-box" data-st="Accepted" onclick="filterStatus('Accepted')"><div class="status-num" id="sb-accepted">0</div><div class="status-lbl">Accepted</div></div>
+    <div class="status-box" data-st="Declined" onclick="filterStatus('Declined')"><div class="status-num" id="sb-declined">0</div><div class="status-lbl">Declined</div></div>
   </div>
   <div id="followup-banner" onclick="document.getElementById('f-time').value='';document.getElementById('f-status').value='Pending';renderTbl();window.scrollTo(0,300)" style="display:none;cursor:pointer;background:rgba(241,196,15,0.12);border-bottom:1px solid rgba(241,196,15,0.25);color:#f1c40f;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.05em"></div>
-  <div id="chart-section" style="padding:16px 14px;border-bottom:1px solid var(--border)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#444">Revenue by Month</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;color:#2ecc71" id="chart-total">$0</div>
+  <div id="chart-section">
+    <div id="chart-header" onclick="toggleChart()">
+      <div class="chart-title">Revenue <span id="chart-total"></span></div>
+      <div class="chart-caret" id="chart-caret">v</div>
     </div>
-    <div id="revchart" style="display:flex;align-items:flex-end;gap:6px;height:90px"></div>
+    <div id="chart-body">
+      <div id="revchart"></div>
+    </div>
   </div>
   <div class="toolbar">
     <input class="tb-search" id="tb-search" type="search" placeholder="Search..." oninput="renderTbl()">
@@ -294,6 +337,8 @@ body.delmode .del-col{display:table-cell}
       <option value="14">14 Days</option>
       <option value="30">30 Days</option>
       <option value="90">3 Months</option>
+      <option value="180">6 Months</option>
+      <option value="365">12 Months</option>
       <option value="this-month">This Month</option>
       <option value="last-month">Last Month</option>
       <option value="this-week">This Week</option>
@@ -327,7 +372,7 @@ body.delmode .del-col{display:table-cell}
 <!-- BUILDER -->
 <div id="view-builder" class="view">
   <div class="bbar">
-    <span class="bbar-lbl">Quote Builder</span>
+    <button class="btn btn-sm" id="doctype-toggle" onclick="toggleDocType()" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">Mode: Quote</button>
     <button class="btn btn-ghost btn-sm" onclick="clearQ()">Clear</button>
     <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
     <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
@@ -347,6 +392,8 @@ body.delmode .del-col{display:table-cell}
         <div class="qmeta-item"><div class="qmeta-lbl">Status</div>
           <select class="qmeta-sel" id="q-status"><option>Pending</option><option>Sent</option><option>Accepted</option><option>Declined</option></select>
         </div>
+        <select id="q-doctype" style="display:none"><option>Quote</option><option>Invoice</option></select>
+        <div class="qmeta-item"><div class="qmeta-lbl">Reference / PO</div><input class="qmeta-val" id="q-ref" placeholder="PO #" style="width:110px"></div>
       </div>
       <div class="q2col">
         <div>
@@ -356,6 +403,7 @@ body.delmode .del-col{display:table-cell}
           <div class="qf"><div class="qf-lbl">Phone</div><input class="qf-in" id="b-phone" type="tel" placeholder="780.000.0000"></div>
           <div class="qf"><div class="qf-lbl">Email</div><input class="qf-in" id="b-email" type="email" placeholder="email@company.com"></div>
           <div class="qf"><div class="qf-lbl">Address</div><input class="qf-in" id="b-addr" placeholder="City, Province"></div>
+          <div class="qf"><div class="qf-lbl">Reference / PO #</div><input class="qf-in" id="b-ref" placeholder="Customer PO number"></div>
         </div>
         <div>
           <div class="qsec">Shipment</div>
@@ -420,6 +468,7 @@ body.delmode .del-col{display:table-cell}
       <div class="fgrp"><label class="flbl">Customer</label><input class="fin" id="m-co" placeholder="Company name" list="cust-list" onchange="autofillCustomer(this.value)"></div>
       <div class="fgrp"><label class="flbl">Phone</label><input class="fin" id="m-phone" type="tel" placeholder="780.000.0000"></div>
       <div class="fgrp"><label class="flbl">Email</label><input class="fin" id="m-email" type="email" placeholder="email@co.com"></div>
+      <div class="fgrp"><label class="flbl">Reference / PO #</label><input class="fin" id="m-ref" placeholder="Customer PO"></div>
       <div class="fgrp"><label class="flbl">Pickup</label><input class="fin" id="m-pickup" placeholder="City, AB"></div>
       <div class="fgrp"><label class="flbl">Delivery</label><input class="fin" id="m-delivery" placeholder="City, AB"></div>
       <div class="fgrp"><label class="flbl">Load Type</label>
@@ -458,8 +507,9 @@ body.delmode .del-col{display:table-cell}
     <h2 id="d-title">Quote</h2>
     <div id="d-body"></div>
     <div class="macts" style="flex-wrap:wrap;gap:6px;justify-content:flex-start">
-      <button class="btn btn-green btn-sm" id="d-email">Email Quote</button>
+      <button class="btn btn-green btn-sm" id="d-email">Email</button>
       <button class="btn btn-blue btn-sm" id="d-dupe">Duplicate</button>
+      <button class="btn btn-sm" id="d-paid" style="background:rgba(46,204,113,0.2);color:#2ecc71;border:1px solid rgba(46,204,113,0.4)">Mark Paid</button>
       <button class="btn btn-ghost btn-sm" id="d-edit">Edit</button>
       <button class="btn btn-chrome btn-sm" id="d-open-builder">Open in Builder</button>
       <button class="btn btn-danger btn-xs" id="d-del">Delete</button>
@@ -604,6 +654,10 @@ function dbToLocal(r) {
     notes: r.notes || "",
     followup: r.followup || "",
     photos: r.photos || [],
+    ref: r.ref || "",
+    doctype: r.doctype || "Quote",
+    paid: r.paid || false,
+    paiddate: r.paiddate || "",
     created: r.created_at || new Date().toISOString()
   };
 }
@@ -630,6 +684,10 @@ function localToDb(q) {
     notes: q.notes,
     followup: q.followup || null,
     photos: q.photos || null,
+    ref: q.ref || "",
+    doctype: q.doctype || "Quote",
+    paid: q.paid || false,
+    paiddate: q.paiddate || null,
     updated_at: new Date().toISOString()
   };
 }
@@ -650,6 +708,27 @@ function switchView(v) {
   document.getElementById("view-" + v).classList.add("active");
   document.querySelectorAll(".nav-tab")[v === "tracker" ? 0 : 1].classList.add("active");
   window.scrollTo(0, 0);
+}
+
+// FILTER BY STATUS (click status box)
+function filterStatus(status) {
+  var cur = document.getElementById("f-status").value;
+  document.getElementById("f-status").value = (cur === status) ? "" : status;
+  renderTbl();
+}
+
+// QUICK STATUS CHANGE
+function quickStatus(id, status) {
+  var q = quotes.find(function(x){return x.id===id;}); if (!q) return;
+  q.status = status;
+  var dbData = { status: status, updated_at: new Date().toISOString() };
+  sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", dbData).then(function() {
+    saveLocal(); renderTbl(); viewQ(id);
+    showToast("Marked " + status);
+  }).catch(function() {
+    saveLocal(); renderTbl(); viewQ(id);
+    showToast("Marked " + status + " (offline)");
+  });
 }
 
 // DELETE MODE
@@ -697,15 +776,38 @@ function checkFollowups() {
 }
 
 // REVENUE CHART
+function toggleChart() {
+  var sec = document.getElementById("chart-section");
+  sec.classList.toggle("collapsed");
+  try { localStorage.setItem("rebar_chart_collapsed", sec.classList.contains("collapsed") ? "1" : "0"); } catch(e) {}
+}
+
 function renderChart() {
   var box = document.getElementById("revchart");
   if (!box) return;
-  // Group accepted+sent quote totals by month (last 6 months)
   var now = new Date();
+  // Determine how many months to show based on the active time filter
+  var tf = document.getElementById("f-time").value;
+  var numMonths = 6;
+  var titleSuffix = "/ 6mo";
+  if (tf === "7" || tf === "this-week" || tf === "last-week") { numMonths = 1; titleSuffix = ""; }
+  else if (tf === "14") { numMonths = 1; titleSuffix = ""; }
+  else if (tf === "30" || tf === "this-month" || tf === "last-month") { numMonths = 2; titleSuffix = ""; }
+  else if (tf === "90") { numMonths = 3; titleSuffix = "/ 3mo"; }
+  else if (tf === "180") { numMonths = 6; titleSuffix = "/ 6mo"; }
+  else if (tf === "365") { numMonths = 12; titleSuffix = "/ 12mo"; }
+  else if (tf === "") { numMonths = 6; titleSuffix = "/ 6mo"; }
+
+  // For day/week filters, show daily bars instead of monthly
+  if (tf === "7" || tf === "14" || tf === "this-week" || tf === "last-week") {
+    renderDailyChart(tf);
+    return;
+  }
+
   var months = [];
-  for (var i = 5; i >= 0; i--) {
+  for (var i = numMonths - 1; i >= 0; i--) {
     var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({ key: d.getFullYear() + "-" + d.getMonth(), label: d.toLocaleDateString("en-CA", {month:"short"}), total: 0 });
+    months.push({ key: d.getFullYear() + "-" + d.getMonth(), label: d.toLocaleDateString("en-CA", {month:"short"}), total: 0, current: i === 0 });
   }
   quotes.forEach(function(q) {
     if (!q.date && !q.created) return;
@@ -716,15 +818,51 @@ function renderChart() {
   });
   var max = Math.max.apply(null, months.map(function(m){return m.total;}).concat([1]));
   var grand = months.reduce(function(s,m){return s+m.total;},0);
-  document.getElementById("chart-total").textContent = "$" + grand.toLocaleString("en-CA",{maximumFractionDigits:0}) + " (6 mo)";
+  document.getElementById("chart-total").textContent = grand > 0 ? "$" + grand.toLocaleString("en-CA",{maximumFractionDigits:0}) + " " + titleSuffix : "";
   var html = "";
   months.forEach(function(m) {
-    var h = Math.max(4, Math.round((m.total / max) * 70));
+    var h = Math.max(4, Math.round((m.total / max) * 60));
+    var lbl = m.total > 0 ? ("$" + (m.total >= 1000 ? (m.total/1000).toFixed(m.total>=10000?0:1) + "k" : m.total.toFixed(0))) : "";
+    html += `<div class="bar-col ${m.current?"current":""}">`
+      + `<div class="bar-val">${lbl}</div>`
+      + `<div class="bar-fill" style="height:${h}px"></div>`
+      + `<div class="bar-lbl">${m.label}</div>`
+      + `</div>`;
+  });
+  box.innerHTML = html;
+}
+
+function renderDailyChart(tf) {
+  var box = document.getElementById("revchart");
+  var now = new Date();
+  var days = [];
+  var numDays = 7;
+  var startDate = new Date(now);
+  if (tf === "14") { numDays = 14; startDate.setDate(now.getDate() - 13); }
+  else if (tf === "this-week") { startDate.setDate(now.getDate() - now.getDay()); numDays = now.getDay() + 1; }
+  else if (tf === "last-week") { startDate.setDate(now.getDate() - now.getDay() - 7); numDays = 7; }
+  else { startDate.setDate(now.getDate() - 6); numDays = 7; }
+  for (var i = 0; i < numDays; i++) {
+    var d = new Date(startDate); d.setDate(startDate.getDate() + i);
+    days.push({ key: d.toISOString().slice(0,10), label: d.toLocaleDateString("en-CA",{weekday:"narrow"}), total: 0, current: d.toDateString() === now.toDateString() });
+  }
+  quotes.forEach(function(q) {
+    if (!q.date && !q.created) return;
+    var key = (q.date || q.created.slice(0,10));
+    var m = days.find(function(x){ return x.key === key; });
+    if (m) m.total += parseFloat(q.total) || 0;
+  });
+  var max = Math.max.apply(null, days.map(function(m){return m.total;}).concat([1]));
+  var grand = days.reduce(function(s,m){return s+m.total;},0);
+  document.getElementById("chart-total").textContent = grand > 0 ? "$" + grand.toLocaleString("en-CA",{maximumFractionDigits:0}) : "";
+  var html = "";
+  days.forEach(function(m) {
+    var h = Math.max(4, Math.round((m.total / max) * 60));
     var lbl = m.total > 0 ? ("$" + (m.total >= 1000 ? (m.total/1000).toFixed(1) + "k" : m.total.toFixed(0))) : "";
-    html += `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">`
-      + `<div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:#666;margin-bottom:3px;white-space:nowrap">${lbl}</div>`
-      + `<div style="width:100%;height:${h}px;background:linear-gradient(180deg,#d8d8d8,#888);border-radius:2px 2px 0 0"></div>`
-      + `<div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#444;margin-top:4px">${m.label}</div>`
+    html += `<div class="bar-col ${m.current?"current":""}">`
+      + `<div class="bar-val">${lbl}</div>`
+      + `<div class="bar-fill" style="height:${h}px"></div>`
+      + `<div class="bar-lbl">${m.label}</div>`
       + `</div>`;
   });
   box.innerHTML = html;
@@ -771,15 +909,41 @@ function renderTbl() {
     });
     tbody.innerHTML = rows;
   }
-  var fv = fl.reduce(function(s,q) { return s + (parseFloat(q.total)||0); }, 0);
-  var acc = quotes.filter(function(q) { return q.status==="Accepted"; }).length;
-  var pend = quotes.filter(function(q) { return q.status==="Pending"; }).length;
-  var rate = quotes.length > 0 ? Math.round((acc/quotes.length)*100) : 0;
-  document.getElementById("s-total").textContent = quotes.length;
-  document.getElementById("s-val").textContent = "$" + fv.toLocaleString("en-CA",{minimumFractionDigits:0,maximumFractionDigits:0});
-  document.getElementById("s-acc").textContent = acc;
-  document.getElementById("s-pend").textContent = pend;
-  document.getElementById("s-rate").textContent = rate + "% close rate";
+  // Status counts (all-time, not filtered)
+  var cPending = quotes.filter(function(q){return q.status==="Pending";}).length;
+  var cSent = quotes.filter(function(q){return q.status==="Sent";}).length;
+  var cAccepted = quotes.filter(function(q){return q.status==="Accepted";}).length;
+  var cDeclined = quotes.filter(function(q){return q.status==="Declined";}).length;
+  document.getElementById("sb-pending").textContent = cPending;
+  document.getElementById("sb-sent").textContent = cSent;
+  document.getElementById("sb-accepted").textContent = cAccepted;
+  document.getElementById("sb-declined").textContent = cDeclined;
+
+  // Revenue calcs respect the active TIME filter (but not status filter, so totals stay meaningful)
+  var tf2 = document.getElementById("f-time").value;
+  var timeScoped = quotes.filter(function(q){ return inTime(q, tf2); });
+
+  var won = timeScoped.filter(function(q){return q.status==="Accepted";}).reduce(function(s,q){return s+(parseFloat(q.total)||0);},0);
+  var pipeline = timeScoped.filter(function(q){return q.status==="Pending"||q.status==="Sent";}).reduce(function(s,q){return s+(parseFloat(q.total)||0);},0);
+  var owed = timeScoped.filter(function(q){ return q.status==="Accepted" && !q.paid; }).reduce(function(s,q){ return s + (parseFloat(q.total)||0); }, 0);
+  var owedCount = timeScoped.filter(function(q){ return q.status==="Accepted" && !q.paid; }).length;
+  var decided = cAccepted + cDeclined;
+  var rate = decided > 0 ? Math.round((cAccepted/decided)*100) : 0;
+  var avgWon = cAccepted > 0 ? (won/timeScoped.filter(function(q){return q.status==="Accepted";}).length||0) : 0;
+
+  document.getElementById("s-won").textContent = "$" + won.toLocaleString("en-CA",{maximumFractionDigits:0});
+  document.getElementById("s-pipe").textContent = "$" + pipeline.toLocaleString("en-CA",{maximumFractionDigits:0});
+  document.getElementById("s-pipe-sub").textContent = (cPending + cSent) + " open";
+  document.getElementById("s-owed").textContent = "$" + owed.toLocaleString("en-CA",{maximumFractionDigits:0});
+  document.getElementById("s-owed-sub").textContent = owedCount + " unpaid";
+  document.getElementById("s-rate2").textContent = rate + "%";
+  document.getElementById("s-avg-sub").textContent = "Avg $" + Math.round(avgWon).toLocaleString("en-CA");
+
+  // Highlight active status box
+  document.querySelectorAll(".status-box").forEach(function(b){
+    b.classList.toggle("active", b.getAttribute("data-st") === document.getElementById("f-status").value);
+  });
+
   document.getElementById("xinfo").textContent = quotes.length + " quote" + (quotes.length!==1?"s":"") + " - cloud synced";
   renderChart();
   checkFollowups();
@@ -819,7 +983,7 @@ function openNewQuote() {
   document.getElementById("m-form-title").textContent = "New Quote";
   document.getElementById("m-num").value = genNum();
   document.getElementById("m-date").value = new Date().toISOString().slice(0,10);
-  ["m-co","m-phone","m-email","m-pickup","m-delivery","m-weight","m-notes"].forEach(function(id) { document.getElementById(id).value = ""; });
+  ["m-co","m-phone","m-email","m-ref","m-pickup","m-delivery","m-weight","m-notes"].forEach(function(id) { document.getElementById(id).value = ""; });
   document.getElementById("m-load").value = "";
   document.getElementById("m-total").value = "";
   document.getElementById("m-pdate").value = "";
@@ -859,6 +1023,10 @@ function saveQ() {
     notes: document.getElementById("m-notes").value.trim(),
     followup: document.getElementById("m-followup").value,
     photos: currentPhotos.slice(),
+    ref: document.getElementById("m-ref").value.trim(),
+    doctype: eid ? (quotes.find(function(x){return x.id===eid;})||{}).doctype || "Quote" : "Quote",
+    paid: eid ? (quotes.find(function(x){return x.id===eid;})||{}).paid || false : false,
+    paiddate: eid ? (quotes.find(function(x){return x.id===eid;})||{}).paiddate || "" : "",
     created: eid ? (quotes.find(function(x){return x.id===eid;})||{}).created || new Date().toISOString() : new Date().toISOString()
   };
   var dbData = localToDb(q);
@@ -892,6 +1060,7 @@ function editQ(id) {
   document.getElementById("m-co").value = q.co || "";
   document.getElementById("m-phone").value = q.phone || "";
   document.getElementById("m-email").value = q.email || "";
+  document.getElementById("m-ref").value = q.ref || "";
   document.getElementById("m-pickup").value = q.pickup || "";
   document.getElementById("m-delivery").value = q.delivery || "";
   document.getElementById("m-load").value = q.load || "";
@@ -929,7 +1098,15 @@ function viewQ(id) {
     + `<div class="drow"><span class="dlbl">Load</span><span class="dval">${q.load||"--"}</span></div>`
     + `<div class="drow"><span class="dlbl">Weight</span><span class="dval">${q.weight||"--"}</span></div>`
     + `<div class="drow"><span class="dlbl">Status</span><span class="dval"><span class="badge b-${(q.status||"pending").toLowerCase()}">${q.status||"Pending"}</span></span></div>`
+    + `<div style="display:flex;gap:5px;margin:6px 0 10px;flex-wrap:wrap">`
+      + `<button class="qs-btn" style="border-color:rgba(241,196,15,0.4);color:#f1c40f" onclick="quickStatus('${q.id}','Pending')">Pending</button>`
+      + `<button class="qs-btn" style="border-color:rgba(52,152,219,0.4);color:#3498db" onclick="quickStatus('${q.id}','Sent')">Sent</button>`
+      + `<button class="qs-btn" style="border-color:rgba(46,204,113,0.4);color:#2ecc71" onclick="quickStatus('${q.id}','Accepted')">Accepted</button>`
+      + `<button class="qs-btn" style="border-color:rgba(231,76,60,0.4);color:#e74c3c" onclick="quickStatus('${q.id}','Declined')">Declined</button>`
+    + `</div>`
     + ( q.followup ? `<div class="drow"><span class="dlbl">Follow-up</span><span class="dval" style="color:#f1c40f">${fmtDate(q.followup)}</span></div>` : "" )
+    + ( q.ref ? `<div class="drow"><span class="dlbl">Ref / PO</span><span class="dval">${q.ref}</span></div>` : "" )
+    + ( q.doctype === "Invoice" ? `<div class="drow"><span class="dlbl">Payment</span><span class="dval">${ q.paid ? `<span style="color:#2ecc71;font-weight:700">PAID ${q.paiddate?fmtDate(q.paiddate):""}</span>` : `<span style="color:#e74c3c;font-weight:700">UNPAID</span>` }</span></div>` : ( q.status === "Accepted" ? `<div class="drow"><span class="dlbl">Payment</span><span class="dval">${ q.paid ? `<span style="color:#2ecc71;font-weight:700">PAID</span>` : `<span style="color:#e74c3c;font-weight:700">UNPAID</span>` }</span></div>` : "" ) )
     + `<div class="drow"><span class="dlbl">Total</span><span class="dval" style="font-family:'Barlow Condensed';font-size:20px;font-weight:800;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${fmtAmt(q.total)}</span></div>`
     + ( q.notes ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="dlbl">Notes</span><span class="dval" style="text-align:left;color:#666;font-size:12px;line-height:1.6">${q.notes}</span></div>` : "" )
     + ( (q.photos && q.photos.length) ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:6px"><span class="dlbl">Photos</span><div style="display:flex;gap:6px;flex-wrap:wrap">${q.photos.map(function(p){return `<a href="${p}" target="_blank"><img src="${p}" style="width:60px;height:60px;object-fit:cover;border:1px solid #333"></a>`;}).join("")}</div></div>` : "" );
@@ -939,6 +1116,9 @@ function viewQ(id) {
   document.getElementById("d-open-builder").onclick = function() { openInBuilder(id); };
   document.getElementById("d-email").onclick = function() { emailQuote(id); };
   document.getElementById("d-dupe").onclick = function() { duplicateQuote(id); };
+  var paidBtn = document.getElementById("d-paid");
+  paidBtn.textContent = q.paid ? "Mark Unpaid" : "Mark Paid";
+  paidBtn.onclick = function() { togglePaid(id); };
   document.getElementById("m-detail").classList.add("open");
 }
 
@@ -958,6 +1138,11 @@ function openInBuilder(id) {
   document.getElementById("b-email").value = q.email || "";
   document.getElementById("b-contact").value = q.contact || "";
   document.getElementById("b-addr").value = q.addr || "";
+  document.getElementById("b-ref").value = q.ref || "";
+  document.getElementById("q-ref").value = q.ref || "";
+  document.getElementById("q-doctype").value = q.doctype || "Quote";
+  document.getElementById("doctype-toggle").textContent = "Mode: " + (q.doctype || "Quote");
+  updateDocType();
   document.getElementById("s-pickup").value = q.pickup || "";
   document.getElementById("s-delivery").value = q.delivery || "";
   document.getElementById("s-date").value = q.pdate || "";
@@ -1026,6 +1211,21 @@ function removePhoto(i) {
   renderPhotoPreview();
 }
 
+// TOGGLE PAID STATUS
+function togglePaid(id) {
+  var q = quotes.find(function(x){return x.id===id;}); if (!q) return;
+  q.paid = !q.paid;
+  q.paiddate = q.paid ? new Date().toISOString().slice(0,10) : "";
+  var dbData = { paid: q.paid, paiddate: q.paiddate || null, updated_at: new Date().toISOString() };
+  sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", dbData).then(function() {
+    saveLocal(); renderTbl(); closeM("m-detail");
+    showToast(q.paid ? "Marked as paid" : "Marked as unpaid");
+  }).catch(function() {
+    saveLocal(); renderTbl(); closeM("m-detail");
+    showToast(q.paid ? "Marked paid (offline)" : "Marked unpaid (offline)");
+  });
+}
+
 // EMAIL QUOTE
 function emailQuote(id) {
   var q = quotes.find(function(x){return x.id===id;}); if (!q) return;
@@ -1070,6 +1270,7 @@ function duplicateQuote(id) {
   document.getElementById("m-co").value = q.co || "";
   document.getElementById("m-phone").value = q.phone || "";
   document.getElementById("m-email").value = q.email || "";
+  document.getElementById("m-ref").value = q.ref || "";
   document.getElementById("m-pickup").value = q.pickup || "";
   document.getElementById("m-delivery").value = q.delivery || "";
   document.getElementById("m-load").value = q.load || "";
@@ -1108,9 +1309,9 @@ document.querySelectorAll(".mbg").forEach(function(bg) {
 // CSV
 function exportCSV() {
   if (!quotes.length) { showToast("No quotes to export"); return; }
-  var h = ["Quote #","Date","Customer","Phone","Email","Pickup","Delivery","Load","Weight","Pickup Date","Total","Status","Follow-up","Notes"];
+  var h = ["Doc","Quote #","Ref/PO","Date","Customer","Phone","Email","Pickup","Delivery","Load","Weight","Pickup Date","Total","Status","Paid","Follow-up","Notes"];
   var rows = quotes.map(function(q) {
-    return [q.num,q.date,q.co,q.phone,q.email,q.pickup,q.delivery,q.load,q.weight,q.pdate,q.total?parseFloat(q.total).toFixed(2):"",q.status,q.followup||"",q.notes]
+    return [q.doctype||"Quote",q.num,q.ref||"",q.date,q.co,q.phone,q.email,q.pickup,q.delivery,q.load,q.weight,q.pdate,q.total?parseFloat(q.total).toFixed(2):"",q.status,q.paid?"PAID":"",q.followup||"",q.notes]
       .map(function(v){var s=(v||"").toString();var dq=String.fromCharCode(34);return dq+s.split(dq).join(dq+dq)+dq;}).join(",")
   });
   var a = document.createElement("a");
@@ -1196,6 +1397,8 @@ function saveToTracker() {
     email: document.getElementById("b-email").value.trim(),
     contact: document.getElementById("b-contact").value.trim(),
     addr: document.getElementById("b-addr").value.trim(),
+    ref: document.getElementById("b-ref").value.trim() || document.getElementById("q-ref").value.trim(),
+    doctype: document.getElementById("q-doctype").value,
     pickup: document.getElementById("s-pickup").value.trim(),
     delivery: document.getElementById("s-delivery").value.trim(),
     load: document.getElementById("s-load").value,
@@ -1207,6 +1410,8 @@ function saveToTracker() {
     total: (parseFloat(grand)||0).toFixed(2),
     status: document.getElementById("q-status").value,
     notes: document.getElementById("q-notes").value.trim(),
+    paid: false,
+    paiddate: "",
     created: new Date().toISOString()
   };
   var dbData = localToDb(q);
@@ -1216,7 +1421,7 @@ function saveToTracker() {
       q.id = res[0].id; quotes.unshift(q);
       saveLocal(); renderTbl();
       switchView("tracker");
-      showToast("Quote saved to tracker");
+      showToast(q.doctype + " saved to tracker");
     } else { showToast("Save failed"); }
   }).catch(function() {
     q.id = "local-" + Date.now(); quotes.unshift(q);
@@ -1227,6 +1432,29 @@ function saveToTracker() {
 }
 
 // PRINT - iframe method (no popups needed)
+function toggleDocType() {
+  var sel = document.getElementById("q-doctype");
+  sel.value = (sel.value === "Quote") ? "Invoice" : "Quote";
+  document.getElementById("doctype-toggle").textContent = "Mode: " + sel.value;
+  updateDocType();
+  showToast("Switched to " + sel.value + " mode");
+}
+
+function updateDocType() {
+  var type = document.getElementById("q-doctype").value;
+  var titleEl = document.querySelector(".pdf-title");
+  var grandLabel = document.querySelector(".qtrow.grand span");
+  if (type === "Invoice") {
+    titleEl.textContent = "Invoice";
+    if (grandLabel) grandLabel.textContent = "Amount Due";
+    document.getElementById("q-terms").value = "Payment due within 15 days of invoice date. Please include the invoice/reference number with your payment. E-transfer to rebartransport@hotmail.com or cheque payable to ReBar Transportation Services Ltd. A 2% monthly interest charge applies to overdue balances. Thank you for your business.";
+  } else {
+    titleEl.textContent = "Freight Quote";
+    if (grandLabel) grandLabel.textContent = "Total";
+    document.getElementById("q-terms").value = "Payment due within 15 days of delivery. This quote is valid for 7 days from date issued. Rates subject to change if load details differ from above. Fuel surcharges may apply based on current rates at time of pickup. ReBar Transportation Services Ltd reserves the right to refuse any load that does not meet safety standards. All loads subject to availability.";
+  }
+}
+
 function doPrint() {
   var content = document.getElementById("qdoc").innerHTML;
   var iframe = document.createElement("iframe");
@@ -1309,6 +1537,7 @@ document.addEventListener("keydown", function(e) {
 
 // INIT
 document.addEventListener("DOMContentLoaded", function() {
+  try { if (localStorage.getItem("rebar_chart_collapsed") === "1") document.getElementById("chart-section").classList.add("collapsed"); } catch(e) {}
   checkSession();
 });
 </script>
