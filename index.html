@@ -484,35 +484,31 @@ function doLogin() {
   if (!email || !pass) { err.textContent = "Please enter email and password."; return; }
   btn.disabled = true;
   btn.textContent = "Signing in...";
-  err.textContent = "Connecting...";
+  err.textContent = "";
   fetch(SB_URL + "/auth/v1/token?grant_type=password", {
     method: "POST",
-    headers: {
-      "apikey": SB_KEY,
-      "Content-Type": "application/json"
-    },
+    headers: { "apikey": SB_KEY, "Content-Type": "application/json" },
     body: JSON.stringify({ email: email, password: pass })
   }).then(function(r) {
-    err.textContent = "Got response: " + r.status;
-    return r.text();
-  }).then(function(text) {
-    err.textContent = "Raw: " + text.slice(0, 200);
-    var data;
-    try { data = JSON.parse(text); } catch(e) { err.textContent = "Parse error: " + text.slice(0,100); btn.disabled=false; btn.textContent="Sign In"; return; }
-    if (data.access_token) {
-      currentUser = data;
-      localStorage.setItem("rebar_session", JSON.stringify({ access_token: data.access_token, user: data.user }));
-      document.getElementById("login-screen").style.display = "none";
-      document.getElementById("nav").style.display = "flex";
-      loadQuotes();
-      showToast("Welcome back");
-    } else {
-      err.textContent = "Error: " + (data.error_description || data.msg || data.error || JSON.stringify(data).slice(0,150));
-      btn.disabled = false;
-      btn.textContent = "Sign In";
-    }
+    return r.text().then(function(text) {
+      var data = {};
+      try { data = JSON.parse(text); } catch(e) {}
+      if (r.ok && data.access_token) {
+        currentUser = data;
+        localStorage.setItem("rebar_session", JSON.stringify({ access_token: data.access_token, user: data.user }));
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("nav").style.display = "flex";
+        loadQuotes();
+        showToast("Welcome back");
+      } else {
+        var msg = data.error_description || data.msg || data.error || ("Sign in failed (" + r.status + ")");
+        err.textContent = msg;
+        btn.disabled = false;
+        btn.textContent = "Sign In";
+      }
+    });
   }).catch(function(e) {
-    err.textContent = "Network error: " + e.toString();
+    err.textContent = "Connection error - check internet";
     btn.disabled = false;
     btn.textContent = "Sign In";
   });
@@ -679,18 +675,19 @@ function renderTbl() {
     var rows = "";
     fl.forEach(function(q) {
       var badge = "badge b-" + (q.status||"pending").toLowerCase();
-      rows += "<tr onclick="viewQ('" + q.id + "')">" +
-        "<td class="fw">" + (q.num||"--") + "</td>" +
-        "<td>" + fmtDate(q.date) + "</td>" +
-        "<td class="fw">" + (q.co||"--") + "</td>" +
-        "<td class="hide-mob">" + (q.pickup||"--") + "</td>" +
-        "<td class="hide-mob">" + (q.delivery||"--") + "</td>" +
-        "<td class="hide-mob">" + (q.load||"--") + "</td>" +
-        "<td><span class="" + badge + "">" + (q.status||"Pending") + "</span></td>" +
-        "<td class="amt">" + fmtAmt(q.total) + "</td>" +
-        "<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editQ('" + q.id + "')">Edit</button></td>" +
-        "<td class="del-col"><button class="del-x" onclick="event.stopPropagation();delQ('" + q.id + "')">x</button></td>" +
-        "</tr>";
+      var qid = q.id;
+      rows += `<tr onclick="viewQ('${qid}')">`
+        + `<td class="fw">${q.num||"--"}</td>`
+        + `<td>${fmtDate(q.date)}</td>`
+        + `<td class="fw">${q.co||"--"}</td>`
+        + `<td class="hide-mob">${q.pickup||"--"}</td>`
+        + `<td class="hide-mob">${q.delivery||"--"}</td>`
+        + `<td class="hide-mob">${q.load||"--"}</td>`
+        + `<td><span class="${badge}">${q.status||"Pending"}</span></td>`
+        + `<td class="amt">${fmtAmt(q.total)}</td>`
+        + `<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editQ('${qid}')">Edit</button></td>`
+        + `<td class="del-col"><button class="del-x" onclick="event.stopPropagation();delQ('${qid}')">x</button></td>`
+        + `</tr>`;
     });
     tbody.innerHTML = rows;
   }
@@ -804,27 +801,20 @@ function viewQ(id) {
   document.getElementById("d-title").textContent = q.num || "Quote";
   var phone = q.phone || "";
   var email = q.email || "";
+  var phoneClean = (q.phone||"").replace(/[^0-9]/g,"");
   var html =
-    "<div class="drow"><span class="dlbl">Customer</span><span class="dval">" + (q.co||"--") + "</span></div>" +
-    "<div class="drow"><span class="dlbl">Phone</span><span class="dval">" +
-      (phone ? "<a class="call-btn" href="tel:" + phone.replace(/[^0-9]/g,"") + "">Call " + phone + "</a>" : "--") +
-    "</span></div>" +
-    "<div class="drow"><span class="dlbl">Email</span><span class="dval">" +
-      (email ? "<a class="email-btn" href="mailto:" + email + "">Email " + email + "</a>" : "--") +
-    "</span></div>" +
-    "<div class="drow"><span class="dlbl">Date</span><span class="dval">" + fmtDate(q.date) + "</span></div>" +
-    "<div class="drow"><span class="dlbl">Pickup Date</span><span class="dval">" + fmtDate(q.pdate) + "</span></div>" +
-    "<div class="drow"><span class="dlbl">Pickup</span><span class="dval">" +
-      (q.pickup ? q.pickup + " <a class="map-btn" href="https://maps.google.com/?q=" + encodeURIComponent(q.pickup) + "" target="_blank">Map</a>" : "--") +
-    "</span></div>" +
-    "<div class="drow"><span class="dlbl">Delivery</span><span class="dval">" +
-      (q.delivery ? q.delivery + " <a class="map-btn" href="https://maps.google.com/?q=" + encodeURIComponent(q.delivery) + "" target="_blank">Map</a>" : "--") +
-    "</span></div>" +
-    "<div class="drow"><span class="dlbl">Load</span><span class="dval">" + (q.load||"--") + "</span></div>" +
-    "<div class="drow"><span class="dlbl">Weight</span><span class="dval">" + (q.weight||"--") + "</span></div>" +
-    "<div class="drow"><span class="dlbl">Status</span><span class="dval"><span class="badge b-" + (q.status||"pending").toLowerCase() + "">" + (q.status||"Pending") + "</span></span></div>" +
-    "<div class="drow"><span class="dlbl">Total</span><span class="dval" style="font-family:'Barlow Condensed';font-size:20px;font-weight:800;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">" + fmtAmt(q.total) + "</span></div>" +
-    (q.notes ? "<div class="drow" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="dlbl">Notes</span><span class="dval" style="text-align:left;color:#666;font-size:12px;line-height:1.6">" + q.notes + "</span></div>" : "");
+    `<div class="drow"><span class="dlbl">Customer</span><span class="dval">${q.co||"--"}</span></div>`
+    + `<div class="drow"><span class="dlbl">Phone</span><span class="dval">${ q.phone ? `<a class="call-btn" href="tel:${phoneClean}">Call ${q.phone}</a>` : "--" }</span></div>`
+    + `<div class="drow"><span class="dlbl">Email</span><span class="dval">${ q.email ? `<a class="email-btn" href="mailto:${q.email}">Email</a>` : "--" }</span></div>`
+    + `<div class="drow"><span class="dlbl">Date</span><span class="dval">${fmtDate(q.date)}</span></div>`
+    + `<div class="drow"><span class="dlbl">Pickup Date</span><span class="dval">${fmtDate(q.pdate)}</span></div>`
+    + `<div class="drow"><span class="dlbl">Pickup</span><span class="dval">${ q.pickup ? `${q.pickup} <a class="map-btn" href="https://maps.google.com/?q=${encodeURIComponent(q.pickup)}" target="_blank">Map</a>` : "--" }</span></div>`
+    + `<div class="drow"><span class="dlbl">Delivery</span><span class="dval">${ q.delivery ? `${q.delivery} <a class="map-btn" href="https://maps.google.com/?q=${encodeURIComponent(q.delivery)}" target="_blank">Map</a>` : "--" }</span></div>`
+    + `<div class="drow"><span class="dlbl">Load</span><span class="dval">${q.load||"--"}</span></div>`
+    + `<div class="drow"><span class="dlbl">Weight</span><span class="dval">${q.weight||"--"}</span></div>`
+    + `<div class="drow"><span class="dlbl">Status</span><span class="dval"><span class="badge b-${(q.status||"pending").toLowerCase()}">${q.status||"Pending"}</span></span></div>`
+    + `<div class="drow"><span class="dlbl">Total</span><span class="dval" style="font-family:'Barlow Condensed';font-size:20px;font-weight:800;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${fmtAmt(q.total)}</span></div>`
+    + ( q.notes ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="dlbl">Notes</span><span class="dval" style="text-align:left;color:#666;font-size:12px;line-height:1.6">${q.notes}</span></div>` : "" );
   document.getElementById("d-body").innerHTML = html;
   document.getElementById("d-del").onclick = function() { delQ(id); };
   document.getElementById("d-edit").onclick = function() { editQ(id); };
@@ -888,11 +878,10 @@ function exportCSV() {
   var h = ["Quote #","Date","Customer","Phone","Email","Pickup","Delivery","Load","Weight","Pickup Date","Total","Status","Notes"];
   var rows = quotes.map(function(q) {
     return [q.num,q.date,q.co,q.phone,q.email,q.pickup,q.delivery,q.load,q.weight,q.pdate,q.total?parseFloat(q.total).toFixed(2):"",q.status,q.notes]
-      .map(function(v){return """ + (v||"").toString().replace(/"/g,"""") + """;}).join(",");
+      .map(function(v){var s=(v||"").toString();var dq=String.fromCharCode(34);return dq+s.split(dq).join(dq+dq)+dq;}).join(",")
   });
   var a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([[h.join(",")].concat(rows).join("
-")],{type:"text/csv"}));
+  a.href = URL.createObjectURL(new Blob([[h.join(",")].concat(rows).join(String.fromCharCode(10))],{type:"text/csv"}));
   a.download = "rebar_quotes_" + new Date().toISOString().slice(0,10) + ".csv";
   a.click();
   showToast("CSV downloaded");
@@ -931,7 +920,7 @@ function calcTotals() {
 
 function addLI() {
   var tr = document.createElement("tr");
-  tr.innerHTML = "<td><input placeholder="Description"></td><td><input placeholder="Details"></td><td><input class="r" placeholder="1"></td><td><input class="r" placeholder="0.00"></td><td><input class="r" value="0.00" readonly style="font-weight:600"></td><td class="li-dc"><button class="li-db" onclick="delLI(this)">x</button></td>";
+  tr.innerHTML = `<td><input placeholder="Description"></td><td><input placeholder="Details"></td><td><input class="r" placeholder="1"></td><td><input class="r" placeholder="0.00"></td><td><input class="r" value="0.00" readonly style="font-weight:600"></td><td class="li-dc"><button class="li-db" onclick="delLI(this)">x</button></td>`;
   document.getElementById("litbody").appendChild(tr);
   tr.querySelector("input").focus();
 }
@@ -1009,11 +998,51 @@ function doPrint() {
   iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:800px;height:600px;border:none;";
   document.body.appendChild(iframe);
   var doc = iframe.contentDocument || iframe.contentWindow.document;
+  var fontLink = `<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">`;
+  var css = `*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@page{margin:0;size:letter portrait}
+body{font-family:'Barlow',sans-serif;background:#fff;color:#111}
+.pdf-hdr{background:#000;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pdf-logo{height:36px;object-fit:contain}
+.pdf-hdr-r{text-align:right}
+.pdf-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;font-style:italic;text-transform:uppercase;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.pdf-contact{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#555;margin-top:2px}
+.pdf-accent{height:4px;background:linear-gradient(90deg,#c8c8c8,#f0f0f0,#888,#c8c8c8)}
+.qbody{padding:20px 28px}
+.qmeta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding:10px 12px;background:#f8f8f8;border-left:3px solid #111}
+.qmeta-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#aaa;margin-bottom:1px}
+.qmeta-val,.qmeta-sel{font-size:12px;font-weight:600;color:#111;border:none;background:transparent;font-family:'Barlow',sans-serif;width:auto;padding:0}
+.qsec{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.24em;text-transform:uppercase;color:#bbb;border-bottom:1px solid #ebebeb;padding-bottom:3px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.qsec::before{content:'';display:block;width:12px;height:2px;background:linear-gradient(90deg,#888,#ccc)}
+.q2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.qf{margin-bottom:7px}
+.qf-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#bbb;margin-bottom:1px}
+.qf-in,.qf-sel{font-size:12px;color:#111;border:none;padding:2px 0;width:100%;background:transparent;font-family:'Barlow',sans-serif}
+.qli-tbl{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:11px}
+.qli-tbl th{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#fff;background:#111;padding:6px 7px;text-align:left}
+.qli-tbl th.r,.qli-tbl td.r{text-align:right}
+.qli-tbl td{padding:6px 7px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+.qli-tbl td input{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#111;width:100%}
+.qli-tbl td input.r{text-align:right}
+.li-dc,.li-db,.add-li{display:none}
+.qtotals{display:flex;justify-content:flex-end}
+.qtbox{width:200px}
+.qtrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f2f2f2;font-size:11px;color:#666}
+.qtrow.grand{border-top:2px solid #111;border-bottom:none;margin-top:3px;padding-top:6px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;color:#111}
+.qt-in{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#111;font-weight:600;text-align:right;width:90px}
+.qt-in.grand{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800}
+.qpage2{page-break-before:always;break-before:page;padding:20px 28px}
+.qtermbox{background:#f8f8f8;border-left:3px solid #ddd;padding:10px 12px;margin-bottom:14px}
+.qta{width:100%;border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#444;line-height:1.7;min-height:50px}
+.qsig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px}
+.qsig-line{border-bottom:1.5px solid #111;height:28px;margin-bottom:3px}
+.qsig-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#aaa}
+.pdf-ftr{background:#000;padding:9px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px}
+.pdf-ftr-t{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:0.09em;color:#444}
+.pdf-ftr-t a{color:#555;text-decoration:none}`;
+  var page = `<!DOCTYPE html><html><head><meta charset="UTF-8">` + fontLink + `<style>` + css + `</style></head><body>` + content + `</body></html>`;
   doc.open();
-  doc.write("<!DOCTYPE html><html><head><meta charset="UTF-8">" +
-    "<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">" +
-    "<style>*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important} @page{margin:0;size:letter portrait} body{font-family:'Barlow',sans-serif;background:#fff;color:#111} .pdf-hdr{background:#000!important;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:10px} .pdf-logo{height:36px;object-fit:contain} .pdf-hdr-r{text-align:right} .pdf-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;font-style:italic;text-transform:uppercase;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text} .pdf-contact{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#555;margin-top:2px} .pdf-accent{height:4px;background:linear-gradient(90deg,#c8c8c8,#f0f0f0,#888,#c8c8c8)!important} .qbody{padding:20px 28px} .qmeta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding:10px 12px;background:#f8f8f8!important;border-left:3px solid #111} .qmeta-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#aaa;margin-bottom:1px} .qmeta-val,.qmeta-sel{font-size:12px;font-weight:600;color:#111;border:none;background:transparent;font-family:'Barlow',sans-serif;width:auto;padding:0} .qsec{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.24em;text-transform:uppercase;color:#bbb;border-bottom:1px solid #ebebeb;padding-bottom:3px;margin-bottom:10px;display:flex;align-items:center;gap:6px} .qsec::before{content:'';display:block;width:12px;height:2px;background:linear-gradient(90deg,#888,#ccc)} .q2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px} .qf{margin-bottom:7px} .qf-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#bbb;margin-bottom:1px} .qf-in,.qf-sel{font-size:12px;color:#111;border:none;padding:2px 0;width:100%;background:transparent;font-family:'Barlow',sans-serif} .qli-tbl{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:11px} .qli-tbl th{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#fff;background:#111!important;padding:6px 7px;text-align:left} .qli-tbl th.r,.qli-tbl td.r{text-align:right} .qli-tbl td{padding:6px 7px;border-bottom:1px solid #f5f5f5;vertical-align:middle} .qli-tbl td input{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#111;width:100%} .qli-tbl td input.r{text-align:right} .li-dc,.li-db,.add-li{display:none!important} .qtotals{display:flex;justify-content:flex-end} .qtbox{width:200px} .qtrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f2f2f2;font-size:11px;color:#666} .qtrow.grand{border-top:2px solid #111;border-bottom:none;margin-top:3px;padding-top:6px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;color:#111} .qt-in{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#111;font-weight:600;text-align:right;width:90px} .qt-in.grand{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800} .qpage2{page-break-before:always;break-before:page;padding:20px 28px} .qtermbox{background:#f8f8f8!important;border-left:3px solid #ddd;padding:10px 12px;margin-bottom:14px} .qta{width:100%;border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#444;line-height:1.7;min-height:50px} .qsig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px} .qsig-line{border-bottom:1.5px solid #111;height:28px;margin-bottom:3px} .qsig-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#aaa} .pdf-ftr{background:#000!important;padding:9px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px} .pdf-ftr-t{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:0.09em;color:#444} .pdf-ftr-t a{color:#555;text-decoration:none}</style>" +
-    "</head><body>" + content + "</body></html>");
+  doc.write(page);
   doc.close();
   iframe.onload = function() {
     iframe.contentWindow.focus();
