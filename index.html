@@ -250,6 +250,40 @@ body.delmode .del-col{display:table-cell}
 .bar-lbl{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#3a3a3a;margin-top:4px}
 .bar-col.current .bar-lbl{color:#2ecc71}
 
+
+/* FLEET */
+.fleet-card{background:var(--card);border:1px solid var(--border2);padding:18px;margin-bottom:14px}
+.fleet-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.fleet-card-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em}
+.fleet-card-sub{font-size:12px;color:#555;margin-top:3px}
+.fleet-badge{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:4px 10px;background:rgba(46,204,113,0.12);color:#2ecc71;flex-shrink:0}
+.fleet-specs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+@media(max-width:480px){.fleet-specs{grid-template-columns:1fr}}
+.fleet-spec{background:var(--bg);padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fleet-spec-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#444;flex-shrink:0}
+.fleet-spec-val{font-size:12px;color:#ccc;text-align:right}
+.fleet-section{background:var(--card);border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.fleet-section-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#555;margin-bottom:12px}
+.fleet-ref{display:flex;flex-direction:column;gap:8px}
+.fleet-ref-item{font-size:12px;color:#888;line-height:1.5}
+.fleet-ref-item strong{color:#ccc;font-weight:600}
+.maint-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px}
+.maint-row:last-child{border:none}
+.maint-date{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#555;flex-shrink:0;width:68px}
+.maint-info{flex:1}
+.maint-type{font-weight:600;color:#ccc;margin-bottom:2px}
+.maint-detail{color:#555;font-size:11px}
+.maint-cost{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.maint-miles{font-size:10px;color:#444;text-align:right}
+.svc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px}
+.svc-row:last-child{border:none}
+.svc-name{color:#ccc;font-weight:500}
+.svc-interval{color:#555;font-size:11px}
+.svc-status{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 6px}
+.svc-ok{background:rgba(46,204,113,0.1);color:#2ecc71}
+.svc-soon{background:rgba(241,196,15,0.1);color:#f1c40f}
+.svc-due{background:rgba(231,76,60,0.1);color:#e74c3c}
+
 /* PRINT */
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
@@ -472,6 +506,121 @@ body.delmode .del-col{display:table-cell}
       <div class="pdf-ftr-t">ReBar Transportation Services Ltd - Millet, Alberta</div>
       <div class="pdf-ftr-t"><a href="tel:7803871747">780.387.1747</a> - <a href="mailto:rebartransport@hotmail.com">rebartransport@hotmail.com</a> - rebartransport.ca</div>
     </div>
+  </div>
+</div>
+
+
+<!-- FLEET / MAINTENANCE -->
+<div id="view-fleet" class="view">
+  <div style="max-width:700px;margin:16px auto;padding:0 14px">
+
+    <div class="fleet-card">
+      <div class="fleet-card-header">
+        <div>
+          <div class="fleet-card-title">2007 Peterbilt 387</div>
+          <div class="fleet-card-sub">CAT C-15 Twin Turbo | 550 HP | 18-Speed Manual</div>
+        </div>
+        <div class="fleet-badge">Active</div>
+      </div>
+      <div class="fleet-specs">
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Engine</div><div class="fleet-spec-val">CAT C-15 ACERT Twin Turbo</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Horsepower</div><div class="fleet-spec-val">550 HP @ 2100 RPM</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Torque</div><div class="fleet-spec-val">1,850 lb-ft @ 1200 RPM</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Transmission</div><div class="fleet-spec-val">Eaton Fuller 18-Speed Manual</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Displacement</div><div class="fleet-spec-val">15.2L (928 ci)</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Oil Capacity</div><div class="fleet-spec-val">~48 quarts (with filter)</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Coolant</div><div class="fleet-spec-val">~15 gallons</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Fuel Filter</div><div class="fleet-spec-val">Racor / CAT 1R-0751</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Oil Filter</div><div class="fleet-spec-val">CAT 1R-0739</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Air Filter</div><div class="fleet-spec-val">CAT 6I-2503 / 6I-2504</div></div>
+      </div>
+    </div>
+
+    <div class="fleet-section" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="fleet-section-title" style="margin:0">Odometer</div>
+      <input class="fin" id="odo-current" type="number" placeholder="Current miles" style="width:140px;font-size:14px;font-weight:600" oninput="saveFleetData()">
+      <span style="font-size:11px;color:#444">miles</span>
+      <button class="btn btn-ghost btn-xs" onclick="updateOdometer()">Update</button>
+    </div>
+
+    <div class="fleet-section">
+      <div class="fleet-section-title">Service Schedule</div>
+      <div id="service-reminders"></div>
+    </div>
+
+    <div class="fleet-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="fleet-section-title" style="margin:0">Maintenance Log</div>
+        <button class="btn btn-chrome btn-sm" onclick="openMaintModal()">+ Add Record</button>
+      </div>
+      <div id="maint-log"></div>
+      <div id="maint-empty" style="text-align:center;padding:32px;color:#333;font-size:13px;display:none">No records yet</div>
+    </div>
+
+    <div class="fleet-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="fleet-section-title" style="margin:0">Fuel Log</div>
+        <button class="btn btn-ghost btn-sm" onclick="openFuelModal()">+ Add Fill</button>
+      </div>
+      <div id="fuel-log"></div>
+      <div id="fuel-stats" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px"></div>
+    </div>
+
+    <div class="fleet-section">
+      <div class="fleet-section-title">C-15 Quick Reference</div>
+      <div class="fleet-ref">
+        <div class="fleet-ref-item"><strong>Oil Change:</strong> 15,000 - 25,000 miles (CAT DEO 15W-40)</div>
+        <div class="fleet-ref-item"><strong>Fuel Filter:</strong> Every 15,000 miles or 6 months</div>
+        <div class="fleet-ref-item"><strong>Coolant:</strong> Check SCA every 15,000 mi, full flush at 300,000 mi or 3 years</div>
+        <div class="fleet-ref-item"><strong>Valve Lash:</strong> Check every 250,000 mi (intake 0.015", exhaust 0.025")</div>
+        <div class="fleet-ref-item"><strong>Turbo Boost:</strong> 30-35 PSI normal, check for leaks if under 25 PSI</div>
+        <div class="fleet-ref-item"><strong>Jake Brake:</strong> Check butterfly valves every 100,000 mi</div>
+        <div class="fleet-ref-item"><strong>Fan Clutch:</strong> Check engagement temp ~210F</div>
+        <div class="fleet-ref-item"><strong>Common Issues:</strong> Injector o-rings, turbo actuator, oil cooler gasket, water pump weep hole</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MAINTENANCE MODAL -->
+<div class="mbg" id="m-maint">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('m-maint')">x</button>
+    <h2>Add Service Record</h2>
+    <div class="fg">
+      <div class="fgrp"><label class="flbl">Date</label><input class="fin" id="mt-date" type="date"></div>
+      <div class="fgrp"><label class="flbl">Odometer (mi)</label><input class="fin" id="mt-odo" type="number" placeholder="Miles"></div>
+      <div class="fgrp"><label class="flbl">Service Type</label>
+        <select class="fsel" id="mt-type">
+          <option>Oil Change</option><option>Fuel Filter</option><option>Air Filter</option>
+          <option>Coolant Service</option><option>Brakes</option><option>Tires</option>
+          <option>Transmission</option><option>Turbo Service</option><option>Electrical</option>
+          <option>Suspension</option><option>Exhaust</option><option>Annual Inspection</option>
+          <option>Pre-Trip Repair</option><option>Roadside Repair</option><option>Other</option>
+        </select>
+      </div>
+      <div class="fgrp"><label class="flbl">Cost ($)</label><input class="fin" id="mt-cost" type="number" placeholder="0.00" step="0.01"></div>
+    </div>
+    <div class="fgrp"><label class="flbl">Parts / Details</label><input class="fin" id="mt-parts" placeholder="e.g. Delo 15W-40, CAT 1R-0739 filter"></div>
+    <div class="fgrp" style="margin-top:8px"><label class="flbl">Notes</label><textarea class="fta" id="mt-notes" placeholder="Shop name, warranty info..."></textarea></div>
+    <div class="macts"><button class="btn btn-ghost btn-sm" onclick="closeM('m-maint')">Cancel</button><button class="btn btn-chrome btn-sm" onclick="saveMaint()">Save</button></div>
+  </div>
+</div>
+
+<!-- FUEL MODAL -->
+<div class="mbg" id="m-fuel">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('m-fuel')">x</button>
+    <h2>Add Fuel Fill</h2>
+    <div class="fg">
+      <div class="fgrp"><label class="flbl">Date</label><input class="fin" id="fl-date" type="date"></div>
+      <div class="fgrp"><label class="flbl">Odometer (mi)</label><input class="fin" id="fl-odo" type="number" placeholder="Miles"></div>
+      <div class="fgrp"><label class="flbl">Gallons</label><input class="fin" id="fl-gallons" type="number" placeholder="0.0" step="0.1"></div>
+      <div class="fgrp"><label class="flbl">Cost ($)</label><input class="fin" id="fl-cost" type="number" placeholder="0.00" step="0.01"></div>
+      <div class="fgrp"><label class="flbl">Station</label><input class="fin" id="fl-station" placeholder="e.g. Shell, Leduc"></div>
+    </div>
+    <div class="macts"><button class="btn btn-ghost btn-sm" onclick="closeM('m-fuel')">Cancel</button><button class="btn btn-chrome btn-sm" onclick="saveFuel()">Save</button></div>
   </div>
 </div>
 
@@ -769,7 +918,8 @@ function switchView(v) {
   document.querySelectorAll(".view").forEach(function(el) { el.classList.remove("active"); });
   document.querySelectorAll(".nav-tab").forEach(function(el) { el.classList.remove("active"); });
   document.getElementById("view-" + v).classList.add("active");
-  document.querySelectorAll(".nav-tab")[v === "tracker" ? 0 : 1].classList.add("active");
+  var tabIdx = v === "tracker" ? 0 : v === "builder" ? 1 : 2;
+  document.querySelectorAll(".nav-tab")[tabIdx].classList.add("active");
   window.scrollTo(0, 0);
 }
 
