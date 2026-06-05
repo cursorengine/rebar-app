@@ -105,6 +105,22 @@ a{color:inherit}
 .del-toggle.on .tog{background:rgba(231,76,60,0.3)}
 .tog::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#333;transition:transform 0.2s,background 0.2s}
 .del-toggle.on .tog::after{transform:translateX(10px);background:#e74c3c}
+/* FOLLOW-UP DOT */
+.fu-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;flex-shrink:0;vertical-align:middle}
+.fu-dot.overdue{background:#e74c3c}
+.fu-dot.today{background:#f1c40f}
+.fu-dot.soon{background:#3498db}
+/* DOCTYPE BADGE */
+.dt-i{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:1px 5px;background:rgba(52,152,219,0.18);color:#3498db;margin-left:5px;vertical-align:middle}
+.dt-q{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:1px 5px;background:rgba(255,255,255,0.07);color:#555;margin-left:5px;vertical-align:middle}
+/* MARGIN COL */
+td.margin{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;text-align:right;white-space:nowrap}
+/* CLEAR FILTERS BTN */
+.clear-btn{background:none;border:1px solid var(--border);color:#444;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:9px 10px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.clear-btn:hover{color:#fff;border-color:rgba(255,255,255,0.2)}
+/* INLINE STATUS CYCLE */
+.status-tap{cursor:pointer;transition:opacity 0.15s}
+.status-tap:hover{opacity:0.75}
 
 /* DOC TABS */
 .doc-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -357,7 +373,6 @@ body.delmode .del-col{display:table-cell}
   <div class="nav-right">
     <div class="sync-dot" id="sync-dot" title="Sync status"></div>
     <button class="btn btn-ghost btn-sm hide-mob" onclick="exportCSV()">CSV</button>
-    <button class="btn btn-chrome btn-sm" onclick="openNewQuote()">+ New</button>
     <button class="btn btn-ghost btn-xs" onclick="doLogout()" style="color:#555">Out</button>
   </div>
 </nav>
@@ -418,6 +433,8 @@ body.delmode .del-col{display:table-cell}
       <option value="last-week">Last Week</option>
     </select>
     <select class="tb-sel" id="f-sort" onchange="renderTbl()"><option value="date-desc">Newest</option><option value="date-asc">Oldest</option><option value="amt-desc">Highest</option><option value="amt-asc">Lowest</option><option value="status">By Status</option></select>
+    <button class="clear-btn" id="clear-filters-btn" onclick="clearFilters()" title="Clear all filters" style="display:none">&#10005; Clear</button>
+    <button class="btn btn-chrome btn-sm" onclick="openNewQuote()">+ New</button>
     <button class="del-toggle" id="del-tog" onclick="toggleDel()"><div class="tog"></div>Delete</button>
   </div>
   <div class="tbl-wrap">
@@ -427,6 +444,7 @@ body.delmode .del-col{display:table-cell}
         <th class="hide-mob">Pickup</th><th class="hide-mob">Delivery</th>
         <th class="hide-mob">Load</th><th>Status</th>
         <th style="text-align:right">Total</th>
+        <th style="text-align:right" class="hide-mob">Margin</th>
         <th></th><th class="del-col"></th>
       </tr></thead>
       <tbody id="qtbody"></tbody>
@@ -1063,6 +1081,15 @@ function toggleDel() {
   renderTbl();
 }
 
+// CLEAR ALL FILTERS
+function clearFilters() {
+  document.getElementById("tb-search").value = "";
+  document.getElementById("f-status").value = "";
+  document.getElementById("f-time").value = "";
+  document.getElementById("f-sort").value = "date-desc";
+  renderTbl();
+}
+
 // TIME FILTER
 function inTime(q, f) {
   if (!f) return true;
@@ -1223,25 +1250,49 @@ function renderTbl() {
   else {
     empty.style.display = "none";
     var rows = "";
+    var today0 = new Date(); today0.setHours(0,0,0,0);
     fl.forEach(function(q) {
       var badge = "badge b-" + (q.status||"pending").toLowerCase();
       var qid = q.id;
-      var dtype = (q.doctype||"Quote").charAt(0);
+      // Follow-up dot
+      var fuDot = "";
+      if (q.followup && q.status !== "Accepted" && q.status !== "Declined") {
+        var fuD = new Date(q.followup + "T12:00:00");
+        var diffDays = Math.ceil((fuD - today0) / 86400000);
+        if (diffDays < 0) fuDot = '<span class="fu-dot overdue" title="Follow-up overdue"></span>';
+        else if (diffDays === 0) fuDot = '<span class="fu-dot today" title="Follow-up today"></span>';
+        else if (diffDays <= 3) fuDot = '<span class="fu-dot soon" title="Follow-up in ' + diffDays + ' day' + (diffDays===1?'':"s") + '"></span>';
+      }
+      // Doctype badge
+      var dtBadge = (q.doctype === "Invoice") ? '<span class="dt-i">INV</span>' : '<span class="dt-q">QT</span>';
+      // Margin
+      var marginHtml = "";
+      var tot = parseFloat(q.total)||0; var cst = parseFloat(q.cost)||0;
+      if (tot > 0 && cst > 0) {
+        var mgn = Math.round(((tot-cst)/tot)*100);
+        var mColor = mgn >= 20 ? "#2ecc71" : mgn >= 10 ? "#f1c40f" : "#e74c3c";
+        marginHtml = '<span style="color:' + mColor + '">' + mgn + '%</span>';
+      }
+      // Inline status cycle (click badge to advance status)
+      var statusOrder = ["Pending","Sent","Accepted","Declined"];
+      var nextStatus = statusOrder[(statusOrder.indexOf(q.status||"Pending")+1) % statusOrder.length];
+      var inlineStatus = '<span class="' + badge + ' status-tap" title="Tap to mark ' + nextStatus + '" onclick="event.stopPropagation();quickStatus(\''+ qid +'\',\''+nextStatus+'\')">'+  (q.status||"Pending") + '</span>';
       var actBtn = q.deleted
-        ? '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();restoreQ(\''+qid+'\')">Restore</button>'
-        : '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editQ(\''+qid+'\')">Edit</button>';
+        ? '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();restoreQ(\'\'+qid+'\')">Restore</button>'
+        : '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editQ(\'\'+qid+'\')">Edit</button>';
       var delBtn = q.deleted
-        ? '<button class="del-x" onclick="event.stopPropagation();permDeleteQ(\''+qid+'\')">x</button>'
-        : '<button class="del-x" onclick="event.stopPropagation();delQ(\''+qid+'\')">x</button>';
-      rows += '<tr onclick="viewQ(\'' + qid + '\')">'
-        + '<td class="fw">' + (q.num||"--") + '</td>'
+        ? '<button class="del-x" onclick="event.stopPropagation();permDeleteQ(\'\'+qid+'\')">x</button>'
+        : '<button class="del-x" onclick="event.stopPropagation();delQ(\'\'+qid+'\')">x</button>';
+      rows += '<tr onclick="viewQ(\'\' + qid + \'\')">'
+        + '<td class="fw">' + fuDot + (q.num||"--") + dtBadge + '</td>'
         + '<td>' + fmtDate(q.date) + '</td>'
         + '<td class="fw">' + (q.co||"--") + '</td>'
         + '<td class="hide-mob">' + (q.pickup||"--") + '</td>'
         + '<td class="hide-mob">' + (q.delivery||"--") + '</td>'
         + '<td class="hide-mob">' + (q.load||"--") + '</td>'
-        + '<td><span class="' + badge + '">' + (q.status||"Pending") + '</span></td>'
+        + '<td>' + inlineStatus + '</td>'
         + '<td class="amt">' + fmtAmt(q.total) + '</td>'
+        + '<td class="margin hide-mob">' + marginHtml + '</td>'
         + '<td>' + actBtn + '</td>'
         + '<td class="del-col">' + delBtn + '</td>'
         + '</tr>';
@@ -1287,7 +1338,13 @@ function renderTbl() {
     b.classList.toggle("active", b.getAttribute("data-st") === document.getElementById("f-status").value);
   });
 
-  document.getElementById("xinfo").textContent = quotes.length + " quote" + (quotes.length!==1?"s":"") + " - cloud synced";
+  var filteredCount = fl.length;
+  var hasFilter = sr || sf || tf;
+  document.getElementById("xinfo").textContent = hasFilter
+    ? filteredCount + " of " + quotes.length + " quote" + (quotes.length!==1?"s":"")
+    : quotes.length + " quote" + (quotes.length!==1?"s":"") + " - cloud synced";
+  var cb = document.getElementById("clear-filters-btn");
+  if (cb) cb.style.display = hasFilter ? "block" : "none";
 
   // Dashboard summary
   var summaryEl = document.getElementById("dash-summary");
@@ -1345,7 +1402,6 @@ function openNewQuote() {
   document.getElementById("m-pdate").value = "";
   document.getElementById("m-followup").value = "";
   document.getElementById("m-status").value = "Pending";
-  document.getElementById("m-doctype").value = q.doctype || "Quote";
   document.getElementById("m-doctype").value = "Quote";
   document.getElementById("save-btn").disabled = false;
   document.getElementById("save-btn").textContent = "Save Quote";
@@ -1442,7 +1498,6 @@ function editQ(id) {
   document.getElementById("m-weight").value = q.weight || "";
   document.getElementById("m-pdate").value = q.pdate || "";
   document.getElementById("m-total").value = q.total || "";
-  document.getElementById("m-cost").value = q.cost || "";
   document.getElementById("m-cost").value = q.cost || "";
   document.getElementById("m-status").value = q.status || "Pending";
   document.getElementById("m-doctype").value = q.doctype || "Quote";
@@ -1657,7 +1712,6 @@ function duplicateQuote(id) {
   document.getElementById("m-pdate").value = "";
   document.getElementById("m-followup").value = "";
   document.getElementById("m-total").value = q.total || "";
-  document.getElementById("m-cost").value = q.cost || "";
   document.getElementById("m-cost").value = q.cost || "";
   document.getElementById("m-status").value = "Pending";
   document.getElementById("m-notes").value = q.notes || "";
