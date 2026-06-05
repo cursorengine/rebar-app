@@ -377,6 +377,7 @@ body.delmode .del-col{display:table-cell}
     <button class="btn btn-ghost btn-sm" onclick="clearQ()">Clear</button>
     <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
     <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
+    <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
     <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
   </div>
   <div id="qdoc">
@@ -1454,6 +1455,80 @@ function updateDocType() {
     if (grandLabel) grandLabel.textContent = "Total";
     document.getElementById("q-terms").value = "Payment due within 15 days of delivery. This quote is valid for 7 days from date issued. Rates subject to change if load details differ from above. Fuel surcharges may apply based on current rates at time of pickup. ReBar Transportation Services Ltd reserves the right to refuse any load that does not meet safety standards. All loads subject to availability.";
   }
+}
+
+function doEmail() {
+  var doctype = document.getElementById("doctype-toggle").textContent.replace("Mode: ","").trim() || "Quote";
+  var num     = document.getElementById("q-num").value.trim()       || "";
+  var date    = document.getElementById("q-date").value             || "";
+  var expiry  = document.getElementById("q-expiry")                  ? (document.getElementById("q-expiry").value || "") : "";
+  var co      = document.getElementById("m-co").value.trim()        || "";
+  var contact = document.getElementById("m-contact") ? (document.getElementById("m-contact").value.trim() || "") : "";
+  var toEmail = document.getElementById("m-email") ? (document.getElementById("m-email").value.trim() || "") : "";
+  var pickup   = document.getElementById("m-pickup").value.trim()   || "";
+  var delivery = document.getElementById("m-delivery").value.trim() || "";
+  var load     = document.getElementById("m-load").value            || "";
+  var weight   = document.getElementById("m-weight").value.trim()   || "";
+  var pdate    = document.getElementById("m-pdate").value           || "";
+  var notes    = document.getElementById("m-notes").value.trim()    || "";
+  var sub      = document.getElementById("t-sub").value             || "$0.00";
+  var gst      = document.getElementById("t-gst").value             || "$0.00";
+  var grand    = document.getElementById("t-grand").value           || "$0.00";
+
+  // Build line items summary
+  var liLines = [];
+  document.querySelectorAll("#litbody tr").forEach(function(row) {
+    var cells = row.querySelectorAll("td input");
+    if (cells.length >= 5) {
+      var desc = cells[0].value.trim();
+      var det  = cells[1].value.trim();
+      var qty  = cells[2].value.trim();
+      var rate = cells[3].value.trim();
+      var amt  = cells[4].value.trim();
+      if (desc) liLines.push("  " + desc + (det ? " (" + det + ")" : "") + "  |  Qty: " + qty + "  Rate: $" + rate + "  =  $" + amt);
+    }
+  });
+
+  var greeting = contact ? ("Hi " + contact + ",") : ("Hi,");
+  var expiryLine = expiry ? ("\nValid Until:  " + expiry) : "";
+  var notesLine  = notes  ? ("\n\nNotes:\n" + notes) : "";
+  var liBlock    = liLines.length ? ("\nPricing Breakdown:\n" + liLines.join("\n")) : "";
+
+  var body =
+greeting + "\n\n" +
+"Please find your " + doctype.toLowerCase() + " details below. " +
+"To accept or discuss this " + doctype.toLowerCase() + ", simply reply to this email or call us at 780.387.1747.\n\n" +
+"─────────────────────────────\n" +
+doctype.toUpperCase() + " #" + num + "\n" +
+"─────────────────────────────\n" +
+"Date:         " + date + expiryLine + "\n" +
+"Customer:     " + co + "\n" +
+(pickup   ? ("Pickup:       " + pickup   + "\n") : "") +
+(delivery ? ("Delivery:     " + delivery + "\n") : "") +
+(load     ? ("Load Type:    " + load     + "\n") : "") +
+(weight   ? ("Est. Weight:  " + weight   + "\n") : "") +
+(pdate    ? ("Pickup Date:  " + pdate    + "\n") : "") +
+liBlock + "\n\n" +
+"─────────────────────────────\n" +
+"Subtotal:     " + sub + "\n" +
+"GST (5%):     " + gst + "\n" +
+"TOTAL:        " + grand + "\n" +
+"─────────────────────────────" +
+notesLine + "\n\n" +
+"Thank you for choosing ReBar Transportation Services Ltd.\n" +
+"rebartransport.ca  |  780.387.1747  |  rebartransport@hotmail.com\n" +
+"Millet, Alberta";
+
+  var subject = doctype + " #" + num + " – ReBar Transportation" + (co ? " for " + co : "");
+  var mailto  = "mailto:" + encodeURIComponent(toEmail) +
+                "?subject=" + encodeURIComponent(subject) +
+                "&body="    + encodeURIComponent(body);
+
+  // mailto has a ~2000 char limit on some clients — warn if close
+  if (mailto.length > 1900) {
+    showToast("Email opened — some details may be trimmed by mail app");
+  }
+  window.location.href = mailto;
 }
 
 function doPrint() {
