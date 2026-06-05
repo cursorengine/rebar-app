@@ -51,13 +51,14 @@ a{color:inherit}
 .login-sync{text-align:center;font-size:11px;color:#2a2a2a;margin-top:16px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.1em}
 
 /* NAV */
-#nav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:rgba(0,0,0,0.98);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;backdrop-filter:blur(10px)}
-.nav-logo{height:30px;object-fit:contain;cursor:pointer;flex-shrink:0}
-.nav-tabs{display:flex;gap:0}
-.nav-tab{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;padding:8px 14px;cursor:pointer;color:#444;background:none;border:none;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;white-space:nowrap}
+#nav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:rgba(0,0,0,0.98);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;padding:0 10px;backdrop-filter:blur(10px);overflow:hidden}
+.nav-logo{height:28px;object-fit:contain;cursor:pointer;flex-shrink:0}
+.nav-tabs{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;padding:8px 11px;cursor:pointer;color:#444;background:none;border:none;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;white-space:nowrap;flex-shrink:0}
 .nav-tab.active{color:#fff;border-bottom-color:#fff}
 .nav-tab:hover{color:#aaa}
-.nav-right{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.nav-right{display:flex;gap:4px;align-items:center;flex-shrink:0}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:#2ecc71;flex-shrink:0;transition:background 0.3s}
 .sync-dot.syncing{background:#f1c40f;animation:pulse 1s infinite}
 .sync-dot.offline{background:#e74c3c}
@@ -250,6 +251,17 @@ body.delmode .del-col{display:table-cell}
 .bar-lbl{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#3a3a3a;margin-top:4px}
 .bar-col.current .bar-lbl{color:#2ecc71}
 
+/* STATS SECTION */
+#stats-section{border-bottom:1px solid var(--border)}
+#stats-header{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;user-select:none;transition:background 0.15s}
+#stats-header:hover{background:rgba(255,255,255,0.02)}
+.stats-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#555}
+.stats-title span{color:#b0b0b0;margin-left:6px;font-size:10px}
+.stats-caret{font-family:monospace;font-size:11px;color:#444;transition:transform 0.2s;line-height:1}
+#stats-section.collapsed .stats-caret{transform:rotate(-90deg)}
+#stats-body{overflow:hidden;transition:max-height 0.25s ease,opacity 0.2s;max-height:200px;opacity:1}
+#stats-section.collapsed #stats-body{max-height:0;opacity:0}
+
 
 /* FLEET */
 .fleet-card{background:var(--card);border:1px solid var(--border2);padding:18px;margin-bottom:14px}
@@ -302,7 +314,8 @@ body.delmode .del-col{display:table-cell}
 
 /* MOBILE */
 @media(max-width:480px){
-  .nav-tab{padding:6px 9px;font-size:11px;letter-spacing:0.09em}
+  .nav-tab{padding:6px 8px;font-size:11px;letter-spacing:0.07em}
+  .nav-logo{height:24px}
   td{padding:10px 8px;font-size:12px}
   thead th{padding:7px 8px;font-size:8px}
   .toolbar{padding:8px 10px}
@@ -351,6 +364,12 @@ body.delmode .del-col{display:table-cell}
 
 <!-- TRACKER -->
 <div id="view-tracker" class="view active">
+  <div id="stats-section">
+    <div id="stats-header" onclick="toggleStats()">
+      <div class="stats-title">Stats <span id="stats-summary"></span></div>
+      <div class="stats-caret" id="stats-caret">v</div>
+    </div>
+    <div id="stats-body">
   <div class="stats-grid">
     <div class="stat"><div class="stat-lbl">Won Revenue</div><div class="stat-val chrome" id="s-won">$0</div><div class="stat-sub" id="s-won-sub">Accepted value</div></div>
     <div class="stat"><div class="stat-lbl">Pipeline</div><div class="stat-val chrome" id="s-pipe">$0</div><div class="stat-sub" id="s-pipe-sub">Pending + sent</div></div>
@@ -362,6 +381,8 @@ body.delmode .del-col{display:table-cell}
     <div class="status-box" data-st="Sent" onclick="filterStatus('Sent')"><div class="status-num" id="sb-sent">0</div><div class="status-lbl">Sent</div></div>
     <div class="status-box" data-st="Accepted" onclick="filterStatus('Accepted')"><div class="status-num" id="sb-accepted">0</div><div class="status-lbl">Accepted</div></div>
     <div class="status-box" data-st="Declined" onclick="filterStatus('Declined')"><div class="status-num" id="sb-declined">0</div><div class="status-lbl">Declined</div></div>
+  </div>
+    </div>
   </div>
   <div id="dash-summary" style="padding:8px 14px;font-size:12px;color:#444;font-family:'Barlow',sans-serif;border-bottom:1px solid var(--border);display:none"></div>
   <div id="followup-banner" onclick="document.getElementById('f-time').value='';document.getElementById('f-status').value='Pending';renderTbl();window.scrollTo(0,300)" style="display:none;cursor:pointer;background:rgba(241,196,15,0.12);border-bottom:1px solid rgba(241,196,15,0.25);color:#f1c40f;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.05em"></div>
@@ -534,6 +555,9 @@ body.delmode .del-col{display:table-cell}
         <div class="fleet-spec"><div class="fleet-spec-lbl">Fuel Filter</div><div class="fleet-spec-val">Racor / CAT 1R-0751</div></div>
         <div class="fleet-spec"><div class="fleet-spec-lbl">Oil Filter</div><div class="fleet-spec-val">CAT 1R-0739</div></div>
         <div class="fleet-spec"><div class="fleet-spec-lbl">Air Filter</div><div class="fleet-spec-val">CAT 6I-2503 / 6I-2504</div></div>
+        <div class="fleet-spec" style="background:rgba(255,255,255,0.02)"><div class="fleet-spec-lbl">NSC #</div><div class="fleet-spec-val"><input class="fin" id="fleet-nsc" placeholder="AB350-3646" style="font-size:12px;padding:4px 6px;text-align:right;width:140px" oninput="saveFleetData()"></div></div>
+        <div class="fleet-spec" style="background:rgba(255,255,255,0.02)"><div class="fleet-spec-lbl">GVW</div><div class="fleet-spec-val"><input class="fin" id="fleet-gvw" placeholder="46,500 KG" style="font-size:12px;padding:4px 6px;text-align:right;width:140px" oninput="saveFleetData()"></div></div>
+        <div class="fleet-spec" style="background:rgba(255,255,255,0.02)"><div class="fleet-spec-lbl">Tare Weight</div><div class="fleet-spec-val"><input class="fin" id="fleet-tare" placeholder="9,000 KG" style="font-size:12px;padding:4px 6px;text-align:right;width:140px" oninput="saveFleetData()"></div></div>
       </div>
     </div>
 
@@ -542,6 +566,35 @@ body.delmode .del-col{display:table-cell}
       <input class="fin" id="odo-current" type="number" placeholder="Current miles" style="width:140px;font-size:14px;font-weight:600" oninput="saveFleetData()">
       <span style="font-size:11px;color:#444">miles</span>
       <button class="btn btn-ghost btn-xs" onclick="updateOdometer()">Update</button>
+    </div>
+
+    <div class="fleet-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="fleet-section-title" style="margin:0">Insurance</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fgrp"><label class="flbl">Provider</label><input class="fin" id="ins-provider" placeholder="e.g. Intact, Northbridge" oninput="saveFleetData()"></div>
+        <div class="fgrp"><label class="flbl">Policy #</label><input class="fin" id="ins-policy" placeholder="Policy number" oninput="saveFleetData()"></div>
+        <div class="fgrp"><label class="flbl">Expiry Date</label><input class="fin" id="ins-expiry" type="date" oninput="saveFleetData()"></div>
+        <div class="fgrp"><label class="flbl">Annual Premium ($)</label><input class="fin" id="ins-premium" type="number" placeholder="0.00" step="0.01" oninput="saveFleetData()"></div>
+        <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Coverage Notes</label><input class="fin" id="ins-notes" placeholder="e.g. Commercial auto, $2M liability" oninput="saveFleetData()"></div>
+      </div>
+      <div id="ins-expiry-warn" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);color:#e74c3c;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase"></div>
+    </div>
+
+    <div class="fleet-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="fleet-section-title" style="margin:0">Registration</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fgrp"><label class="flbl">Plate #</label><input class="fin" id="reg-plate" placeholder="e.g. ABC 1234" oninput="saveFleetData()"></div>
+        <div class="fgrp"><label class="flbl">Expiry Date</label><input class="fin" id="reg-expiry" type="date" oninput="saveFleetData()"></div>
+        <div class="fgrp"><label class="flbl">Jurisdiction</label><input class="fin" id="reg-province" placeholder="e.g. AB" oninput="saveFleetData()"></div>
+        <div class="fgrp"><label class="flbl">Registered Owner</label><input class="fin" id="reg-owner" placeholder="Owner name" oninput="saveFleetData()"></div>
+        <div class="fgrp"><label class="flbl">Annual Fee ($)</label><input class="fin" id="reg-fee" type="number" placeholder="0.00" step="0.01" oninput="saveFleetData()"></div>
+        <div class="fgrp"><label class="flbl">CVIP / Inspection</label><input class="fin" id="reg-cvip" type="date" oninput="saveFleetData()"></div>
+      </div>
+      <div id="reg-expiry-warn" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);color:#e74c3c;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase"></div>
     </div>
 
     <div class="fleet-section">
@@ -1046,6 +1099,13 @@ function checkFollowups() {
   }
 }
 
+// STATS SECTION
+function toggleStats() {
+  var sec = document.getElementById("stats-section");
+  sec.classList.toggle("collapsed");
+  try { localStorage.setItem("rebar_stats_collapsed", sec.classList.contains("collapsed") ? "1" : "0"); } catch(e) {}
+}
+
 // REVENUE CHART
 function toggleChart() {
   var sec = document.getElementById("chart-section");
@@ -1220,6 +1280,7 @@ function renderTbl() {
   document.getElementById("s-owed-sub").textContent = owedCount + " unpaid";
   document.getElementById("s-rate2").textContent = rate + "%";
   document.getElementById("s-avg-sub").textContent = "Avg $" + Math.round(avgWon).toLocaleString("en-CA");
+  document.getElementById("stats-summary").textContent = "$" + won.toLocaleString("en-CA",{maximumFractionDigits:0}) + " won · " + rate + "% close";
 
   // Highlight active status box
   document.querySelectorAll(".status-box").forEach(function(b){
@@ -2041,11 +2102,31 @@ document.addEventListener("keydown", function(e) {
 });
 
 // -- FLEET / MAINTENANCE --
-var fleetData = { odo: 0, maint: [], fuel: [] };
+var fleetData = { odo: 0, maint: [], fuel: [], nsc: "", gvw: "", tare: "", ins: {}, reg: {} };
 
 function loadFleetData() {
-  try { fleetData = JSON.parse(localStorage.getItem("rebar_fleet") || '{"odo":0,"maint":[],"fuel":[]}'); } catch(e) { fleetData = {odo:0,maint:[],fuel:[]}; }
+  try { fleetData = JSON.parse(localStorage.getItem("rebar_fleet") || '{"odo":0,"maint":[],"fuel":[],"nsc":"","gvw":"","tare":"","ins":{},"reg":{}}'); } catch(e) { fleetData = {odo:0,maint:[],fuel:[],nsc:"",gvw:"",tare:"",ins:{},reg:{}}; }
   document.getElementById("odo-current").value = fleetData.odo || "";
+  // NSC/GVW/TARE
+  document.getElementById("fleet-nsc").value = fleetData.nsc || "";
+  document.getElementById("fleet-gvw").value = fleetData.gvw || "";
+  document.getElementById("fleet-tare").value = fleetData.tare || "";
+  // Insurance
+  var ins = fleetData.ins || {};
+  document.getElementById("ins-provider").value = ins.provider || "";
+  document.getElementById("ins-policy").value = ins.policy || "";
+  document.getElementById("ins-expiry").value = ins.expiry || "";
+  document.getElementById("ins-premium").value = ins.premium || "";
+  document.getElementById("ins-notes").value = ins.notes || "";
+  // Registration
+  var reg = fleetData.reg || {};
+  document.getElementById("reg-plate").value = reg.plate || "";
+  document.getElementById("reg-expiry").value = reg.expiry || "";
+  document.getElementById("reg-province").value = reg.province || "";
+  document.getElementById("reg-owner").value = reg.owner || "";
+  document.getElementById("reg-fee").value = reg.fee || "";
+  document.getElementById("reg-cvip").value = reg.cvip || "";
+  checkFleetExpiry();
   renderMaintLog();
   renderFuelLog();
   renderServiceReminders();
@@ -2053,7 +2134,47 @@ function loadFleetData() {
 
 function saveFleetData() {
   fleetData.odo = parseInt(document.getElementById("odo-current").value) || 0;
+  fleetData.nsc = document.getElementById("fleet-nsc").value.trim();
+  fleetData.gvw = document.getElementById("fleet-gvw").value.trim();
+  fleetData.tare = document.getElementById("fleet-tare").value.trim();
+  fleetData.ins = {
+    provider: document.getElementById("ins-provider").value.trim(),
+    policy: document.getElementById("ins-policy").value.trim(),
+    expiry: document.getElementById("ins-expiry").value,
+    premium: document.getElementById("ins-premium").value,
+    notes: document.getElementById("ins-notes").value.trim()
+  };
+  fleetData.reg = {
+    plate: document.getElementById("reg-plate").value.trim(),
+    expiry: document.getElementById("reg-expiry").value,
+    province: document.getElementById("reg-province").value.trim(),
+    owner: document.getElementById("reg-owner").value.trim(),
+    fee: document.getElementById("reg-fee").value,
+    cvip: document.getElementById("reg-cvip").value
+  };
+  checkFleetExpiry();
   try { localStorage.setItem("rebar_fleet", JSON.stringify(fleetData)); } catch(e) {}
+}
+
+function checkFleetExpiry() {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var warn30 = new Date(today); warn30.setDate(warn30.getDate() + 30);
+  function checkDate(dateStr, warnEl) {
+    var el = document.getElementById(warnEl);
+    if (!dateStr) { el.style.display = "none"; return; }
+    var d = new Date(dateStr + "T12:00:00");
+    if (d < today) {
+      el.textContent = "⚠ EXPIRED on " + d.toLocaleDateString("en-CA");
+      el.style.display = "block"; el.style.color = "#e74c3c";
+    } else if (d <= warn30) {
+      var days = Math.ceil((d - today) / 86400000);
+      el.textContent = "⚠ Expires in " + days + " day" + (days === 1 ? "" : "s");
+      el.style.display = "block"; el.style.color = "#f1c40f";
+    } else { el.style.display = "none"; }
+  }
+  checkDate((fleetData.ins || {}).expiry, "ins-expiry-warn");
+  checkDate((fleetData.reg || {}).expiry, "reg-expiry-warn");
 }
 
 function updateOdometer() {
@@ -2231,6 +2352,7 @@ function renderServiceReminders() {
 // INIT
 document.addEventListener("DOMContentLoaded", function() {
   try { if (localStorage.getItem("rebar_chart_collapsed") === "1") document.getElementById("chart-section").classList.add("collapsed"); } catch(e) {}
+  try { if (localStorage.getItem("rebar_stats_collapsed") === "1") document.getElementById("stats-section").classList.add("collapsed"); } catch(e) {}
   loadTemplateList();
   loadFleetData();
   checkSession();
