@@ -15,7 +15,7 @@
   --nav-h:58px;
 }
 html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
-body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:100vh}
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-track{background:#0a0a0a}
 ::-webkit-scrollbar-thumb{background:#2a2a2a}
@@ -154,7 +154,8 @@ body.delmode .del-col{display:table-cell}
 .qf-in,.qf-sel{font-size:13px;color:#111;border:none;border-bottom:1.5px solid #ebebeb;padding:3px 0;width:100%;background:transparent;font-family:'Barlow',sans-serif;outline:none;transition:border-color 0.15s;cursor:pointer}
 .qf-in:focus,.qf-sel:focus{border-bottom-color:#888}
 .qf-in::placeholder{color:#e0e0e0}
-.qli-tbl{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:12px}
+.qli-tbl{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:12px;min-width:480px}
+.qli-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:4px}
 .qli-tbl th{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#fff;background:#111;padding:7px 7px;text-align:left}
 .qli-tbl th.r,.qli-tbl td.r{text-align:right}
 .qli-tbl td{padding:7px 7px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
@@ -420,14 +421,14 @@ body.delmode .del-col{display:table-cell}
         </div>
       </div>
       <div class="qsec">Pricing</div>
-      <table class="qli-tbl">
+      <div class="qli-wrap"><table class="qli-tbl">
         <thead><tr><th style="width:34%">Description</th><th style="width:20%">Details</th><th class="r" style="width:12%">Qty</th><th class="r" style="width:13%">Rate $</th><th class="r" style="width:13%">Amt $</th><th class="li-dc"></th></tr></thead>
         <tbody id="litbody">
           <tr><td><input placeholder="Base haul rate"></td><td><input placeholder="Flat/mile"></td><td><input class="r" placeholder="1"></td><td><input class="r" placeholder="0.00"></td><td><input class="r" value="0.00" readonly style="font-weight:600"></td><td class="li-dc"><button class="li-db" onclick="delLI(this)">x</button></td></tr>
           <tr><td><input placeholder="Fuel surcharge"></td><td><input placeholder="% or flat"></td><td><input class="r" placeholder="1"></td><td><input class="r" placeholder="0.00"></td><td><input class="r" value="0.00" readonly style="font-weight:600"></td><td class="li-dc"><button class="li-db" onclick="delLI(this)">x</button></td></tr>
           <tr><td><input placeholder="Detention/wait"></td><td><input placeholder="Per hour"></td><td><input class="r" placeholder="0"></td><td><input class="r" placeholder="0.00"></td><td><input class="r" value="0.00" readonly style="font-weight:600"></td><td class="li-dc"><button class="li-db" onclick="delLI(this)">x</button></td></tr>
         </tbody>
-      </table>
+      </table></div>
       <button class="add-li" onclick="addLI()">+ Add Line Item</button>
       <div class="qtotals">
         <div class="qtbox">
