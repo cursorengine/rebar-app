@@ -347,6 +347,23 @@ body.delmode .del-col{display:table-cell}
 .exp-stat-val{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:800;color:#fff}
 .exp-del-btn{background:none;border:none;color:#2a2a2a;font-size:16px;cursor:pointer;padding:0 4px;line-height:1;font-family:monospace;flex-shrink:0;transition:color 0.15s}
 .exp-del-btn:hover{color:#e74c3c}
+
+/* HAMBURGER NAV */
+.hamburger-btn{display:none;flex-direction:column;gap:5px;padding:6px;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hamburger-btn span{display:block;width:22px;height:2px;background:var(--silver);border-radius:1px;transition:all 0.2s}
+.hamburger-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger-btn.open span:nth-child(2){opacity:0}
+.hamburger-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.ham-item{display:block;width:100%;text-align:left;padding:14px 20px;background:none;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#555;border-left:3px solid transparent;transition:color 0.15s,border-color 0.15s,background 0.15s}
+.ham-item:hover,.ham-item:active{background:rgba(255,255,255,0.04);color:#fff}
+.ham-item.active{color:#fff;border-left-color:#fff;background:rgba(255,255,255,0.03)}
+@media(max-width:640px){
+  .hamburger-btn{display:flex}
+  .nav-tabs{display:none}
+  .nav-logo{height:26px}
+  .nav-right .btn-ghost.hide-mob{display:none}
+}
+
 /* PRINT */
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
@@ -412,8 +429,21 @@ body.delmode .del-col{display:table-cell}
     <div class="sync-dot" id="sync-dot" title="Sync status"></div>
     <button class="btn btn-ghost btn-sm hide-mob" onclick="exportCSV()">CSV</button>
     <button class="btn btn-ghost btn-xs" onclick="doLogout()" style="color:#555">Out</button>
+    <button id="hamburger" class="hamburger-btn" onclick="toggleHamburger()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+
+<!-- MOBILE DROPDOWN MENU -->
+<div id="hamburger-menu" style="display:none;position:fixed;top:var(--nav-h);left:0;right:0;z-index:99;background:rgba(0,0,0,0.98);border-bottom:1px solid rgba(255,255,255,0.1);padding:8px 0">
+  <button class="ham-item active" id="hm-tracker" onclick="hamSwitch('tracker')">Tracker</button>
+  <button class="ham-item" id="hm-builder" onclick="hamSwitch('builder')">Quote Builder</button>
+  <button class="ham-item" id="hm-loads" onclick="hamSwitch('loads')">Loads</button>
+  <button class="ham-item" id="hm-contacts" onclick="hamSwitch('contacts')">Contacts</button>
+  <button class="ham-item" id="hm-expenses" onclick="hamSwitch('expenses')">Expenses</button>
+  <button class="ham-item" id="hm-fleet" onclick="hamSwitch('fleet')">Fleet</button>
+</div>
 
 <!-- TRACKER -->
 <div id="view-tracker" class="view active">
@@ -2796,6 +2826,43 @@ document.addEventListener("DOMContentLoaded",function(){
   loadExpenses();
   setTimeout(checkFleetAlerts,2000);
 });
+
+
+function toggleHamburger(){
+  var menu = document.getElementById('hamburger-menu');
+  var btn = document.getElementById('hamburger');
+  var open = menu.style.display === 'block';
+  menu.style.display = open ? 'none' : 'block';
+  btn.classList.toggle('open', !open);
+}
+function hamSwitch(v){
+  switchView(v);
+  document.getElementById('hamburger-menu').style.display = 'none';
+  document.getElementById('hamburger').classList.remove('open');
+  // Update active state on ham items
+  document.querySelectorAll('.ham-item').forEach(function(el){ el.classList.remove('active'); });
+  var hm = document.getElementById('hm-' + v);
+  if(hm) hm.classList.add('active');
+}
+// Close hamburger when clicking outside
+document.addEventListener('click', function(e){
+  var menu = document.getElementById('hamburger-menu');
+  var btn = document.getElementById('hamburger');
+  if(menu && menu.style.display === 'block'){
+    if(!menu.contains(e.target) && !btn.contains(e.target)){
+      menu.style.display = 'none';
+      btn.classList.remove('open');
+    }
+  }
+});
+// Sync hamburger active state when switchView is called
+var _hamOrig = switchView;
+switchView = function(v){
+  _hamOrig(v);
+  document.querySelectorAll('.ham-item').forEach(function(el){ el.classList.remove('active'); });
+  var hm = document.getElementById('hm-' + v);
+  if(hm) hm.classList.add('active');
+};
 
 </script>
 </body>
