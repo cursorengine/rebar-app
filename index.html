@@ -552,8 +552,16 @@ body.delmode .del-col{display:table-cell}
 
 <!-- FLEET / MAINTENANCE -->
 <div id="view-fleet" class="view">
-  <div style="max-width:700px;margin:16px auto;padding:0 14px">
 
+  <div class="doc-tabs">
+    <button class="doc-tab active" data-ftab="truck" onclick="switchFleetTab('truck')">Truck</button>
+    <button class="doc-tab" data-ftab="service" onclick="switchFleetTab('service')">Service</button>
+    <button class="doc-tab" data-ftab="fuel" onclick="switchFleetTab('fuel')">Fuel</button>
+    <button class="doc-tab" data-ftab="docs" onclick="switchFleetTab('docs')">Docs</button>
+  </div>
+
+  <!-- TRUCK TAB -->
+  <div id="ftab-truck" class="ftab-panel" style="max-width:700px;margin:16px auto;padding:0 14px">
     <div class="fleet-card">
       <div class="fleet-card-header">
         <div>
@@ -578,14 +586,57 @@ body.delmode .del-col{display:table-cell}
         <div class="fleet-spec" style="background:rgba(255,255,255,0.02)"><div class="fleet-spec-lbl">Tare Weight</div><div class="fleet-spec-val"><input class="fin" id="fleet-tare" placeholder="9,000 KG" style="font-size:12px;padding:4px 6px;text-align:right;width:140px" oninput="saveFleetData()"></div></div>
       </div>
     </div>
-
     <div class="fleet-section" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div class="fleet-section-title" style="margin:0">Odometer</div>
       <input class="fin" id="odo-current" type="number" placeholder="Current miles" style="width:140px;font-size:14px;font-weight:600" oninput="saveFleetData()">
       <span style="font-size:11px;color:#444">miles</span>
       <button class="btn btn-ghost btn-xs" onclick="updateOdometer()">Update</button>
     </div>
+    <div class="fleet-section">
+      <div class="fleet-section-title">C-15 Quick Reference</div>
+      <div class="fleet-ref">
+        <div class="fleet-ref-item"><strong>Oil Change:</strong> 15,000 - 25,000 miles (CAT DEO 15W-40)</div>
+        <div class="fleet-ref-item"><strong>Fuel Filter:</strong> Every 15,000 miles or 6 months</div>
+        <div class="fleet-ref-item"><strong>Coolant:</strong> Check SCA every 15,000 mi, full flush at 300,000 mi or 3 years</div>
+        <div class="fleet-ref-item"><strong>Valve Lash:</strong> Check every 250,000 mi (intake 0.015", exhaust 0.025")</div>
+        <div class="fleet-ref-item"><strong>Turbo Boost:</strong> 30-35 PSI normal, check for leaks if under 25 PSI</div>
+        <div class="fleet-ref-item"><strong>Jake Brake:</strong> Check butterfly valves every 100,000 mi</div>
+        <div class="fleet-ref-item"><strong>Fan Clutch:</strong> Check engagement temp ~210F</div>
+        <div class="fleet-ref-item"><strong>Common Issues:</strong> Injector o-rings, turbo actuator, oil cooler gasket, water pump weep hole</div>
+      </div>
+    </div>
+  </div>
 
+  <!-- SERVICE TAB -->
+  <div id="ftab-service" class="ftab-panel" style="display:none;max-width:700px;margin:16px auto;padding:0 14px">
+    <div class="fleet-section">
+      <div class="fleet-section-title">Service Schedule</div>
+      <div id="service-reminders"></div>
+    </div>
+    <div class="fleet-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="fleet-section-title" style="margin:0">Maintenance Log</div>
+        <button class="btn btn-chrome btn-sm" onclick="openMaintModal()">+ Add Record</button>
+      </div>
+      <div id="maint-log"></div>
+      <div id="maint-empty" style="text-align:center;padding:32px;color:#333;font-size:13px;display:none">No records yet</div>
+    </div>
+  </div>
+
+  <!-- FUEL TAB -->
+  <div id="ftab-fuel" class="ftab-panel" style="display:none;max-width:700px;margin:16px auto;padding:0 14px">
+    <div class="fleet-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="fleet-section-title" style="margin:0">Fuel Log</div>
+        <button class="btn btn-ghost btn-sm" onclick="openFuelModal()">+ Add Fill</button>
+      </div>
+      <div id="fuel-log"></div>
+      <div id="fuel-stats" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- DOCS TAB -->
+  <div id="ftab-docs" class="ftab-panel" style="display:none;max-width:700px;margin:16px auto;padding:0 14px">
     <div class="fleet-section">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div class="fleet-section-title" style="margin:0">Insurance</div>
@@ -599,7 +650,6 @@ body.delmode .del-col{display:table-cell}
       </div>
       <div id="ins-expiry-warn" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);color:#e74c3c;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase"></div>
     </div>
-
     <div class="fleet-section">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div class="fleet-section-title" style="margin:0">Registration</div>
@@ -614,45 +664,8 @@ body.delmode .del-col{display:table-cell}
       </div>
       <div id="reg-expiry-warn" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);color:#e74c3c;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase"></div>
     </div>
-
-    <div class="fleet-section">
-      <div class="fleet-section-title">Service Schedule</div>
-      <div id="service-reminders"></div>
-    </div>
-
-    <div class="fleet-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="fleet-section-title" style="margin:0">Maintenance Log</div>
-        <button class="btn btn-chrome btn-sm" onclick="openMaintModal()">+ Add Record</button>
-      </div>
-      <div id="maint-log"></div>
-      <div id="maint-empty" style="text-align:center;padding:32px;color:#333;font-size:13px;display:none">No records yet</div>
-    </div>
-
-    <div class="fleet-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="fleet-section-title" style="margin:0">Fuel Log</div>
-        <button class="btn btn-ghost btn-sm" onclick="openFuelModal()">+ Add Fill</button>
-      </div>
-      <div id="fuel-log"></div>
-      <div id="fuel-stats" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px"></div>
-    </div>
-
-    <div class="fleet-section">
-      <div class="fleet-section-title">C-15 Quick Reference</div>
-      <div class="fleet-ref">
-        <div class="fleet-ref-item"><strong>Oil Change:</strong> 15,000 - 25,000 miles (CAT DEO 15W-40)</div>
-        <div class="fleet-ref-item"><strong>Fuel Filter:</strong> Every 15,000 miles or 6 months</div>
-        <div class="fleet-ref-item"><strong>Coolant:</strong> Check SCA every 15,000 mi, full flush at 300,000 mi or 3 years</div>
-        <div class="fleet-ref-item"><strong>Valve Lash:</strong> Check every 250,000 mi (intake 0.015", exhaust 0.025")</div>
-        <div class="fleet-ref-item"><strong>Turbo Boost:</strong> 30-35 PSI normal, check for leaks if under 25 PSI</div>
-        <div class="fleet-ref-item"><strong>Jake Brake:</strong> Check butterfly valves every 100,000 mi</div>
-        <div class="fleet-ref-item"><strong>Fan Clutch:</strong> Check engagement temp ~210F</div>
-        <div class="fleet-ref-item"><strong>Common Issues:</strong> Injector o-rings, turbo actuator, oil cooler gasket, water pump weep hole</div>
-      </div>
-    </div>
-
   </div>
+
 </div>
 
 <!-- MAINTENANCE MODAL -->
@@ -2398,6 +2411,14 @@ function renderServiceReminders() {
       + '</div></div>';
   });
   box.innerHTML = html;
+}
+
+// FLEET TABS
+function switchFleetTab(tab) {
+  document.querySelectorAll(".ftab-panel").forEach(function(el) { el.style.display = "none"; });
+  document.querySelectorAll(".doc-tab[data-ftab]").forEach(function(el) { el.classList.remove("active"); });
+  document.getElementById("ftab-" + tab).style.display = "block";
+  document.querySelector(".doc-tab[data-ftab='" + tab + "']").classList.add("active");
 }
 
 // INIT
