@@ -712,6 +712,7 @@ function dbToLocal(r) {
     lastContacted: r.last_contacted || "",
     cost: r.cost ? r.cost.toString() : "",
     photos: r.photos || [],
+    activity: r.activity || [],
     ref: r.ref || "",
     doctype: r.doctype || "Quote",
     paid: r.paid || false,
@@ -745,6 +746,7 @@ function localToDb(q) {
     last_contacted: q.lastContacted || null,
     cost: parseFloat(q.cost) || null,
     photos: q.photos || null,
+    activity: q.activity || null,
     ref: q.ref || "",
     doctype: q.doctype || "Quote",
     paid: q.paid || false,
@@ -788,10 +790,57 @@ function filterStatus(status) {
   renderTbl();
 }
 
+// ACTIVITY TIMELINE
+function buildTimeline(q) {
+  if (!q.activity || !q.activity.length) return '<div style="font-size:11px;color:#333;text-align:center;padding:8px">No activity yet</div>';
+  var items = q.activity.slice().reverse().slice(0, 20);
+  var html = '<div style="max-height:180px;overflow-y:auto">';
+  items.forEach(function(a) {
+    var d = new Date(a.ts);
+    var time = d.toLocaleDateString("en-CA",{month:"short",day:"numeric"}) + " " + d.toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"});
+    var icon = a.action === "Note" ? "+" : a.action.includes("Status") ? "*" : a.action.includes("Email") ? "@" : a.action.includes("paid") ? "$" : "-";
+    html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:11px">'
+      + '<div style="color:#555;flex-shrink:0;width:70px;font-family:Barlow Condensed,sans-serif;font-size:10px;letter-spacing:0.05em">' + time + '</div>'
+      + '<div style="color:#888"><span style="color:#555;font-weight:600">' + a.action + '</span>' + (a.detail ? ' - ' + a.detail : '') + '</div>'
+      + '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function addQuickNote(id) {
+  var input = document.getElementById("quick-note-input");
+  var note = input.value.trim();
+  if (!note) return;
+  logActivity(id, "Note", note);
+  input.value = "";
+  viewQ(id); // refresh the detail view
+  showToast("Note added");
+}
+
+// ACTIVITY LOG
+function logActivity(qid, action, detail) {
+  var q = quotes.find(function(x){return x.id===qid;});
+  if (!q) return;
+  if (!q.activity) q.activity = [];
+  q.activity.push({
+    ts: new Date().toISOString(),
+    action: action,
+    detail: detail || ""
+  });
+  // Keep last 50 activities max
+  if (q.activity.length > 50) q.activity = q.activity.slice(-50);
+  var dbData = { activity: q.activity, updated_at: new Date().toISOString() };
+  sbFetch("/rest/v1/quotes?id=eq." + qid, "PATCH", dbData).catch(function(){});
+  saveLocal();
+}
+
 // QUICK STATUS CHANGE
 function quickStatus(id, status) {
   var q = quotes.find(function(x){return x.id===id;}); if (!q) return;
+  var oldStatus = q.status;
   q.status = status;
+  logActivity(id, "Status changed", oldStatus + " -> " + status);
   var dbData = { status: status, updated_at: new Date().toISOString() };
   sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", dbData).then(function() {
     saveLocal(); renderTbl(); viewQ(id);
@@ -1332,6 +1381,7 @@ function removePhoto(i) {
 function togglePaid(id) {
   var q = quotes.find(function(x){return x.id===id;}); if (!q) return;
   q.paid = !q.paid;
+  logActivity(id, q.paid ? "Marked paid" : "Marked unpaid", "");
   q.paiddate = q.paid ? new Date().toISOString().slice(0,10) : "";
   var dbData = { paid: q.paid, paiddate: q.paiddate || null, updated_at: new Date().toISOString() };
   sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", dbData).then(function() {
@@ -1689,6 +1739,7 @@ function doEmail() {
             matchQ.lastContacted = new Date().toISOString().slice(0,10);
             var lcData = { last_contacted: matchQ.lastContacted, updated_at: new Date().toISOString() };
             sbFetch("/rest/v1/quotes?id=eq." + matchQ.id, "PATCH", lcData).catch(function(){});
+            logActivity(matchQ.id, "Emailed", toEmail);
             saveLocal();
           }
         }).catch(function(err) {
@@ -1725,6 +1776,7 @@ function saveTemplate() {
   templates.push(tmpl);
   localStorage.setItem("rebar_templates", JSON.stringify(templates));
   loadTemplateList();
+  loadFleetData();
   showToast("Template saved: " + name);
 }
 
@@ -1837,10 +1889,199 @@ document.addEventListener("keydown", function(e) {
   }
 });
 
+// -- FLEET / MAINTENANCE --
+var fleetData = { odo: 0, maint: [], fuel: [] };
+
+function loadFleetData() {
+  try { fleetData = JSON.parse(localStorage.getItem("rebar_fleet") || '{"odo":0,"maint":[],"fuel":[]}'); } catch(e) { fleetData = {odo:0,maint:[],fuel:[]}; }
+  document.getElementById("odo-current").value = fleetData.odo || "";
+  renderMaintLog();
+  renderFuelLog();
+  renderServiceReminders();
+}
+
+function saveFleetData() {
+  fleetData.odo = parseInt(document.getElementById("odo-current").value) || 0;
+  try { localStorage.setItem("rebar_fleet", JSON.stringify(fleetData)); } catch(e) {}
+}
+
+function updateOdometer() {
+  saveFleetData();
+  renderServiceReminders();
+  showToast("Odometer updated: " + fleetData.odo.toLocaleString() + " mi");
+}
+
+function openMaintModal() {
+  document.getElementById("mt-date").value = new Date().toISOString().slice(0,10);
+  document.getElementById("mt-odo").value = fleetData.odo || "";
+  document.getElementById("mt-type").selectedIndex = 0;
+  document.getElementById("mt-cost").value = "";
+  document.getElementById("mt-parts").value = "";
+  document.getElementById("mt-notes").value = "";
+  document.getElementById("m-maint").classList.add("open");
+}
+
+function saveMaint() {
+  var rec = {
+    id: Date.now().toString(),
+    date: document.getElementById("mt-date").value,
+    odo: parseInt(document.getElementById("mt-odo").value) || 0,
+    type: document.getElementById("mt-type").value,
+    cost: parseFloat(document.getElementById("mt-cost").value) || 0,
+    parts: document.getElementById("mt-parts").value.trim(),
+    notes: document.getElementById("mt-notes").value.trim()
+  };
+  fleetData.maint.unshift(rec);
+  if (rec.odo > fleetData.odo) { fleetData.odo = rec.odo; document.getElementById("odo-current").value = rec.odo; }
+  saveFleetData();
+  renderMaintLog();
+  renderServiceReminders();
+  closeM("m-maint");
+  showToast("Service record saved");
+}
+
+function renderMaintLog() {
+  var box = document.getElementById("maint-log");
+  var empty = document.getElementById("maint-empty");
+  if (!fleetData.maint || !fleetData.maint.length) { box.innerHTML = ""; empty.style.display = "block"; return; }
+  empty.style.display = "none";
+  var html = "";
+  fleetData.maint.slice(0, 30).forEach(function(r) {
+    html += '<div class="maint-row">'
+      + '<div class="maint-date">' + fmtDate(r.date) + '</div>'
+      + '<div class="maint-info"><div class="maint-type">' + r.type + '</div>'
+      + (r.parts ? '<div class="maint-detail">' + r.parts + '</div>' : '')
+      + (r.notes ? '<div class="maint-detail" style="color:#444;font-style:italic">' + r.notes + '</div>' : '')
+      + '</div>'
+      + '<div style="text-align:right;flex-shrink:0"><div class="maint-cost">$' + r.cost.toFixed(0) + '</div>'
+      + (r.odo ? '<div class="maint-miles">' + r.odo.toLocaleString() + ' mi</div>' : '')
+      + '</div></div>';
+  });
+  // Total spend
+  var totalSpend = fleetData.maint.reduce(function(s,r){return s+r.cost;},0);
+  html += '<div style="text-align:right;padding:8px 0;font-family:Barlow Condensed,sans-serif;font-size:13px;color:#555;border-top:1px solid rgba(255,255,255,0.06)">Total: <span style="color:#fff;font-weight:700">$' + totalSpend.toLocaleString("en-CA",{maximumFractionDigits:0}) + '</span></div>';
+  box.innerHTML = html;
+}
+
+function openFuelModal() {
+  document.getElementById("fl-date").value = new Date().toISOString().slice(0,10);
+  document.getElementById("fl-odo").value = fleetData.odo || "";
+  document.getElementById("fl-gallons").value = "";
+  document.getElementById("fl-cost").value = "";
+  document.getElementById("fl-station").value = "";
+  document.getElementById("m-fuel").classList.add("open");
+}
+
+function saveFuel() {
+  var rec = {
+    id: Date.now().toString(),
+    date: document.getElementById("fl-date").value,
+    odo: parseInt(document.getElementById("fl-odo").value) || 0,
+    gallons: parseFloat(document.getElementById("fl-gallons").value) || 0,
+    cost: parseFloat(document.getElementById("fl-cost").value) || 0,
+    station: document.getElementById("fl-station").value.trim()
+  };
+  if (!rec.gallons) { showToast("Enter gallons"); return; }
+  fleetData.fuel.unshift(rec);
+  if (rec.odo > fleetData.odo) { fleetData.odo = rec.odo; document.getElementById("odo-current").value = rec.odo; }
+  saveFleetData();
+  renderFuelLog();
+  closeM("m-fuel");
+  showToast("Fuel fill saved");
+}
+
+function renderFuelLog() {
+  var box = document.getElementById("fuel-log");
+  var stats = document.getElementById("fuel-stats");
+  if (!fleetData.fuel || !fleetData.fuel.length) { box.innerHTML = ""; stats.innerHTML = ""; return; }
+  var html = "";
+  fleetData.fuel.slice(0, 20).forEach(function(r, i) {
+    var mpg = "";
+    if (i < fleetData.fuel.length - 1) {
+      var prev = fleetData.fuel[i + 1];
+      if (r.odo && prev.odo && r.gallons) {
+        mpg = ((r.odo - prev.odo) / r.gallons).toFixed(1) + " mpg";
+      }
+    }
+    var ppg = r.gallons ? (r.cost / r.gallons).toFixed(2) : "";
+    html += '<div class="maint-row">'
+      + '<div class="maint-date">' + fmtDate(r.date) + '</div>'
+      + '<div class="maint-info"><div class="maint-type">' + r.gallons.toFixed(1) + ' gal' + (r.station ? ' @ ' + r.station : '') + '</div>'
+      + (mpg ? '<div class="maint-detail" style="color:#2ecc71">' + mpg + '</div>' : '')
+      + '</div>'
+      + '<div style="text-align:right;flex-shrink:0"><div class="maint-cost">$' + r.cost.toFixed(2) + '</div>'
+      + (ppg ? '<div class="maint-miles">$' + ppg + '/gal</div>' : '')
+      + '</div></div>';
+  });
+  box.innerHTML = html;
+  // Fuel stats
+  var totalGal = fleetData.fuel.reduce(function(s,r){return s+r.gallons;},0);
+  var totalCost = fleetData.fuel.reduce(function(s,r){return s+r.cost;},0);
+  var avgPPG = totalGal > 0 ? (totalCost/totalGal).toFixed(2) : "0";
+  // Calculate avg MPG from all fills with odo data
+  var mpgFills = [];
+  for (var i = 0; i < fleetData.fuel.length - 1; i++) {
+    var cur = fleetData.fuel[i], prev = fleetData.fuel[i+1];
+    if (cur.odo && prev.odo && cur.gallons) mpgFills.push((cur.odo-prev.odo)/cur.gallons);
+  }
+  var avgMPG = mpgFills.length > 0 ? (mpgFills.reduce(function(s,v){return s+v;},0)/mpgFills.length).toFixed(1) : "--";
+  stats.innerHTML = '<div style="font-size:11px;color:#555"><span style="color:#ccc;font-weight:600">' + totalGal.toFixed(0) + '</span> gal total</div>'
+    + '<div style="font-size:11px;color:#555"><span style="color:#ccc;font-weight:600">$' + avgPPG + '</span>/gal avg</div>'
+    + '<div style="font-size:11px;color:#555"><span style="color:#2ecc71;font-weight:600">' + avgMPG + '</span> avg MPG</div>'
+    + '<div style="font-size:11px;color:#555"><span style="color:#ccc;font-weight:600">$' + totalCost.toFixed(0) + '</span> total fuel</div>';
+}
+
+function renderServiceReminders() {
+  var box = document.getElementById("service-reminders");
+  var odo = fleetData.odo || 0;
+  // Find last service of each type
+  function lastService(type) {
+    var found = fleetData.maint.find(function(r){return r.type===type;});
+    return found || null;
+  }
+  var services = [
+    { name: "Oil Change", interval: 20000, type: "Oil Change" },
+    { name: "Fuel Filter", interval: 15000, type: "Fuel Filter" },
+    { name: "Air Filter", interval: 30000, type: "Air Filter" },
+    { name: "Coolant Service", interval: 100000, type: "Coolant Service" },
+    { name: "Brakes Inspection", interval: 50000, type: "Brakes" },
+    { name: "Annual Inspection", interval: 0, type: "Annual Inspection" }
+  ];
+  var html = "";
+  services.forEach(function(svc) {
+    var last = lastService(svc.type);
+    var status = "ok";
+    var detail = "";
+    if (svc.interval > 0 && last && last.odo) {
+      var since = odo - last.odo;
+      var remaining = svc.interval - since;
+      if (remaining <= 0) { status = "due"; detail = Math.abs(remaining).toLocaleString() + " mi overdue"; }
+      else if (remaining < svc.interval * 0.2) { status = "soon"; detail = remaining.toLocaleString() + " mi remaining"; }
+      else { detail = remaining.toLocaleString() + " mi remaining"; }
+    } else if (svc.interval > 0 && !last) {
+      status = "due"; detail = "No record found";
+    } else if (svc.type === "Annual Inspection") {
+      if (last && last.date) {
+        var daysSince = Math.floor((new Date() - new Date(last.date + "T12:00:00")) / 86400000);
+        if (daysSince > 365) { status = "due"; detail = "Expired"; }
+        else if (daysSince > 300) { status = "soon"; detail = (365 - daysSince) + " days remaining"; }
+        else { detail = (365 - daysSince) + " days remaining"; }
+      } else { status = "due"; detail = "No record"; }
+    }
+    html += '<div class="svc-row">'
+      + '<div><div class="svc-name">' + svc.name + '</div><div class="svc-interval">' + (svc.interval > 0 ? 'Every ' + svc.interval.toLocaleString() + ' mi' : 'Annually') + '</div></div>'
+      + '<div style="text-align:right"><div class="svc-status svc-' + status + '">' + status.toUpperCase() + '</div>'
+      + (detail ? '<div style="font-size:10px;color:#444;margin-top:2px">' + detail + '</div>' : '')
+      + '</div></div>';
+  });
+  box.innerHTML = html;
+}
+
 // INIT
 document.addEventListener("DOMContentLoaded", function() {
   try { if (localStorage.getItem("rebar_chart_collapsed") === "1") document.getElementById("chart-section").classList.add("collapsed"); } catch(e) {}
   loadTemplateList();
+  loadFleetData();
   checkSession();
 });
 </script>
