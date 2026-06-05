@@ -1458,77 +1458,120 @@ function updateDocType() {
 }
 
 function doEmail() {
-  var doctype = document.getElementById("doctype-toggle").textContent.replace("Mode: ","").trim() || "Quote";
-  var num     = document.getElementById("q-num").value.trim()       || "";
-  var date    = document.getElementById("q-date").value             || "";
-  var expiry  = document.getElementById("q-expiry")                  ? (document.getElementById("q-expiry").value || "") : "";
-  var co      = document.getElementById("m-co").value.trim()        || "";
-  var contact = document.getElementById("m-contact") ? (document.getElementById("m-contact").value.trim() || "") : "";
-  var toEmail = document.getElementById("m-email") ? (document.getElementById("m-email").value.trim() || "") : "";
-  var pickup   = document.getElementById("m-pickup").value.trim()   || "";
-  var delivery = document.getElementById("m-delivery").value.trim() || "";
-  var load     = document.getElementById("m-load").value            || "";
-  var weight   = document.getElementById("m-weight").value.trim()   || "";
-  var pdate    = document.getElementById("m-pdate").value           || "";
-  var notes    = document.getElementById("m-notes").value.trim()    || "";
-  var sub      = document.getElementById("t-sub").value             || "$0.00";
-  var gst      = document.getElementById("t-gst").value             || "$0.00";
-  var grand    = document.getElementById("t-grand").value           || "$0.00";
+  var doctype  = document.getElementById("doctype-toggle").textContent.replace("Mode: ","").trim() || "Quote";
+  var num      = document.getElementById("q-num").value.trim()  || "";
+  var co       = document.getElementById("m-co").value.trim()   || "";
+  var contact  = document.getElementById("m-contact") ? (document.getElementById("m-contact").value.trim() || "") : "";
+  var toEmail  = document.getElementById("m-email")  ? (document.getElementById("m-email").value.trim()  || "") : "";
 
-  // Build line items summary
-  var liLines = [];
-  document.querySelectorAll("#litbody tr").forEach(function(row) {
-    var cells = row.querySelectorAll("td input");
-    if (cells.length >= 5) {
-      var desc = cells[0].value.trim();
-      var det  = cells[1].value.trim();
-      var qty  = cells[2].value.trim();
-      var rate = cells[3].value.trim();
-      var amt  = cells[4].value.trim();
-      if (desc) liLines.push("  " + desc + (det ? " (" + det + ")" : "") + "  |  Qty: " + qty + "  Rate: $" + rate + "  =  $" + amt);
-    }
-  });
-
-  var greeting = contact ? ("Hi " + contact + ",") : ("Hi,");
-  var expiryLine = expiry ? ("\nValid Until:  " + expiry) : "";
-  var notesLine  = notes  ? ("\n\nNotes:\n" + notes) : "";
-  var liBlock    = liLines.length ? ("\nPricing Breakdown:\n" + liLines.join("\n")) : "";
-
-  var body =
-greeting + "\n\n" +
-"Please find your " + doctype.toLowerCase() + " details below. " +
-"To accept or discuss this " + doctype.toLowerCase() + ", simply reply to this email or call us at 780.387.1747.\n\n" +
-"─────────────────────────────\n" +
-doctype.toUpperCase() + " #" + num + "\n" +
-"─────────────────────────────\n" +
-"Date:         " + date + expiryLine + "\n" +
-"Customer:     " + co + "\n" +
-(pickup   ? ("Pickup:       " + pickup   + "\n") : "") +
-(delivery ? ("Delivery:     " + delivery + "\n") : "") +
-(load     ? ("Load Type:    " + load     + "\n") : "") +
-(weight   ? ("Est. Weight:  " + weight   + "\n") : "") +
-(pdate    ? ("Pickup Date:  " + pdate    + "\n") : "") +
-liBlock + "\n\n" +
-"─────────────────────────────\n" +
-"Subtotal:     " + sub + "\n" +
-"GST (5%):     " + gst + "\n" +
-"TOTAL:        " + grand + "\n" +
-"─────────────────────────────" +
-notesLine + "\n\n" +
-"Thank you for choosing ReBar Transportation Services Ltd.\n" +
-"rebartransport.ca  |  780.387.1747  |  rebartransport@hotmail.com\n" +
-"Millet, Alberta";
-
-  var subject = doctype + " #" + num + " – ReBar Transportation" + (co ? " for " + co : "");
-  var mailto  = "mailto:" + encodeURIComponent(toEmail) +
-                "?subject=" + encodeURIComponent(subject) +
-                "&body="    + encodeURIComponent(body);
-
-  // mailto has a ~2000 char limit on some clients — warn if close
-  if (mailto.length > 1900) {
-    showToast("Email opened — some details may be trimmed by mail app");
+  if (!toEmail) {
+    // No email on file — fall back to mailto so user can type it
+    var subject = doctype + " #" + num + " – ReBar Transportation" + (co ? " for " + co : "");
+    showToast("No customer email — opening mail app");
+    window.location.href = "mailto:?subject=" + encodeURIComponent(subject);
+    return;
   }
-  window.location.href = mailto;
+
+  showToast("Generating PDF...");
+
+  // --- Build the PDF in a hidden iframe (reuse doPrint logic) ---
+  var content = document.getElementById("qdoc").innerHTML;
+  var iframe  = document.createElement("iframe");
+  iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:800px;height:1100px;border:none;visibility:hidden;";
+  document.body.appendChild(iframe);
+  var doc = iframe.contentDocument || iframe.contentWindow.document;
+  var fontLink = '<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">';
+  var css = `*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:'Barlow',sans-serif;background:#fff;color:#111}.pdf-hdr{background:#000;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:10px}.pdf-logo{height:36px;object-fit:contain}.pdf-hdr-r{text-align:right}.pdf-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;font-style:italic;text-transform:uppercase;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}.pdf-contact{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#555;margin-top:2px}.pdf-accent{height:4px;background:linear-gradient(90deg,#c8c8c8,#f0f0f0,#888,#c8c8c8)}.qbody{padding:20px 28px}.qmeta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding:10px 12px;background:#f8f8f8;border-left:3px solid #111}.qmeta-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#aaa;margin-bottom:1px}.qmeta-val,.qmeta-sel{font-size:12px;font-weight:600;color:#111;border:none;background:transparent;font-family:'Barlow',sans-serif;width:auto;padding:0}.qsec{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.24em;text-transform:uppercase;color:#bbb;border-bottom:1px solid #ebebeb;padding-bottom:3px;margin-bottom:10px;display:flex;align-items:center;gap:6px}.qsec::before{content:'';display:block;width:12px;height:2px;background:linear-gradient(90deg,#888,#ccc)}.q2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}.qf{margin-bottom:7px}.qf-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#bbb;margin-bottom:1px}.qf-in,.qf-sel{font-size:12px;color:#111;border:none;padding:2px 0;width:100%;background:transparent;font-family:'Barlow',sans-serif}.qli-tbl{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:11px}.qli-tbl th{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#fff;background:#111;padding:6px 7px;text-align:left}.qli-tbl th.r,.qli-tbl td.r{text-align:right}.qli-tbl td{padding:6px 7px;border-bottom:1px solid #f5f5f5;vertical-align:middle}.qli-tbl td input{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#111;width:100%}.qli-tbl td input.r{text-align:right}.li-dc,.li-db,.add-li,.qli-wrap{display:block}.li-dc,.li-db,.add-li{display:none}.qtotals{display:flex;justify-content:flex-end}.qtbox{width:200px}.qtrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f2f2f2;font-size:11px;color:#666}.qtrow.grand{border-top:2px solid #111;border-bottom:none;margin-top:3px;padding-top:6px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;color:#111}.qt-in{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#111;font-weight:600;text-align:right;width:90px}.qt-in.grand{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800}.qpage2{page-break-before:always;break-before:page;padding:20px 28px}.qtermbox{background:#f8f8f8;border-left:3px solid #ddd;padding:10px 12px;margin-bottom:14px}.qta{width:100%;border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#444;line-height:1.7;min-height:50px}.qsig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px}.qsig-line{border-bottom:1.5px solid #111;height:28px;margin-bottom:3px}.qsig-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#aaa}.pdf-ftr{background:#000;padding:9px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px}.pdf-ftr-t{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:0.09em;color:#444}.pdf-ftr-t a{color:#555;text-decoration:none}`;
+  doc.open();
+  doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' + fontLink + '<style>' + css + '</style></head><body>' + content + '</body></html>');
+  doc.close();
+
+  // Use html2canvas + jsPDF to generate base64 PDF, then send via Edge Function
+  setTimeout(function() {
+    // Load jsPDF dynamically
+    var script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    script.onload = function() {
+      var script2 = document.createElement("script");
+      script2.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+      script2.onload = function() {
+        showToast("Rendering document...");
+        var iBody = iframe.contentDocument.body;
+        window.html2canvas(iBody, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          width: 800,
+          windowWidth: 800
+        }).then(function(canvas) {
+          var imgData = canvas.toDataURL("image/jpeg", 0.92);
+          var pdf = new window.jspdf.jsPDF({ unit: "pt", format: "letter", orientation: "portrait" });
+          var pageW = pdf.internal.pageSize.getWidth();
+          var pageH = pdf.internal.pageSize.getHeight();
+          var imgH   = (canvas.height * pageW) / canvas.width;
+          var y = 0;
+          // Multi-page support
+          while (y < imgH) {
+            if (y > 0) pdf.addPage();
+            pdf.addImage(imgData, "JPEG", 0, -y, pageW, imgH);
+            y += pageH;
+          }
+          var pdfBase64 = pdf.output("datauristring").split(",")[1];
+          document.body.removeChild(iframe);
+
+          // --- Build HTML email body ---
+          var grand   = document.getElementById("t-grand").value || "$0.00";
+          var date    = document.getElementById("q-date").value  || "";
+          var greeting = contact ? ("Hi " + contact + ",") : ("Hi,");
+          var htmlBody =
+            '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222">' +
+            '<div style="background:#000;padding:18px 24px;display:flex;align-items:center;justify-content:space-between">' +
+            '<span style="font-size:22px;font-weight:900;font-style:italic;letter-spacing:0.04em;color:#ccc">ReBar</span>' +
+            '<span style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#555">rebartransport.ca &nbsp; 780.387.1747</span>' +
+            '</div>' +
+            '<div style="padding:28px 24px">' +
+            '<p style="margin:0 0 16px">' + greeting + '</p>' +
+            '<p style="margin:0 0 20px">Please find your <strong>' + doctype + ' #' + num + '</strong> attached' + (co ? ' for <strong>' + co + '</strong>' : '') + '. Total amount: <strong>' + grand + '</strong>.</p>' +
+            '<p style="margin:0 0 20px">To accept or discuss this ' + doctype.toLowerCase() + ', simply reply to this email or call us at <strong>780.387.1747</strong>.</p>' +
+            '<p style="margin:0;color:#888;font-size:12px">ReBar Transportation Services Ltd &mdash; Millet, Alberta<br>rebartransport.ca &nbsp;&bull;&nbsp; rebartransport@hotmail.com</p>' +
+            '</div></div>';
+
+          var subject  = doctype + " #" + num + " – ReBar Transportation" + (co ? " for " + co : "");
+          var filename = doctype.toLowerCase() + "-" + num + ".pdf";
+
+          showToast("Sending email...");
+          fetch(SB_URL + "/functions/v1/send-quote", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + (currentUser ? currentUser.access_token : SB_KEY)
+            },
+            body: JSON.stringify({ to: toEmail, subject: subject, html: htmlBody, pdfBase64: pdfBase64, filename: filename })
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.success) {
+              showToast("✓ " + doctype + " emailed to " + toEmail);
+            } else {
+              console.error("Email error:", data);
+              showToast("Send failed — check console");
+            }
+          })
+          .catch(function(err) {
+            console.error(err);
+            showToast("Send failed — check connection");
+          });
+        }).catch(function(err) {
+          document.body.removeChild(iframe);
+          console.error(err);
+          showToast("PDF render failed");
+        });
+      };
+      document.head.appendChild(script2);
+    };
+    document.head.appendChild(script);
+  }, 800);
 }
 
 function doPrint() {
