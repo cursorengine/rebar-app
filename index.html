@@ -349,19 +349,17 @@ body.delmode .del-col{display:table-cell}
 .exp-del-btn:hover{color:#e74c3c}
 
 /* HAMBURGER NAV */
-.hamburger-btn{display:none;flex-direction:column;gap:5px;padding:6px;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.hamburger-btn span{display:block;width:22px;height:2px;background:var(--silver);border-radius:1px;transition:all 0.2s}
+.hamburger-btn{display:flex;flex-direction:column;gap:5px;padding:6px;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.hamburger-btn span{display:block;width:20px;height:2px;background:var(--silver);border-radius:1px;transition:all 0.2s}
 .hamburger-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
 .hamburger-btn.open span:nth-child(2){opacity:0}
 .hamburger-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-.ham-item{display:block;width:100%;text-align:left;padding:14px 20px;background:none;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#555;border-left:3px solid transparent;transition:color 0.15s,border-color 0.15s,background 0.15s}
-.ham-item:hover,.ham-item:active{background:rgba(255,255,255,0.04);color:#fff}
-.ham-item.active{color:#fff;border-left-color:#fff;background:rgba(255,255,255,0.03)}
+.ham-item{display:block;width:100%;text-align:left;padding:12px 20px;background:none;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#666;border-left:3px solid transparent;transition:color 0.15s,border-color 0.15s,background 0.15s;white-space:nowrap}
+.ham-item:hover,.ham-item:active{background:rgba(255,255,255,0.05);color:#fff}
+.ham-item.active{color:#fff;border-left-color:#fff;background:rgba(255,255,255,0.04)}
 @media(max-width:640px){
-  .hamburger-btn{display:flex}
   .nav-tabs{display:none}
   .nav-logo{height:26px}
-  .nav-right .btn-ghost.hide-mob{display:none}
 }
 
 /* PRINT */
@@ -420,25 +418,18 @@ body.delmode .del-col{display:table-cell}
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchView('tracker')">Tracker</button>
     <button class="nav-tab" onclick="switchView('builder')">Builder</button>
-    <button class="nav-tab" onclick="switchView('loads')">Loads</button>
-    <button class="nav-tab" onclick="switchView('contacts')">Contacts</button>
-    <button class="nav-tab" onclick="switchView('expenses')">Expenses</button>
-    <button class="nav-tab" id="fleet-tab" onclick="switchView('fleet')">Fleet <span id="fleet-alert" style="display:none;width:6px;height:6px;background:#e74c3c;border-radius:50%;vertical-align:middle;margin-left:2px;display:inline-block"></span></button>
   </div>
   <div class="nav-right">
     <div class="sync-dot" id="sync-dot" title="Sync status"></div>
-    <button class="btn btn-ghost btn-sm hide-mob" onclick="exportCSV()">CSV</button>
-    <button class="btn btn-ghost btn-xs" onclick="doLogout()" style="color:#555">Out</button>
     <button id="hamburger" class="hamburger-btn" onclick="toggleHamburger()" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
+    <button class="btn btn-ghost btn-xs" onclick="doLogout()" style="color:#555;margin-left:4px">Out</button>
   </div>
 </nav>
 
 <!-- MOBILE DROPDOWN MENU -->
-<div id="hamburger-menu" style="display:none;position:fixed;top:var(--nav-h);left:0;right:0;z-index:99;background:rgba(0,0,0,0.98);border-bottom:1px solid rgba(255,255,255,0.1);padding:8px 0">
-  <button class="ham-item active" id="hm-tracker" onclick="hamSwitch('tracker')">Tracker</button>
-  <button class="ham-item" id="hm-builder" onclick="hamSwitch('builder')">Quote Builder</button>
+<div id="hamburger-menu" style="display:none;position:fixed;top:var(--nav-h);right:0;left:auto;z-index:99;background:rgba(0,0,0,0.98);border:1px solid rgba(255,255,255,0.1);border-top:none;padding:8px 0;min-width:180px">
   <button class="ham-item" id="hm-loads" onclick="hamSwitch('loads')">Loads</button>
   <button class="ham-item" id="hm-contacts" onclick="hamSwitch('contacts')">Contacts</button>
   <button class="ham-item" id="hm-expenses" onclick="hamSwitch('expenses')">Expenses</button>
@@ -532,13 +523,13 @@ body.delmode .del-col{display:table-cell}
 <div id="view-builder" class="view">
   <div class="bbar">
     <button class="btn btn-sm" id="doctype-toggle" onclick="toggleDocType()" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">Mode: Quote</button>
+    <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
+    <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
+    <button class="btn btn-ghost btn-sm" onclick="doEmail()">Email</button>
+    <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
     <button class="btn btn-ghost btn-sm" onclick="clearQ()">Clear</button>
     <button class="btn btn-ghost btn-sm" onclick="saveTemplate()">Save Tmpl</button>
-    <select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value)" style="max-width:120px;font-size:10px"><option value="">Load Template...</option></select>
-    <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
-    <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
-    <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
-    <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
+    <select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value)" style="max-width:110px;font-size:10px"><option value="">Load Tmpl...</option></select>
   </div>
   <div id="qdoc">
     <div class="pdf-hdr">
@@ -1153,9 +1144,26 @@ function loadLocal() { try { quotes = JSON.parse(localStorage.getItem("rebar_q_c
 
 function setSyncDot(state) {
   var dot = document.getElementById("sync-dot");
+  if (!dot) return;
   dot.className = "sync-dot" + (state === "syncing" ? " syncing" : state === "offline" ? " offline" : "");
   dot.title = state === "ok" ? "Synced" : state === "syncing" ? "Syncing..." : "Offline - cached data";
 }
+
+// Retry sync after short delay if offline - handles mobile wake-from-sleep
+function retrySyncIfOffline() {
+  var dot = document.getElementById("sync-dot");
+  if (dot && dot.classList.contains("offline")) {
+    setTimeout(function() {
+      if (currentUser) loadQuotes();
+    }, 3000);
+  }
+}
+document.addEventListener("visibilitychange", function() {
+  if (!document.hidden && currentUser) {
+    // Page became visible (phone unlocked, tab refocused) - resync
+    loadQuotes();
+  }
+});
 
 // VIEWS
 function switchView(v) {
@@ -1407,7 +1415,19 @@ function renderTbl() {
   var so = document.getElementById("f-sort").value;
   var fl = quotes.filter(function(q) {
     var ms = !sr || (q.num||"").toLowerCase().includes(sr) || (q.co||"").toLowerCase().includes(sr) || (q.pickup||"").toLowerCase().includes(sr) || (q.delivery||"").toLowerCase().includes(sr) || (q.load||"").toLowerCase().includes(sr);
-    return ms && (!sf || q.status === sf) && inTime(q, tf);
+    // Doc type filter
+    var md = true;
+    if (activeDocFilter === "trash") {
+      md = q.deleted === true;
+    } else if (activeDocFilter === "Quote") {
+      md = !q.deleted && (q.doctype === "Quote" || !q.doctype);
+    } else if (activeDocFilter === "Invoice") {
+      md = !q.deleted && q.doctype === "Invoice";
+    } else {
+      // "All" - exclude trash
+      md = !q.deleted;
+    }
+    return ms && md && (!sf || q.status === sf) && inTime(q, tf);
   });
   fl.sort(function(a,b) {
     if (so==="date-desc") return new Date(b.created)-new Date(a.created);
@@ -2839,7 +2859,6 @@ function hamSwitch(v){
   switchView(v);
   document.getElementById('hamburger-menu').style.display = 'none';
   document.getElementById('hamburger').classList.remove('open');
-  // Update active state on ham items
   document.querySelectorAll('.ham-item').forEach(function(el){ el.classList.remove('active'); });
   var hm = document.getElementById('hm-' + v);
   if(hm) hm.classList.add('active');
@@ -2856,9 +2875,15 @@ document.addEventListener('click', function(e){
   }
 });
 // Sync hamburger active state when switchView is called
-var _hamOrig = switchView;
+var _hamOrigV2 = switchView;
 switchView = function(v){
-  _hamOrig(v);
+  _hamOrigV2(v);
+  // Close hamburger menu when switching view
+  var menu = document.getElementById('hamburger-menu');
+  var btn = document.getElementById('hamburger');
+  if(menu) menu.style.display = 'none';
+  if(btn) btn.classList.remove('open');
+  // Highlight active ham item if it belongs to hamburger
   document.querySelectorAll('.ham-item').forEach(function(el){ el.classList.remove('active'); });
   var hm = document.getElementById('hm-' + v);
   if(hm) hm.classList.add('active');
