@@ -1252,44 +1252,41 @@ function renderTbl() {
     var rows = "";
     var today0 = new Date(); today0.setHours(0,0,0,0);
     fl.forEach(function(q) {
-      var badge = "badge b-" + (q.status||"pending").toLowerCase();
+      var badge = 'badge b-' + (q.status||'pending').toLowerCase();
       var qid = q.id;
-      // Follow-up dot
-      var fuDot = "";
-      if (q.followup && q.status !== "Accepted" && q.status !== "Declined") {
-        var fuD = new Date(q.followup + "T12:00:00");
+      var fuDot = '';
+      if (q.followup && q.status !== 'Accepted' && q.status !== 'Declined') {
+        var fuD = new Date(q.followup + 'T12:00:00');
         var diffDays = Math.ceil((fuD - today0) / 86400000);
         if (diffDays < 0) fuDot = '<span class="fu-dot overdue" title="Follow-up overdue"></span>';
         else if (diffDays === 0) fuDot = '<span class="fu-dot today" title="Follow-up today"></span>';
-        else if (diffDays <= 3) fuDot = '<span class="fu-dot soon" title="Follow-up in ' + diffDays + ' day' + (diffDays===1?'':"s") + '"></span>';
+        else if (diffDays <= 3) fuDot = '<span class="fu-dot soon" title="Follow-up in ' + diffDays + (diffDays === 1 ? ' day' : ' days') + '"></span>';
       }
-      // Doctype badge
-      var dtBadge = (q.doctype === "Invoice") ? '<span class="dt-i">INV</span>' : '<span class="dt-q">QT</span>';
-      // Margin
-      var marginHtml = "";
-      var tot = parseFloat(q.total)||0; var cst = parseFloat(q.cost)||0;
+      var dtBadge = q.doctype === 'Invoice' ? '<span class="dt-i">INV</span>' : '<span class="dt-q">QT</span>';
+      var marginHtml = '';
+      var tot = parseFloat(q.total) || 0;
+      var cst = parseFloat(q.cost) || 0;
       if (tot > 0 && cst > 0) {
-        var mgn = Math.round(((tot-cst)/tot)*100);
-        var mColor = mgn >= 20 ? "#2ecc71" : mgn >= 10 ? "#f1c40f" : "#e74c3c";
+        var mgn = Math.round(((tot - cst) / tot) * 100);
+        var mColor = mgn >= 20 ? '#2ecc71' : mgn >= 10 ? '#f1c40f' : '#e74c3c';
         marginHtml = '<span style="color:' + mColor + '">' + mgn + '%</span>';
       }
-      // Inline status cycle (click badge to advance status)
-      var statusOrder = ["Pending","Sent","Accepted","Declined"];
-      var nextStatus = statusOrder[(statusOrder.indexOf(q.status||"Pending")+1) % statusOrder.length];
-      var inlineStatus = '<span class="' + badge + ' status-tap" title="Tap to mark ' + nextStatus + '" onclick="event.stopPropagation();quickStatus(\''+ qid +'\',\''+nextStatus+'\')">'+  (q.status||"Pending") + '</span>';
+      var statusOrder = ['Pending', 'Sent', 'Accepted', 'Declined'];
+      var nextStatus = statusOrder[(statusOrder.indexOf(q.status || 'Pending') + 1) % statusOrder.length];
+      var inlineStatus = '<span class="' + badge + ' status-tap" title="Tap to mark ' + nextStatus + '" onclick="event.stopPropagation();quickStatus(\'' + qid + '\',\'' + nextStatus + '\')">' + (q.status || 'Pending') + '</span>';
       var actBtn = q.deleted
-        ? '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();restoreQ(\'\'+qid+'\')">Restore</button>'
-        : '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editQ(\'\'+qid+'\')">Edit</button>';
+        ? '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();restoreQ(\'' + qid + '\')">Restore</button>'
+        : '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editQ(\'' + qid + '\')">Edit</button>';
       var delBtn = q.deleted
-        ? '<button class="del-x" onclick="event.stopPropagation();permDeleteQ(\'\'+qid+'\')">x</button>'
-        : '<button class="del-x" onclick="event.stopPropagation();delQ(\'\'+qid+'\')">x</button>';
-      rows += '<tr onclick="viewQ(\'\' + qid + \'\')">'
-        + '<td class="fw">' + fuDot + (q.num||"--") + dtBadge + '</td>'
+        ? '<button class="del-x" onclick="event.stopPropagation();permDeleteQ(\'' + qid + '\')">x</button>'
+        : '<button class="del-x" onclick="event.stopPropagation();delQ(\'' + qid + '\')">x</button>';
+      rows += '<tr onclick="viewQ(\'' + qid + '\')">'
+        + '<td class="fw">' + fuDot + (q.num || '--') + dtBadge + '</td>'
         + '<td>' + fmtDate(q.date) + '</td>'
-        + '<td class="fw">' + (q.co||"--") + '</td>'
-        + '<td class="hide-mob">' + (q.pickup||"--") + '</td>'
-        + '<td class="hide-mob">' + (q.delivery||"--") + '</td>'
-        + '<td class="hide-mob">' + (q.load||"--") + '</td>'
+        + '<td class="fw">' + (q.co || '--') + '</td>'
+        + '<td class="hide-mob">' + (q.pickup || '--') + '</td>'
+        + '<td class="hide-mob">' + (q.delivery || '--') + '</td>'
+        + '<td class="hide-mob">' + (q.load || '--') + '</td>'
         + '<td>' + inlineStatus + '</td>'
         + '<td class="amt">' + fmtAmt(q.total) + '</td>'
         + '<td class="margin hide-mob">' + marginHtml + '</td>'
