@@ -103,6 +103,13 @@ a{color:inherit}
 .tog::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#333;transition:transform 0.2s,background 0.2s}
 .del-toggle.on .tog::after{transform:translateX(10px);background:#e74c3c}
 
+/* DOC TABS */
+.doc-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.doc-tab{flex:1;min-width:0;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#444;background:none;border:none;border-bottom:2px solid transparent;padding:10px 8px;cursor:pointer;text-align:center;white-space:nowrap;transition:color 0.15s,border-color 0.15s}
+.doc-tab:hover{color:#888}
+.doc-tab.active{color:#fff;border-bottom-color:#fff}
+.doc-tab[data-doc="trash"].active{color:#e74c3c;border-bottom-color:#e74c3c}
+
 /* TABLE */
 .tbl-wrap{overflow-x:auto;padding-bottom:16px}
 table{width:100%;border-collapse:collapse;min-width:460px}
@@ -233,7 +240,7 @@ body.delmode .del-col{display:table-cell}
 #chart-section.collapsed .chart-caret{transform:rotate(-90deg)}
 #chart-body{max-height:120px;overflow:hidden;transition:max-height 0.25s ease,opacity 0.2s,padding 0.2s;opacity:1;padding:0 14px 14px}
 #chart-section.collapsed #chart-body{max-height:0;opacity:0;padding:0 14px}
-#revchart{display:flex;align-items:flex-end;gap:6px;height:84px}
+#revchart{display:flex;align-items:flex-end;gap:6px;height:100px}
 .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
 .bar-val{font-family:'Barlow Condensed',sans-serif;font-size:8px;color:#555;margin-bottom:3px;white-space:nowrap;height:10px}
 .bar-fill{width:100%;background:linear-gradient(180deg,#d8d8d8,#888);border-radius:2px 2px 0 0;transition:height 0.3s,background 0.2s}
@@ -329,8 +336,14 @@ body.delmode .del-col{display:table-cell}
       <div id="revchart"></div>
     </div>
   </div>
+  <div class="doc-tabs">
+    <button class="doc-tab active" data-doc="" onclick="filterDoc('')">All</button>
+    <button class="doc-tab" data-doc="Quote" onclick="filterDoc('Quote')">Quotes</button>
+    <button class="doc-tab" data-doc="Invoice" onclick="filterDoc('Invoice')">Invoices</button>
+    <button class="doc-tab" data-doc="trash" onclick="filterDoc('trash')">Trash</button>
+  </div>
   <div class="toolbar">
-    <input class="tb-search" id="tb-search" type="search" placeholder="Search..." oninput="renderTbl()">
+    <input class="tb-search" id="tb-search" type="search" placeholder="Search name, phone, location..." oninput="renderTbl()">
     <select class="tb-sel" id="f-status" onchange="renderTbl()"><option value="">All</option><option>Pending</option><option>Sent</option><option>Accepted</option><option>Declined</option></select>
     <select class="tb-sel" id="f-time" onchange="renderTbl()">
       <option value="">All Time</option>
@@ -345,7 +358,7 @@ body.delmode .del-col{display:table-cell}
       <option value="this-week">This Week</option>
       <option value="last-week">Last Week</option>
     </select>
-    <select class="tb-sel" id="f-sort" onchange="renderTbl()"><option value="date-desc">Newest</option><option value="date-asc">Oldest</option><option value="amt-desc">Highest</option><option value="amt-asc">Lowest</option></select>
+    <select class="tb-sel" id="f-sort" onchange="renderTbl()"><option value="date-desc">Newest</option><option value="date-asc">Oldest</option><option value="amt-desc">Highest</option><option value="amt-asc">Lowest</option><option value="status">By Status</option></select>
     <button class="del-toggle" id="del-tog" onclick="toggleDel()"><div class="tog"></div>Delete</button>
   </div>
   <div class="tbl-wrap">
@@ -375,6 +388,8 @@ body.delmode .del-col{display:table-cell}
   <div class="bbar">
     <button class="btn btn-sm" id="doctype-toggle" onclick="toggleDocType()" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">Mode: Quote</button>
     <button class="btn btn-ghost btn-sm" onclick="clearQ()">Clear</button>
+    <button class="btn btn-ghost btn-sm" onclick="saveTemplate()">Save Tmpl</button>
+    <select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value)" style="max-width:120px;font-size:10px"><option value="">Load Template...</option></select>
     <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
     <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
     <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
@@ -479,6 +494,7 @@ body.delmode .del-col{display:table-cell}
       <div class="fgrp"><label class="flbl">Weight</label><input class="fin" id="m-weight" placeholder="e.g. 20,000 lbs"></div>
       <div class="fgrp"><label class="flbl">Pickup Date</label><input class="fin" id="m-pdate" type="date"></div>
       <div class="fgrp"><label class="flbl">Total ($)</label><input class="fin" id="m-total" type="number" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="fgrp"><label class="flbl">Cost ($)</label><input class="fin" id="m-cost" type="number" placeholder="Your cost" step="0.01" min="0"></div>
       <div class="fgrp"><label class="flbl">Follow-up Date</label><input class="fin" id="m-followup" type="date"></div>
     </div>
     <div class="fgrp" style="margin-bottom:10px">
@@ -655,6 +671,10 @@ function dbToLocal(r) {
     status: r.status || "Pending",
     notes: r.notes || "",
     followup: r.followup || "",
+    deleted: r.deleted || false,
+    deletedAt: r.deletedAt || "",
+    lastContacted: r.last_contacted || "",
+    cost: r.cost ? r.cost.toString() : "",
     photos: r.photos || [],
     ref: r.ref || "",
     doctype: r.doctype || "Quote",
@@ -685,6 +705,9 @@ function localToDb(q) {
     status: q.status,
     notes: q.notes,
     followup: q.followup || null,
+    deleted: q.deleted || false,
+    last_contacted: q.lastContacted || null,
+    cost: parseFloat(q.cost) || null,
     photos: q.photos || null,
     ref: q.ref || "",
     doctype: q.doctype || "Quote",
@@ -710,6 +733,16 @@ function switchView(v) {
   document.getElementById("view-" + v).classList.add("active");
   document.querySelectorAll(".nav-tab")[v === "tracker" ? 0 : 1].classList.add("active");
   window.scrollTo(0, 0);
+}
+
+// FILTER BY DOC TYPE
+var activeDocFilter = "";
+function filterDoc(dt) {
+  activeDocFilter = dt;
+  document.querySelectorAll(".doc-tab").forEach(function(t) {
+    t.classList.toggle("active", t.getAttribute("data-doc") === dt);
+  });
+  renderTbl();
 }
 
 // FILTER BY STATUS (click status box)
@@ -823,7 +856,7 @@ function renderChart() {
   document.getElementById("chart-total").textContent = grand > 0 ? "$" + grand.toLocaleString("en-CA",{maximumFractionDigits:0}) + " " + titleSuffix : "";
   var html = "";
   months.forEach(function(m) {
-    var h = Math.max(4, Math.round((m.total / max) * 60));
+    var h = m.total > 0 ? Math.max(2, Math.round((m.total / max) * 80)) : 0;
     var lbl = m.total > 0 ? ("$" + (m.total >= 1000 ? (m.total/1000).toFixed(m.total>=10000?0:1) + "k" : m.total.toFixed(0))) : "";
     html += `<div class="bar-col ${m.current?"current":""}">`
       + `<div class="bar-val">${lbl}</div>`
@@ -859,7 +892,7 @@ function renderDailyChart(tf) {
   document.getElementById("chart-total").textContent = grand > 0 ? "$" + grand.toLocaleString("en-CA",{maximumFractionDigits:0}) : "";
   var html = "";
   days.forEach(function(m) {
-    var h = Math.max(4, Math.round((m.total / max) * 60));
+    var h = m.total > 0 ? Math.max(2, Math.round((m.total / max) * 80)) : 0;
     var lbl = m.total > 0 ? ("$" + (m.total >= 1000 ? (m.total/1000).toFixed(1) + "k" : m.total.toFixed(0))) : "";
     html += `<div class="bar-col ${m.current?"current":""}">`
       + `<div class="bar-val">${lbl}</div>`
@@ -885,6 +918,7 @@ function renderTbl() {
     if (so==="date-asc") return new Date(a.created)-new Date(b.created);
     if (so==="amt-desc") return (parseFloat(b.total)||0)-(parseFloat(a.total)||0);
     if (so==="amt-asc") return (parseFloat(a.total)||0)-(parseFloat(b.total)||0);
+    if (so==="status") { var order={Pending:0,Sent:1,Accepted:2,Declined:3}; return (order[a.status]||9)-(order[b.status]||9); }
     return 0;
   });
   var tbody = document.getElementById("qtbody");
@@ -896,18 +930,25 @@ function renderTbl() {
     fl.forEach(function(q) {
       var badge = "badge b-" + (q.status||"pending").toLowerCase();
       var qid = q.id;
-      rows += `<tr onclick="viewQ('${qid}')">`
-        + `<td class="fw">${q.num||"--"}</td>`
-        + `<td>${fmtDate(q.date)}</td>`
-        + `<td class="fw">${q.co||"--"}</td>`
-        + `<td class="hide-mob">${q.pickup||"--"}</td>`
-        + `<td class="hide-mob">${q.delivery||"--"}</td>`
-        + `<td class="hide-mob">${q.load||"--"}</td>`
-        + `<td><span class="${badge}">${q.status||"Pending"}</span></td>`
-        + `<td class="amt">${fmtAmt(q.total)}</td>`
-        + `<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editQ('${qid}')">Edit</button></td>`
-        + `<td class="del-col"><button class="del-x" onclick="event.stopPropagation();delQ('${qid}')">x</button></td>`
-        + `</tr>`;
+      var dtype = (q.doctype||"Quote").charAt(0);
+      var actBtn = q.deleted
+        ? '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();restoreQ(\''+qid+'\')">Restore</button>'
+        : '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editQ(\''+qid+'\')">Edit</button>';
+      var delBtn = q.deleted
+        ? '<button class="del-x" onclick="event.stopPropagation();permDeleteQ(\''+qid+'\')">x</button>'
+        : '<button class="del-x" onclick="event.stopPropagation();delQ(\''+qid+'\')">x</button>';
+      rows += '<tr onclick="viewQ(\'' + qid + '\')">'
+        + '<td class="fw">' + (q.num||"--") + '</td>'
+        + '<td>' + fmtDate(q.date) + '</td>'
+        + '<td class="fw">' + (q.co||"--") + '</td>'
+        + '<td class="hide-mob">' + (q.pickup||"--") + '</td>'
+        + '<td class="hide-mob">' + (q.delivery||"--") + '</td>'
+        + '<td class="hide-mob">' + (q.load||"--") + '</td>'
+        + '<td><span class="' + badge + '">' + (q.status||"Pending") + '</span></td>'
+        + '<td class="amt">' + fmtAmt(q.total) + '</td>'
+        + '<td>' + actBtn + '</td>'
+        + '<td class="del-col">' + delBtn + '</td>'
+        + '</tr>';
     });
     tbody.innerHTML = rows;
   }
@@ -933,7 +974,10 @@ function renderTbl() {
   var rate = decided > 0 ? Math.round((cAccepted/decided)*100) : 0;
   var avgWon = cAccepted > 0 ? (won/timeScoped.filter(function(q){return q.status==="Accepted";}).length||0) : 0;
 
+  var totalCost = timeScoped.filter(function(q){return q.status==="Accepted";}).reduce(function(s,q){return s+(parseFloat(q.cost)||0);},0);
+  var profit = won - totalCost;
   document.getElementById("s-won").textContent = "$" + won.toLocaleString("en-CA",{maximumFractionDigits:0});
+  document.getElementById("s-won-sub").textContent = totalCost > 0 ? ("Profit: $" + profit.toLocaleString("en-CA",{maximumFractionDigits:0})) : "Accepted value";
   document.getElementById("s-pipe").textContent = "$" + pipeline.toLocaleString("en-CA",{maximumFractionDigits:0});
   document.getElementById("s-pipe-sub").textContent = (cPending + cSent) + " open";
   document.getElementById("s-owed").textContent = "$" + owed.toLocaleString("en-CA",{maximumFractionDigits:0});
@@ -988,6 +1032,7 @@ function openNewQuote() {
   ["m-co","m-phone","m-email","m-ref","m-pickup","m-delivery","m-weight","m-notes"].forEach(function(id) { document.getElementById(id).value = ""; });
   document.getElementById("m-load").value = "";
   document.getElementById("m-total").value = "";
+  document.getElementById("m-cost").value = "";
   document.getElementById("m-pdate").value = "";
   document.getElementById("m-followup").value = "";
   document.getElementById("m-status").value = "Pending";
@@ -1001,6 +1046,21 @@ function openNewQuote() {
 function saveQ() {
   var co = document.getElementById("m-co").value.trim();
   if (!co) { showToast("Enter customer name"); return; }
+  // Duplicate detection (only for new quotes, not edits)
+  var eid = document.getElementById("eid").value;
+  if (!eid) {
+    var pickup = document.getElementById("m-pickup").value.trim().toLowerCase();
+    var delivery = document.getElementById("m-delivery").value.trim().toLowerCase();
+    var dupe = quotes.find(function(q) {
+      return !q.deleted && q.co && q.co.toLowerCase() === co.toLowerCase()
+        && pickup && q.pickup && q.pickup.toLowerCase() === pickup
+        && delivery && q.delivery && q.delivery.toLowerCase() === delivery
+        && (q.status === "Pending" || q.status === "Sent");
+    });
+    if (dupe) {
+      if (!confirm("Similar quote exists for " + co + " (" + dupe.num + " - " + dupe.status + "). Create anyway?")) return;
+    }
+  }
   var btn = document.getElementById("save-btn");
   btn.disabled = true;
   btn.textContent = "Saving...";
@@ -1022,6 +1082,7 @@ function saveQ() {
     ptime: "",
     total: document.getElementById("m-total").value,
     status: document.getElementById("m-status").value,
+    cost: document.getElementById("m-cost").value,
     notes: document.getElementById("m-notes").value.trim(),
     followup: document.getElementById("m-followup").value,
     photos: currentPhotos.slice(),
@@ -1069,6 +1130,8 @@ function editQ(id) {
   document.getElementById("m-weight").value = q.weight || "";
   document.getElementById("m-pdate").value = q.pdate || "";
   document.getElementById("m-total").value = q.total || "";
+  document.getElementById("m-cost").value = q.cost || "";
+  document.getElementById("m-cost").value = q.cost || "";
   document.getElementById("m-status").value = q.status || "Pending";
   document.getElementById("m-notes").value = q.notes || "";
   document.getElementById("m-followup").value = q.followup || "";
@@ -1280,6 +1343,8 @@ function duplicateQuote(id) {
   document.getElementById("m-pdate").value = "";
   document.getElementById("m-followup").value = "";
   document.getElementById("m-total").value = q.total || "";
+  document.getElementById("m-cost").value = q.cost || "";
+  document.getElementById("m-cost").value = q.cost || "";
   document.getElementById("m-status").value = "Pending";
   document.getElementById("m-notes").value = q.notes || "";
   currentPhotos = (q.photos || []).slice();
@@ -1292,14 +1357,40 @@ function duplicateQuote(id) {
 
 // DELETE
 function delQ(id) {
-  closeM("m-detail");
-  sbFetch("/rest/v1/quotes?id=eq." + id, "DELETE").then(function() {
-    quotes = quotes.filter(function(x){return x.id!==id;});
-    saveLocal(); renderTbl(); showToast("Quote deleted");
+  var q = quotes.find(function(x){return x.id===id;});
+  if (!q) return;
+  q.deleted = true;
+  q.deletedAt = new Date().toISOString();
+  var dbData = { deleted: true, updated_at: new Date().toISOString() };
+  sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", dbData).then(function() {
+    saveLocal(); renderTbl(); closeM("m-detail");
+    showToast("Moved to trash");
   }).catch(function() {
-    quotes = quotes.filter(function(x){return x.id!==id;});
-    saveLocal(); renderTbl(); showToast("Deleted locally");
+    saveLocal(); renderTbl(); closeM("m-detail");
+    showToast("Trashed (offline)");
   });
+}
+
+function restoreQ(id) {
+  var q = quotes.find(function(x){return x.id===id;});
+  if (!q) return;
+  q.deleted = false;
+  q.deletedAt = "";
+  var dbData = { deleted: false, updated_at: new Date().toISOString() };
+  sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", dbData).then(function() {
+    saveLocal(); renderTbl();
+    showToast("Quote restored");
+  }).catch(function() {
+    saveLocal(); renderTbl();
+    showToast("Restored (offline)");
+  });
+}
+
+function permDeleteQ(id) {
+  quotes = quotes.filter(function(x){return x.id!==id;});
+  sbFetch("/rest/v1/quotes?id=eq." + id, "DELETE").catch(function(){});
+  saveLocal(); renderTbl();
+  showToast("Permanently deleted");
 }
 
 // MODAL
@@ -1310,10 +1401,11 @@ document.querySelectorAll(".mbg").forEach(function(bg) {
 
 // CSV
 function exportCSV() {
-  if (!quotes.length) { showToast("No quotes to export"); return; }
-  var h = ["Doc","Quote #","Ref/PO","Date","Customer","Phone","Email","Pickup","Delivery","Load","Weight","Pickup Date","Total","Status","Paid","Follow-up","Notes"];
+  var exportable = quotes.filter(function(q){return !q.deleted;});
+  if (!exportable.length) { showToast("No quotes to export"); return; }
+  var h = ["Doc","Quote #","Ref/PO","Date","Customer","Phone","Email","Pickup","Delivery","Load","Weight","Pickup Date","Total","Cost","Profit","Status","Paid","Follow-up","Last Contacted","Notes"];
   var rows = quotes.map(function(q) {
-    return [q.doctype||"Quote",q.num,q.ref||"",q.date,q.co,q.phone,q.email,q.pickup,q.delivery,q.load,q.weight,q.pdate,q.total?parseFloat(q.total).toFixed(2):"",q.status,q.paid?"PAID":"",q.followup||"",q.notes]
+    var t=parseFloat(q.total)||0;var c=parseFloat(q.cost)||0;return [q.doctype||"Quote",q.num,q.ref||"",q.date,q.co,q.phone,q.email,q.pickup,q.delivery,q.load,q.weight,q.pdate,t?t.toFixed(2):"",c?c.toFixed(2):"",t&&c?(t-c).toFixed(2):"",q.status,q.paid?"PAID":"",q.followup||"",q.lastContacted||"",q.notes]
       .map(function(v){var s=(v||"").toString();var dq=String.fromCharCode(34);return dq+s.split(dq).join(dq+dq)+dq;}).join(",")
   });
   var a = document.createElement("a");
@@ -1459,43 +1551,41 @@ function updateDocType() {
 
 function doEmail() {
   var doctype  = document.getElementById("doctype-toggle").textContent.replace("Mode: ","").trim() || "Quote";
-  var num      = document.getElementById("q-num").value.trim()  || "";
-  var co       = document.getElementById("m-co").value.trim()   || "";
-  var contact  = document.getElementById("m-contact") ? (document.getElementById("m-contact").value.trim() || "") : "";
-  var toEmail  = document.getElementById("m-email")  ? (document.getElementById("m-email").value.trim()  || "") : "";
-
-  if (!toEmail) {
-    // No email on file — fall back to mailto so user can type it
-    var subject = doctype + " #" + num + " – ReBar Transportation" + (co ? " for " + co : "");
-    showToast("No customer email — opening mail app");
-    window.location.href = "mailto:?subject=" + encodeURIComponent(subject);
-    return;
-  }
+  var num      = document.getElementById("q-num").value.trim() || "";
+  var co       = document.getElementById("b-co").value.trim() || "";
+  var contact  = document.getElementById("b-contact").value.trim() || "";
+  var toEmail  = document.getElementById("b-email").value.trim() || "";
+  var grand    = document.getElementById("t-grand").value || "$0.00";
+  var pickup   = document.getElementById("s-pickup").value.trim() || "";
+  var delivery = document.getElementById("s-delivery").value.trim() || "";
 
   showToast("Generating PDF...");
 
-  // --- Build the PDF in a hidden iframe (reuse doPrint logic) ---
-  var content = document.getElementById("qdoc").innerHTML;
-  var iframe  = document.createElement("iframe");
+  // Render the quote doc into a hidden iframe
+  var qContent = document.getElementById("qdoc").innerHTML;
+  var iframe = document.createElement("iframe");
   iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:800px;height:1100px;border:none;visibility:hidden;";
   document.body.appendChild(iframe);
-  var doc = iframe.contentDocument || iframe.contentWindow.document;
+  var idoc = iframe.contentDocument || iframe.contentWindow.document;
   var fontLink = '<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">';
-  var css = `*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:'Barlow',sans-serif;background:#fff;color:#111}.pdf-hdr{background:#000;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:10px}.pdf-logo{height:36px;object-fit:contain}.pdf-hdr-r{text-align:right}.pdf-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;font-style:italic;text-transform:uppercase;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}.pdf-contact{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#555;margin-top:2px}.pdf-accent{height:4px;background:linear-gradient(90deg,#c8c8c8,#f0f0f0,#888,#c8c8c8)}.qbody{padding:20px 28px}.qmeta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding:10px 12px;background:#f8f8f8;border-left:3px solid #111}.qmeta-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#aaa;margin-bottom:1px}.qmeta-val,.qmeta-sel{font-size:12px;font-weight:600;color:#111;border:none;background:transparent;font-family:'Barlow',sans-serif;width:auto;padding:0}.qsec{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.24em;text-transform:uppercase;color:#bbb;border-bottom:1px solid #ebebeb;padding-bottom:3px;margin-bottom:10px;display:flex;align-items:center;gap:6px}.qsec::before{content:'';display:block;width:12px;height:2px;background:linear-gradient(90deg,#888,#ccc)}.q2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}.qf{margin-bottom:7px}.qf-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#bbb;margin-bottom:1px}.qf-in,.qf-sel{font-size:12px;color:#111;border:none;padding:2px 0;width:100%;background:transparent;font-family:'Barlow',sans-serif}.qli-tbl{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:11px}.qli-tbl th{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#fff;background:#111;padding:6px 7px;text-align:left}.qli-tbl th.r,.qli-tbl td.r{text-align:right}.qli-tbl td{padding:6px 7px;border-bottom:1px solid #f5f5f5;vertical-align:middle}.qli-tbl td input{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#111;width:100%}.qli-tbl td input.r{text-align:right}.li-dc,.li-db,.add-li,.qli-wrap{display:block}.li-dc,.li-db,.add-li{display:none}.qtotals{display:flex;justify-content:flex-end}.qtbox{width:200px}.qtrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f2f2f2;font-size:11px;color:#666}.qtrow.grand{border-top:2px solid #111;border-bottom:none;margin-top:3px;padding-top:6px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;color:#111}.qt-in{border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#111;font-weight:600;text-align:right;width:90px}.qt-in.grand{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800}.qpage2{page-break-before:always;break-before:page;padding:20px 28px}.qtermbox{background:#f8f8f8;border-left:3px solid #ddd;padding:10px 12px;margin-bottom:14px}.qta{width:100%;border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:11px;color:#444;line-height:1.7;min-height:50px}.qsig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px}.qsig-line{border-bottom:1.5px solid #111;height:28px;margin-bottom:3px}.qsig-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#aaa}.pdf-ftr{background:#000;padding:9px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px}.pdf-ftr-t{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:0.09em;color:#444}.pdf-ftr-t a{color:#555;text-decoration:none}`;
-  doc.open();
-  doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8">' + fontLink + '<style>' + css + '</style></head><body>' + content + '</body></html>');
-  doc.close();
+  var css = document.querySelector("style").textContent;
+  idoc.open();
+  idoc.write("<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" + fontLink + "<style>" + css + " .li-dc,.li-db,.add-li{display:none!important} .qf-in,.qli-tbl td input,.qmeta-val,.qt-in,.qta{border:none!important} *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important} .qpage2{page-break-before:always;break-before:page} .pdf-hdr{background:#000!important} .pdf-ftr{background:#000!important}</style></head><body style=\"background:#fff;margin:0\">" + qContent + "</body></html>");
+  idoc.close();
 
-  // Use html2canvas + jsPDF to generate base64 PDF, then send via Edge Function
   setTimeout(function() {
-    // Load jsPDF dynamically
-    var script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-    script.onload = function() {
-      var script2 = document.createElement("script");
-      script2.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-      script2.onload = function() {
-        showToast("Rendering document...");
+    // Load jsPDF + html2canvas if not already loaded
+    function loadScript(url, cb) {
+      if (url.includes("jspdf") && window.jspdf) { cb(); return; }
+      if (url.includes("html2canvas") && window.html2canvas) { cb(); return; }
+      var s = document.createElement("script");
+      s.src = url;
+      s.onload = cb;
+      document.head.appendChild(s);
+    }
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", function() {
+      loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", function() {
+        showToast("Rendering...");
         var iBody = iframe.contentDocument.body;
         window.html2canvas(iBody, {
           scale: 2,
@@ -1509,69 +1599,110 @@ function doEmail() {
           var pdf = new window.jspdf.jsPDF({ unit: "pt", format: "letter", orientation: "portrait" });
           var pageW = pdf.internal.pageSize.getWidth();
           var pageH = pdf.internal.pageSize.getHeight();
-          var imgH   = (canvas.height * pageW) / canvas.width;
+          var imgH = (canvas.height * pageW) / canvas.width;
           var y = 0;
-          // Multi-page support
           while (y < imgH) {
             if (y > 0) pdf.addPage();
             pdf.addImage(imgData, "JPEG", 0, -y, pageW, imgH);
             y += pageH;
           }
-          var pdfBase64 = pdf.output("datauristring").split(",")[1];
+
+          // Download the PDF
+          var filename = doctype.toLowerCase() + "-" + (num || "quote") + ".pdf";
+          pdf.save(filename);
           document.body.removeChild(iframe);
 
-          // --- Build HTML email body ---
-          var grand   = document.getElementById("t-grand").value || "$0.00";
-          var date    = document.getElementById("q-date").value  || "";
-          var greeting = contact ? ("Hi " + contact + ",") : ("Hi,");
-          var htmlBody =
-            '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222">' +
-            '<div style="background:#000;padding:18px 24px;display:flex;align-items:center;justify-content:space-between">' +
-            '<span style="font-size:22px;font-weight:900;font-style:italic;letter-spacing:0.04em;color:#ccc">ReBar</span>' +
-            '<span style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#555">rebartransport.ca &nbsp; 780.387.1747</span>' +
-            '</div>' +
-            '<div style="padding:28px 24px">' +
-            '<p style="margin:0 0 16px">' + greeting + '</p>' +
-            '<p style="margin:0 0 20px">Please find your <strong>' + doctype + ' #' + num + '</strong> attached' + (co ? ' for <strong>' + co + '</strong>' : '') + '. Total amount: <strong>' + grand + '</strong>.</p>' +
-            '<p style="margin:0 0 20px">To accept or discuss this ' + doctype.toLowerCase() + ', simply reply to this email or call us at <strong>780.387.1747</strong>.</p>' +
-            '<p style="margin:0;color:#888;font-size:12px">ReBar Transportation Services Ltd &mdash; Millet, Alberta<br>rebartransport.ca &nbsp;&bull;&nbsp; rebartransport@hotmail.com</p>' +
-            '</div></div>';
+          // Build the email body
+          var greeting = contact ? "Hi " + contact + "," : "Hi,";
+          var body = greeting;
+          body += "\n\nPlease find the attached " + doctype + " #" + num + " from ReBar Transportation Services Ltd.";
+          if (pickup && delivery) body += "\n\nRoute: " + pickup + " to " + delivery;
+          body += "\nTotal: " + grand;
+          body += "\n\nThis " + doctype.toLowerCase() + " is valid for 7 days. To accept, reply to this email or call 780.387.1747.";
+          body += "\n\nThank you,\nReg Nicolas\nReBar Transportation Services Ltd\n780.387.1747 | rebartransport.ca";
 
-          var subject  = doctype + " #" + num + " – ReBar Transportation" + (co ? " for " + co : "");
-          var filename = doctype.toLowerCase() + "-" + num + ".pdf";
+          var subject = doctype + " #" + num + " - ReBar Transportation" + (co ? " for " + co : "");
 
-          showToast("Sending email...");
-          fetch(SB_URL + "/functions/v1/send-quote", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer " + (currentUser ? currentUser.access_token : SB_KEY)
-            },
-            body: JSON.stringify({ to: toEmail, subject: subject, html: htmlBody, pdfBase64: pdfBase64, filename: filename })
-          })
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (data.success) {
-              showToast("✓ " + doctype + " emailed to " + toEmail);
-            } else {
-              console.error("Email error:", data);
-              showToast("Send failed — check console");
-            }
-          })
-          .catch(function(err) {
-            console.error(err);
-            showToast("Send failed — check connection");
-          });
+          // Open mail app with everything pre-filled
+          var mailto = "mailto:" + encodeURIComponent(toEmail) +
+            "?subject=" + encodeURIComponent(subject) +
+            "&body=" + encodeURIComponent(body);
+          window.location.href = mailto;
+
+          showToast("PDF downloaded - attach it to the email");
+
+          // Auto-stamp last contacted on matching quote in tracker
+          var matchQ = quotes.find(function(x) { return x.num === num && !x.deleted; });
+          if (matchQ) {
+            matchQ.lastContacted = new Date().toISOString().slice(0,10);
+            var lcData = { last_contacted: matchQ.lastContacted, updated_at: new Date().toISOString() };
+            sbFetch("/rest/v1/quotes?id=eq." + matchQ.id, "PATCH", lcData).catch(function(){});
+            saveLocal();
+          }
         }).catch(function(err) {
           document.body.removeChild(iframe);
-          console.error(err);
+          console.error("PDF render error:", err);
           showToast("PDF render failed");
         });
-      };
-      document.head.appendChild(script2);
-    };
-    document.head.appendChild(script);
+      });
+    });
   }, 800);
+}
+
+function saveTemplate() {
+  var co = document.getElementById("b-co").value.trim();
+  var pickup = document.getElementById("s-pickup").value.trim();
+  var delivery = document.getElementById("s-delivery").value.trim();
+  if (!pickup && !delivery) { showToast("Fill in route first"); return; }
+  var name = prompt("Template name (e.g. Edmonton to Calgary Flatdeck):");
+  if (!name) return;
+  var tmpl = {
+    name: name,
+    co: co,
+    phone: document.getElementById("b-phone").value.trim(),
+    email: document.getElementById("b-email").value.trim(),
+    contact: document.getElementById("b-contact").value.trim(),
+    addr: document.getElementById("b-addr").value.trim(),
+    pickup: pickup,
+    delivery: delivery,
+    load: document.getElementById("s-load").value,
+    weight: document.getElementById("s-weight").value.trim()
+  };
+  var templates = [];
+  try { templates = JSON.parse(localStorage.getItem("rebar_templates") || "[]"); } catch(e) {}
+  templates.push(tmpl);
+  localStorage.setItem("rebar_templates", JSON.stringify(templates));
+  loadTemplateList();
+  showToast("Template saved: " + name);
+}
+
+function loadTemplateList() {
+  var sel = document.getElementById("tmpl-sel");
+  var templates = [];
+  try { templates = JSON.parse(localStorage.getItem("rebar_templates") || "[]"); } catch(e) {}
+  sel.innerHTML = '<option value="">Load Template...</option>';
+  templates.forEach(function(t, i) {
+    sel.innerHTML += '<option value="' + i + '">' + t.name + '</option>';
+  });
+}
+
+function loadTemplate(idx) {
+  if (idx === "") return;
+  var templates = [];
+  try { templates = JSON.parse(localStorage.getItem("rebar_templates") || "[]"); } catch(e) {}
+  var t = templates[parseInt(idx)];
+  if (!t) return;
+  if (t.co) document.getElementById("b-co").value = t.co;
+  if (t.phone) document.getElementById("b-phone").value = t.phone;
+  if (t.email) document.getElementById("b-email").value = t.email;
+  if (t.contact) document.getElementById("b-contact").value = t.contact;
+  if (t.addr) document.getElementById("b-addr").value = t.addr;
+  if (t.pickup) document.getElementById("s-pickup").value = t.pickup;
+  if (t.delivery) document.getElementById("s-delivery").value = t.delivery;
+  if (t.load) document.getElementById("s-load").value = t.load;
+  if (t.weight) document.getElementById("s-weight").value = t.weight;
+  document.getElementById("tmpl-sel").value = "";
+  showToast("Template loaded: " + t.name);
 }
 
 function doPrint() {
@@ -1657,6 +1788,7 @@ document.addEventListener("keydown", function(e) {
 // INIT
 document.addEventListener("DOMContentLoaded", function() {
   try { if (localStorage.getItem("rebar_chart_collapsed") === "1") document.getElementById("chart-section").classList.add("collapsed"); } catch(e) {}
+  loadTemplateList();
   checkSession();
 });
 </script>
