@@ -693,6 +693,10 @@ body.delmode .del-col{display:table-cell}
   <!-- SERVICE TAB -->
   <div id="ftab-service" class="ftab-panel" style="display:none;max-width:700px;margin:16px auto;padding:0 14px">
     <div class="fleet-section">
+      <div class="fleet-section-title">Fleet Dashboard</div>
+      <div id="fleet-dashboard"></div>
+    </div>
+    <div class="fleet-section">
       <div class="fleet-section-title">Service Schedule</div>
       <div id="service-reminders"></div>
     </div>
@@ -852,6 +856,8 @@ body.delmode .del-col{display:table-cell}
     <div id="d-body"></div>
     <div class="macts" style="flex-wrap:wrap;gap:6px;justify-content:flex-start">
       <button class="btn btn-green btn-sm" id="d-email">Email</button>
+      <button class="btn btn-sm" id="d-to-invoice" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">To Invoice</button>
+      <button class="btn btn-blue btn-sm" id="d-rebook">Rebook</button>
       <button class="btn btn-blue btn-sm" id="d-dupe">Duplicate</button>
       <button class="btn btn-sm" id="d-paid" style="background:rgba(46,204,113,0.2);color:#2ecc71;border:1px solid rgba(46,204,113,0.4)">Mark Paid</button>
       <button class="btn btn-ghost btn-sm" id="d-edit">Edit</button>
@@ -941,6 +947,8 @@ body.delmode .del-col{display:table-cell}
       <div class="fgrp"><label class="flbl">Vendor / Description</label><input class="fin" id="exp-vendor" placeholder="e.g. Shell Leduc"></div>
       <div class="fgrp full"><label class="flbl">Notes</label><input class="fin" id="exp-notes" placeholder="Optional"></div>
       <div class="fgrp"><label class="flbl">Receipt #</label><input class="fin" id="exp-receipt" placeholder="Optional"></div>
+      <div class="fgrp full"><label class="flbl">Receipt Photo / PDF</label><input type="file" id="exp-receipt-file" accept="image/*,.pdf" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;padding:9px;width:100%;font-size:13px"></div>
+      <div class="fgrp full" id="exp-receipt-current" style="display:none"><span id="exp-receipt-current-link" style="font-size:12px"></span></div>
     </div>
     <div class="macts">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-expense')">Cancel</button>
@@ -976,8 +984,10 @@ body.delmode .del-col{display:table-cell}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <select class="tb-sel" id="fin-year" onchange="renderFinancials()"></select>
         <button class="btn btn-ghost btn-sm" onclick="exportFinCSV()">Export CSV</button>
+        <button class="btn btn-chrome btn-sm" onclick="exportTaxPackage()">Tax Package</button>
       </div>
     </div>
+    <div id="fin-gst-reminder"></div>
     <div id="fin-annual" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:14px"></div>
     <div class="fin-sec-title">GST Quarterly Summary</div>
     <div style="background:var(--card);border:1px solid var(--border);margin-bottom:14px;overflow-x:auto">
@@ -1335,6 +1345,8 @@ function quickStatus(id, status) {
   var q = quotes.find(function(x){return x.id===id;}); if (!q) return;
   var oldStatus = q.status;
   q.status = status;
+  // FEATURE 8: auto-create load when accepted
+  if(status === "Accepted" && !q.loadStatus){ q.loadStatus = "Booked"; }
   logActivity(id, "Status changed", oldStatus + " -> " + status);
   var dbData = { status: status, updated_at: new Date().toISOString() };
   sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", dbData).then(function() {
@@ -1558,8 +1570,10 @@ function renderTbl() {
       var delBtn = q.deleted
         ? '<button class="del-x" onclick="event.stopPropagation();permDeleteQ(\'' + qid + '\')">x</button>'
         : '<button class="del-x" onclick="event.stopPropagation();delQ(\'' + qid + '\')">x</button>';
+      var odDays = invoiceOverdueDays(q);
+      var odTag = odDays > 0 ? '<span style="font-family:Barlow Condensed,sans-serif;font-size:9px;font-weight:700;padding:1px 5px;background:rgba(231,76,60,0.18);color:#e74c3c;margin-left:5px">' + odDays + 'D OD</span>' : '';
       rows += '<tr onclick="viewQ(\'' + qid + '\')">'
-        + '<td class="fw">' + fuDot + (q.num || '--') + dtBadge + '</td>'
+        + '<td class="fw">' + fuDot + (q.num || '--') + dtBadge + odTag + '</td>'
         + '<td>' + fmtDate(q.date) + '</td>'
         + '<td class="fw">' + (q.co || '--') + '</td>'
         + '<td class="hide-mob">' + (q.pickup || '--') + '</td>'
@@ -1832,6 +1846,13 @@ function viewQ(id) {
   var paidBtn = document.getElementById("d-paid");
   paidBtn.textContent = q.paid ? "Mark Unpaid" : "Mark Paid";
   paidBtn.onclick = function() { togglePaid(id); };
+  var toInvBtn = document.getElementById("d-to-invoice");
+  if(toInvBtn){
+    toInvBtn.style.display = (q.doctype === "Invoice") ? "none" : "";
+    toInvBtn.onclick = function() { convertToInvoice(id); };
+  }
+  var rebookBtn = document.getElementById("d-rebook");
+  if(rebookBtn) rebookBtn.onclick = function() { rebookQuote(id); };
   document.getElementById("m-detail").classList.add("open");
 }
 
@@ -2180,6 +2201,13 @@ function toggleDocType() {
   var sel = document.getElementById("q-doctype");
   sel.value = (sel.value === "Quote") ? "Invoice" : "Quote";
   document.getElementById("doctype-toggle").textContent = "Mode: " + sel.value;
+  // FEATURE 7: auto sequential invoice number
+  if(sel.value === "Invoice"){
+    var numEl = document.getElementById("q-num");
+    if(numEl && (!numEl.value || numEl.value.indexOf("RB-") === 0)){
+      numEl.value = nextInvoiceNum();
+    }
+  }
   updateDocType();
   showToast("Switched to " + sel.value + " mode");
 }
@@ -2593,9 +2621,10 @@ function saveFuel() {
   fleetData.fuel.unshift(rec);
   if (rec.odo > fleetData.odo) { fleetData.odo = rec.odo; document.getElementById("odo-current").value = rec.odo; }
   saveFleetData();
+  fuelToExpense(rec);
   renderFuelLog();
   closeM("m-fuel");
-  showToast("Fuel fill saved");
+  showToast("Fuel fill saved + expense logged");
 }
 
 function renderFuelLog() {
@@ -2639,7 +2668,57 @@ function renderFuelLog() {
     + '<div style="font-size:11px;color:#555"><span style="color:#ccc;font-weight:600">$' + totalCost.toFixed(0) + '</span> total fuel</div>';
 }
 
+function renderFleetDashboard(){
+  var box = document.getElementById("fleet-dashboard");
+  if(!box) return;
+  var odo = fleetData.odo || 0;
+  var items = [];
+  // Service intervals
+  var svcs = [{name:"Oil Change",interval:20000,type:"Oil Change"},{name:"Fuel Filter",interval:15000,type:"Fuel Filter"},{name:"Air Filter",interval:30000,type:"Air Filter"},{name:"Coolant",interval:100000,type:"Coolant Service"},{name:"Brakes",interval:50000,type:"Brakes"}];
+  svcs.forEach(function(s){
+    var last = (fleetData.maint||[]).find(function(r){return r.type===s.type;});
+    if(!last || !last.odo){ items.push({lbl:s.name,detail:"No record",urgency:2}); return; }
+    var remaining = s.interval - (odo - last.odo);
+    if(remaining <= 0) items.push({lbl:s.name,detail:Math.abs(remaining).toLocaleString()+" km overdue",urgency:2});
+    else if(remaining < s.interval*0.2) items.push({lbl:s.name,detail:remaining.toLocaleString()+" km left",urgency:1});
+  });
+  // Insurance / Registration / CVIP expiry
+  function chkExpiry(dateStr,label){
+    if(!dateStr) return;
+    var d = new Date(dateStr+"T12:00:00");
+    var days = Math.ceil((d - new Date())/86400000);
+    if(days < 0) items.push({lbl:label,detail:"Expired "+Math.abs(days)+"d ago",urgency:2});
+    else if(days <= 30) items.push({lbl:label,detail:days+"d left",urgency:1});
+  }
+  var ins = fleetData.ins||{}, reg = fleetData.reg||{};
+  chkExpiry(ins.expiry,"Insurance");
+  chkExpiry(reg.expiry,"Registration");
+  chkExpiry(reg.cvip,"CVIP Inspection");
+  // Maintenance cost total (this year)
+  var yr = String(new Date().getFullYear());
+  var maintCost = (fleetData.maint||[]).filter(function(r){return r.date && r.date.slice(0,4)===yr;}).reduce(function(s,r){return s+(r.cost||0);},0);
+  var fuelCost = (fleetData.fuel||[]).filter(function(r){return r.date && r.date.slice(0,4)===yr;}).reduce(function(s,r){return s+(r.cost||0);},0);
+  var html = "";
+  if(!items.length){
+    html += '<div style="padding:10px 0;color:#2ecc71;font-size:13px">All service, insurance & registration current.</div>';
+  } else {
+    items.sort(function(a,b){return b.urgency-a.urgency;});
+    items.forEach(function(it){
+      var clr = it.urgency===2?"#e74c3c":"#f1c40f";
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">'
+        +'<span style="color:#ccc;font-size:13px"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+clr+';margin-right:8px"></span>'+it.lbl+'</span>'
+        +'<span style="color:'+clr+';font-family:\'Barlow Condensed\',sans-serif;font-size:12px;font-weight:700">'+it.detail+'</span></div>';
+    });
+  }
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-top:12px">'
+    +'<div style="background:var(--card);padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#333;margin-bottom:3px">Maintenance '+yr+'</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:800;color:#fff">$'+maintCost.toLocaleString("en-CA",{maximumFractionDigits:0})+'</div></div>'
+    +'<div style="background:var(--card);padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#333;margin-bottom:3px">Fuel '+yr+'</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:800;color:#fff">$'+fuelCost.toLocaleString("en-CA",{maximumFractionDigits:0})+'</div></div>'
+    +'</div>';
+  box.innerHTML = html;
+}
+
 function renderServiceReminders() {
+  renderFleetDashboard();
   var box = document.getElementById("service-reminders");
   var odo = fleetData.odo || 0;
   // Find last service of each type
@@ -2783,6 +2862,12 @@ function saveLoadStatus(){
   saveLocal(); renderLoads();
   closeM("m-load-status");
   showToast("Load updated: "+ns);
+  // FEATURE 9: prompt to invoice when delivered
+  if(ns === "Delivered" && q.doctype !== "Invoice"){
+    setTimeout(function(){
+      if(confirm("Load delivered. Convert to invoice now?")) convertToInvoice(id);
+    }, 400);
+  }
 }
 
 // ── CONTACTS ──
@@ -2823,6 +2908,7 @@ function renderContacts(){
       +"<div class=\"contact-stat\">"+wr+"% <span>win rate</span></div>"
       +"<div class=\"contact-stat\">$"+c.totalRev.toLocaleString("en-CA",{maximumFractionDigits:0})+" <span>total</span></div>"
       +(c.lastJob ? "<div class=\"contact-stat\">"+fmtDate(c.lastJob)+" <span>last job</span></div>" : "")
+      +(function(){ var ps=customerPayStats(c.name); return ps ? "<div class=\"contact-stat\" style=\"color:"+(ps.avgDays<=30?"#2ecc71":"#e74c3c")+"\">"+ps.avgDays+"d <span>avg pay</span></div>" + (ps.late>0?"<div class=\"contact-stat\" style=\"color:#e74c3c\">"+ps.late+" <span>late</span></div>":"") : ""; })()
       +"</div>"
       +"<div class=\"contact-actions\">"
       +(c.phone ? "<a class=\"btn btn-green btn-xs\" href=\"tel:"+c.phone.replace(/[^0-9]/g,"")+"\" style=\"text-decoration:none\">Call "+c.phone+"</a>" : "")
@@ -2858,6 +2944,14 @@ function buildExpMonthOptions(){
 function openExpenseModal(id){
   document.getElementById("m-exp-title").textContent = id ? "Edit Expense" : "Add Expense";
   document.getElementById("exp-eid").value = id||"";
+  var fileEl = document.getElementById("exp-receipt-file"); if(fileEl) fileEl.value = "";
+  var curEl = document.getElementById("exp-receipt-current");
+  var curLink = document.getElementById("exp-receipt-current-link");
+  if(id){
+    var ex0 = expenses.find(function(e){ return e.id === id; });
+    if(ex0 && ex0.receiptUrl && curEl && curLink){ curEl.style.display="block"; curLink.innerHTML = "<a href=\""+ex0.receiptUrl+"\" target=\"_blank\" style=\"color:#2ecc71\">Receipt attached - view</a>"; }
+    else if(curEl){ curEl.style.display="none"; }
+  } else if(curEl){ curEl.style.display="none"; }
   if(id){
     var exp = expenses.find(function(e){ return e.id === id; }); if(!exp) return;
     document.getElementById("exp-date").value = exp.date||"";
@@ -2879,9 +2973,36 @@ function saveExpense(){
   if(!amt||amt<=0){ showToast("Enter a valid amount"); return; }
   var id = document.getElementById("exp-eid").value;
   var rec = {id:id||Date.now().toString(), date:document.getElementById("exp-date").value, amt:amt, cat:document.getElementById("exp-cat").value, vendor:document.getElementById("exp-vendor").value.trim(), notes:document.getElementById("exp-notes").value.trim(), receipt:document.getElementById("exp-receipt").value.trim()};
+  // Preserve existing receipt file link when editing
+  if(id){ var prev = expenses.find(function(e){ return e.id===id; }); if(prev){ rec.receiptUrl = prev.receiptUrl; rec.receiptPath = prev.receiptPath; } }
+  // Commit record
   if(id){ var i = expenses.findIndex(function(e){ return e.id===id; }); if(i>-1) expenses[i]=rec; }
   else expenses.unshift(rec);
-  saveExpenses(); renderExpenses(); closeM("m-expense"); showToast("Expense saved");
+  saveExpenses();
+  // FEATURE 2: inline receipt upload on save
+  var fileEl = document.getElementById("exp-receipt-file");
+  if(fileEl && fileEl.files && fileEl.files[0]){
+    var file = fileEl.files[0];
+    if(file.size > 5*1024*1024){ showToast("Receipt too large (max 5MB), expense saved without it"); renderExpenses(); closeM("m-expense"); return; }
+    var ext = file.name.split(".").pop();
+    var uid = (typeof currentUser !== "undefined" && currentUser && currentUser.id) ? currentUser.id : "anon";
+    var path = uid + "/" + rec.id + "/" + Date.now() + "." + ext;
+    showToast("Uploading receipt...");
+    fetch(SB_URL + "/storage/v1/object/receipts/" + path, {
+      method:"POST", headers:{"Authorization":"Bearer "+SB_KEY,"x-upsert":"true"}, body:file
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if(data.error) throw new Error(data.error.message||"Upload failed");
+      rec.receiptUrl = SB_URL + "/storage/v1/object/public/receipts/" + path;
+      rec.receiptPath = path;
+      var idx2 = expenses.findIndex(function(e){ return e.id===rec.id; });
+      if(idx2>-1) expenses[idx2] = rec;
+      saveExpenses(); renderExpenses();
+      showToast("Expense + receipt saved");
+    }).catch(function(err){ renderExpenses(); showToast("Expense saved, receipt failed: "+err.message); });
+    closeM("m-expense");
+    return;
+  }
+  renderExpenses(); closeM("m-expense"); showToast("Expense saved");
 }
 function deleteExpense(id){
   expenses = expenses.filter(function(e){ return e.id !== id; });
@@ -2922,7 +3043,7 @@ function renderExpenses(){
         +"<div class=\"exp-cat-lbl\">"+e.cat+(e.receipt?" - #"+e.receipt:"")+"</div></div>"
         +"<div class=\"exp-date-lbl\">"+fmtDate(e.date)+"</div>"
         +"<div class=\"exp-amt\">$"+(e.amt||0).toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2})+"</div>"
-        +"<button class=\"rcpt-btn\" onclick=\"event.stopPropagation();openReceiptModal('"+e.id+"')\" style=\"color:"+(e.receiptUrl?"\"#2ecc71\"":"\"#333\"")+"\">"+(e.receiptUrl?"R":"+R")+"</button>"
+        +"<button class=\"rcpt-btn\" onclick=\"event.stopPropagation();openReceiptModal('"+e.id+"')\" style=\"color:"+(e.receiptUrl?"#2ecc71":"#999")+"\">"+(e.receiptUrl?"R":"+R")+"</button>"
         +"<button class=\"exp-del-btn\" onclick=\"event.stopPropagation();deleteExpense('"+e.id+"')\">x</button>"
         +"</div>";
     });
@@ -3015,6 +3136,9 @@ function renderFinancials(){
   var fmt = function(n){ return "$" + n.toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2}); };
   var fmt0 = function(n){ return "$" + Math.abs(n).toLocaleString("en-CA",{maximumFractionDigits:0}); };
 
+  // FEATURE 3: GST reminder banner
+  var banEl = document.getElementById("fin-gst-reminder");
+  if(banEl) banEl.innerHTML = gstReminderBanner();
   // Annual boxes - now 6 stats in 3x2 grid
   var ab = document.getElementById("fin-annual");
   if(ab){
@@ -3220,6 +3344,223 @@ document.addEventListener("DOMContentLoaded", function(){
     } else { prev.style.display = "none"; }
   });
 });
+
+
+// ════════════════════════════════════════
+// FEATURE 7: Sequential invoice numbering
+// ════════════════════════════════════════
+function nextInvoiceNum(){
+  var yr = new Date().getFullYear();
+  var prefix = "INV-" + yr + "-";
+  var max = 0;
+  quotes.forEach(function(q){
+    if(q.num && q.num.indexOf(prefix) === 0){
+      var n = parseInt(q.num.slice(prefix.length));
+      if(!isNaN(n) && n > max) max = n;
+    }
+  });
+  return prefix + String(max + 1).padStart(3,"0");
+}
+
+// ════════════════════════════════════════
+// FEATURE 5: Quote -> Invoice in one tap
+// ════════════════════════════════════════
+function convertToInvoice(id){
+  var q = quotes.find(function(x){ return x.id === id; }); if(!q) return;
+  if(q.doctype === "Invoice"){ showToast("Already an invoice"); return; }
+  if(!confirm("Convert this quote to an invoice?")) return;
+  q.doctype = "Invoice";
+  q.num = nextInvoiceNum();
+  if(q.status === "Pending") q.status = "Sent";
+  logActivity(id, "Converted to Invoice", q.num);
+  sbFetch("/rest/v1/quotes?id=eq."+id,"PATCH",{doctype:"Invoice",num:q.num,status:q.status,updated_at:new Date().toISOString()}).catch(function(){});
+  saveLocal(); renderTbl(); closeM("m-detail");
+  showToast("Invoice created: " + q.num);
+}
+
+// ════════════════════════════════════════
+// FEATURE 13: One-tap rebook
+// ════════════════════════════════════════
+function rebookQuote(id){
+  var q = quotes.find(function(x){ return x.id === id; }); if(!q) return;
+  closeM("m-detail");
+  switchView("builder");
+  document.getElementById("q-num").value = genNum();
+  var today = new Date().toISOString().slice(0,10);
+  document.getElementById("q-date").value = today;
+  var exp = new Date(); exp.setDate(exp.getDate()+7);
+  document.getElementById("q-expiry").value = exp.toISOString().slice(0,10);
+  document.getElementById("q-status").value = "Pending";
+  document.getElementById("q-doctype").value = "Quote";
+  document.getElementById("b-co").value = q.co || "";
+  document.getElementById("b-phone").value = q.phone || "";
+  document.getElementById("b-email").value = q.email || "";
+  document.getElementById("b-contact").value = q.contact || "";
+  document.getElementById("b-addr").value = q.addr || "";
+  document.getElementById("s-pickup").value = q.pickup || "";
+  document.getElementById("s-delivery").value = q.delivery || "";
+  document.getElementById("s-load").value = q.load || "";
+  document.getElementById("s-weight").value = q.weight || "";
+  if(typeof updateDocType === "function") updateDocType();
+  showToast("Rebooking for " + (q.co||"customer"));
+}
+
+// ════════════════════════════════════════
+// FEATURE 6: Overdue invoice flag (helper)
+// ════════════════════════════════════════
+function invoiceOverdueDays(q){
+  if(q.doctype !== "Invoice" || q.paid) return 0;
+  var base = q.date ? new Date(q.date + "T12:00:00") : null;
+  if(!base) return 0;
+  var days = Math.floor((new Date() - base) / 86400000);
+  return days > 30 ? (days - 30) : 0;
+}
+
+// ════════════════════════════════════════
+// FEATURE 12: Customer payment history (helper)
+// ════════════════════════════════════════
+function customerPayStats(name){
+  var key = (name||"").trim().toLowerCase();
+  var paid = quotes.filter(function(q){ return !q.deleted && (q.co||"").trim().toLowerCase()===key && q.paid && q.paiddate && q.date; });
+  if(!paid.length) return null;
+  var totalDays = 0, count = 0, late = 0;
+  paid.forEach(function(q){
+    var inv = new Date(q.date + "T12:00:00");
+    var pd = new Date(q.paiddate + "T12:00:00");
+    var d = Math.round((pd - inv)/86400000);
+    if(d >= 0){ totalDays += d; count++; if(d > 30) late++; }
+  });
+  if(!count) return null;
+  return { avgDays: Math.round(totalDays/count), late: late, total: count };
+}
+
+// ════════════════════════════════════════
+// FEATURE 1: Auto-create expense from fuel log
+// ════════════════════════════════════════
+function fuelToExpense(rec){
+  if(!rec || !rec.cost || rec.cost <= 0) return;
+  var exp = {
+    id: "fuel-" + rec.id,
+    date: rec.date,
+    amt: rec.cost,
+    cat: "Fuel",
+    vendor: rec.station || "Fuel",
+    notes: (rec.gallons ? rec.gallons + " gal" : "") + (rec.odo ? " @ " + rec.odo + " km" : ""),
+    receipt: ""
+  };
+  var existing = expenses.findIndex(function(e){ return e.id === exp.id; });
+  if(existing > -1) expenses[existing] = exp;
+  else expenses.unshift(exp);
+  saveExpenses();
+}
+
+// ════════════════════════════════════════
+// FEATURE 3: GST quarterly filing reminder banner
+// ════════════════════════════════════════
+function gstReminderBanner(){
+  var now = new Date();
+  var q = Math.floor(now.getMonth()/3); // 0-3 current quarter
+  // Filing deadline is one month after quarter end
+  var quarterEnds = [new Date(now.getFullYear(),2,31),new Date(now.getFullYear(),5,30),new Date(now.getFullYear(),8,30),new Date(now.getFullYear(),11,31)];
+  var deadlines = [new Date(now.getFullYear(),3,30),new Date(now.getFullYear(),6,31),new Date(now.getFullYear(),9,31),new Date(now.getFullYear(),0,31)];
+  // Most recently ended quarter
+  var prevQ = q === 0 ? 3 : q - 1;
+  var prevYr = q === 0 ? now.getFullYear()-1 : now.getFullYear();
+  var deadline;
+  if(prevQ === 3) deadline = new Date(now.getFullYear(), 0, 31);
+  else deadline = new Date(prevYr, (prevQ+1)*3, 0);
+  deadline = new Date(deadline.getTime() + 30*86400000);
+  var qLabels = ["Q1","Q2","Q3","Q4"];
+  var daysToDeadline = Math.ceil((deadline - now)/86400000);
+  // Compute net GST owing for the previous quarter
+  var qMonths = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]][prevQ];
+  function getGstLocal(qq){ if(qq.gstAmt) return parseFloat(qq.gstAmt)||0; return (parseFloat(qq.total)||0)/1.05*0.05; }
+  var collected = quotes.filter(function(qq){ return !qq.deleted && qq.paid && qq.date && parseInt(qq.date.slice(0,4))===prevYr && qMonths.indexOf(parseInt(qq.date.slice(5,7)))>-1; });
+  var collGst = collected.reduce(function(s,qq){ return s+getGstLocal(qq); },0);
+  var qExp = expenses.filter(function(e){ return e.cat!=="Insurance" && e.date && parseInt(e.date.slice(0,4))===prevYr && qMonths.indexOf(parseInt(e.date.slice(5,7)))>-1; });
+  var itc = qExp.reduce(function(s,e){ return s+((e.amt||0)/1.05*0.05); },0);
+  var net = collGst - itc;
+  if(daysToDeadline < 0 || daysToDeadline > 45) return "";
+  var urgent = daysToDeadline <= 14;
+  return '<div style="background:'+(urgent?"rgba(231,76,60,0.12)":"rgba(241,196,15,0.1)")+';border:1px solid '+(urgent?"rgba(231,76,60,0.4)":"rgba(241,196,15,0.3)")+';padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'
+    +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:'+(urgent?"#e74c3c":"#f1c40f")+'">'+qLabels[prevQ]+' '+prevYr+' GST Due '+deadline.toLocaleDateString("en-CA",{month:"short",day:"numeric"})+' &middot; '+daysToDeadline+' days</div>'
+    +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:800;color:#fff">Net Owing: $'+net.toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2})+'</div>'
+    +'</div>';
+}
+
+// ════════════════════════════════════════
+// FEATURE 4: Year-end tax package export
+// ════════════════════════════════════════
+function exportTaxPackage(){
+  var sel = document.getElementById("fin-year");
+  var yr = sel ? sel.value : String(new Date().getFullYear());
+  var yrQ = quotes.filter(function(q){ return !q.deleted && q.date && q.date.slice(0,4)===yr; });
+  var yrE = expenses.filter(function(e){ return e.date && e.date.slice(0,4)===yr; });
+  var collected = yrQ.filter(function(q){ return q.paid; });
+  function getGstL(q){ if(q.gstAmt) return parseFloat(q.gstAmt)||0; return (parseFloat(q.total)||0)/1.05*0.05; }
+  function getSubL(q){ if(q.subtotal) return parseFloat(q.subtotal)||0; return (parseFloat(q.total)||0)/1.05; }
+  var c = function(v){ return '"'+((v||"")+"").replace(/"/g,'""')+'"'; };
+  var totalCollSub = collected.reduce(function(s,q){ return s+getSubL(q); },0);
+  var totalCollGst = collected.reduce(function(s,q){ return s+getGstL(q); },0);
+  var totalExp = yrE.reduce(function(s,e){ return s+(e.amt||0); },0);
+  var itcElig = yrE.filter(function(e){ return e.cat!=="Insurance"; });
+  var itc = itcElig.reduce(function(s,e){ return s+((e.amt||0)/1.05*0.05); },0);
+  var rows = [];
+  rows.push("REBAR TRANSPORTATION SERVICES LTD");
+  rows.push("YEAR-END TAX PACKAGE - " + yr);
+  rows.push("Generated " + new Date().toLocaleDateString("en-CA"));
+  rows.push("");
+  rows.push("=== SUMMARY FOR ACCOUNTANT ===");
+  rows.push("Gross Revenue (collected)," + c(totalCollSub.toFixed(2)));
+  rows.push("GST Collected," + c(totalCollGst.toFixed(2)));
+  rows.push("Input Tax Credits (ITCs)," + c(itc.toFixed(2)));
+  rows.push("Net GST Remitted," + c((totalCollGst-itc).toFixed(2)));
+  rows.push("Total Business Expenses," + c(totalExp.toFixed(2)));
+  rows.push("Net Business Income (T2125)," + c((totalCollSub-totalExp).toFixed(2)));
+  rows.push("");
+  // Quarterly GST breakdown
+  rows.push("=== QUARTERLY GST ===");
+  rows.push("Quarter,GST Collected,ITCs,Net Owing");
+  [["Q1",[1,2,3]],["Q2",[4,5,6]],["Q3",[7,8,9]],["Q4",[10,11,12]]].forEach(function(qd){
+    var ms = qd[1];
+    var qc = collected.filter(function(q){ return ms.indexOf(parseInt(q.date.slice(5,7)))>-1; });
+    var qe = itcElig.filter(function(e){ return ms.indexOf(parseInt(e.date.slice(5,7)))>-1; });
+    var g = qc.reduce(function(s,q){ return s+getGstL(q); },0);
+    var i = qe.reduce(function(s,e){ return s+((e.amt||0)/1.05*0.05); },0);
+    rows.push([c(qd[0]),c(g.toFixed(2)),c(i.toFixed(2)),c((g-i).toFixed(2))].join(","));
+  });
+  rows.push("");
+  rows.push("=== PAID INVOICES ===");
+  rows.push("Date,Number,Customer,Subtotal,GST,Total,Date Paid");
+  collected.forEach(function(q){
+    rows.push([c(q.date),c(q.num),c(q.co),c(getSubL(q).toFixed(2)),c(getGstL(q).toFixed(2)),c(q.total),c(q.paiddate||"")].join(","));
+  });
+  rows.push("");
+  rows.push("=== ALL INVOICES/QUOTES ===");
+  rows.push("Date,Number,Customer,Status,Type,Total,Paid");
+  yrQ.forEach(function(q){
+    rows.push([c(q.date),c(q.num),c(q.co),c(q.status),c(q.doctype||"Quote"),c(q.total),c(q.paid?"Yes":"No")].join(","));
+  });
+  rows.push("");
+  rows.push("=== EXPENSES ===");
+  rows.push("Date,Category,Vendor,Amount,ITC,Receipt#,Has Receipt File");
+  yrE.forEach(function(e){
+    var i = e.cat!=="Insurance" ? ((e.amt||0)/1.05*0.05).toFixed(2) : "0.00";
+    rows.push([c(e.date),c(e.cat),c(e.vendor),c(e.amt?e.amt.toFixed(2):""),c(i),c(e.receipt||""),c(e.receiptUrl?"Yes":"No")].join(","));
+  });
+  rows.push("");
+  rows.push("=== RECEIPT FILE LINKS ===");
+  rows.push("Date,Category,Vendor,Amount,Receipt URL");
+  yrE.filter(function(e){ return e.receiptUrl; }).forEach(function(e){
+    rows.push([c(e.date),c(e.cat),c(e.vendor),c(e.amt?e.amt.toFixed(2):""),c(e.receiptUrl)].join(","));
+  });
+  var blob = new Blob([rows.join("\n")],{type:"text/csv"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "rebar_TAX_PACKAGE_"+yr+".csv";
+  a.click();
+  showToast("Tax package exported for " + yr);
+}
 
 </script>
 </body>
