@@ -1275,6 +1275,9 @@ function switchView(v) {
   var hmItem = document.getElementById("hm-" + v);
   if(hmItem) hmItem.classList.add("active");
   if(v === "financials") renderFinancials();
+  if(v === "contacts") renderContacts();
+  if(v === "loads") renderLoads();
+  if(v === "expenses") renderExpenses();
   window.scrollTo(0, 0);
 }
 
@@ -1536,7 +1539,18 @@ function renderTbl() {
   });
   var tbody = document.getElementById("qtbody");
   var empty = document.getElementById("empty");
-  if (!fl.length) { tbody.innerHTML = ""; empty.style.display = "block"; }
+  if (!fl.length) {
+    tbody.innerHTML = "";
+    var emptT = empty.querySelector(".empty-t");
+    var emptS = empty.querySelector(".empty-s");
+    if(emptT){
+      if(activeDocFilter === "trash"){ emptT.textContent = "Trash Is Empty"; if(emptS) emptS.textContent = "Deleted items appear here"; }
+      else if(activeDocFilter === "Invoice"){ emptT.textContent = "No Invoices Found"; if(emptS) emptS.textContent = "Switch a quote to invoice mode to create one"; }
+      else if(activeDocFilter === "Quote"){ emptT.textContent = "No Quotes Found"; if(emptS) emptS.textContent = "Tap \"+ New\" to log your first haul"; }
+      else { emptT.textContent = "Nothing Here Yet"; if(emptS) emptS.textContent = "Tap \"+ New\" to log your first haul"; }
+    }
+    empty.style.display = "block";
+  }
   else {
     empty.style.display = "none";
     var rows = "";
