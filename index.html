@@ -715,8 +715,8 @@ body.delmode .del-col{display:table-cell}
     <div class="fleet-card">
       <div class="fleet-card-header">
         <div>
-          <div class="fleet-card-title">2007 Peterbilt 387</div>
-          <div class="fleet-card-sub">CAT C-15 Twin Turbo | 550 HP | 18-Speed Manual</div>
+          <div class="fleet-card-title">2007 Peterbilt 386</div>
+          <div class="fleet-card-sub">CAT C-15 Twin Turbo | 550 HP | 15-Speed Manual</div>
         </div>
         <div class="fleet-badge">Active</div>
       </div>
@@ -724,7 +724,7 @@ body.delmode .del-col{display:table-cell}
         <div class="fleet-spec"><div class="fleet-spec-lbl">Engine</div><div class="fleet-spec-val">CAT C-15 ACERT Twin Turbo</div></div>
         <div class="fleet-spec"><div class="fleet-spec-lbl">Horsepower</div><div class="fleet-spec-val">550 HP @ 2100 RPM</div></div>
         <div class="fleet-spec"><div class="fleet-spec-lbl">Torque</div><div class="fleet-spec-val">1,850 lb-ft @ 1200 RPM</div></div>
-        <div class="fleet-spec"><div class="fleet-spec-lbl">Transmission</div><div class="fleet-spec-val">Eaton Fuller 18-Speed Manual</div></div>
+        <div class="fleet-spec"><div class="fleet-spec-lbl">Transmission</div><div class="fleet-spec-val">Eaton Fuller 15-Speed Manual</div></div>
         <div class="fleet-spec"><div class="fleet-spec-lbl">Displacement</div><div class="fleet-spec-val">15.2L (928 ci)</div></div>
         <div class="fleet-spec"><div class="fleet-spec-lbl">Oil Capacity</div><div class="fleet-spec-val">~48 quarts (with filter)</div></div>
         <div class="fleet-spec"><div class="fleet-spec-lbl">Coolant</div><div class="fleet-spec-val">~15 gallons</div></div>
@@ -818,8 +818,39 @@ body.delmode .del-col{display:table-cell}
       </div>
       <div id="reg-expiry-warn" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);color:#e74c3c;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase"></div>
     </div>
+
+    <div class="fleet-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="fleet-section-title" style="margin:0">Documents</div>
+        <button class="btn btn-chrome btn-sm" onclick="openDocUpload()">+ Upload</button>
+      </div>
+      <div id="fleet-docs-list"></div>
+      <div id="fleet-docs-empty" style="font-size:12px;color:#333;font-family:'Barlow Condensed',sans-serif;padding:8px 0">No documents uploaded. Add CVIP reports, safety certificates, permits, etc.</div>
+    </div>
   </div>
 
+</div>
+
+<!-- DOC UPLOAD MODAL -->
+<div class="mbg" id="m-doc">
+  <div class="modal" style="max-width:480px">
+    <button class="mclose" onclick="closeM('m-doc')">x</button>
+    <h2>Upload Document</h2>
+    <div class="fgrp" style="margin-bottom:12px"><label class="flbl">Document Name</label><input class="fin" id="doc-name" placeholder="e.g. CVIP Inspection 2026, Safety Certificate"></div>
+    <div class="fgrp" style="margin-bottom:12px"><label class="flbl">Category</label>
+      <select class="fsel" id="doc-cat">
+        <option>CVIP Inspection</option><option>Safety Certificate</option><option>Carrier Profile</option>
+        <option>Permit</option><option>Bill of Lading</option><option>Insurance Document</option>
+        <option>Registration</option><option>Other</option>
+      </select>
+    </div>
+    <div class="fgrp" style="margin-bottom:12px"><label class="flbl">File (Image / PDF)</label><input type="file" id="doc-file" accept="image/*,.pdf" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;padding:9px;width:100%;font-size:13px"></div>
+    <div class="macts">
+      <button class="btn btn-ghost btn-sm" onclick="closeM('m-doc')">Cancel</button>
+      <button class="btn btn-chrome btn-sm" onclick="saveDoc()">Upload</button>
+    </div>
+    <div id="doc-status" style="display:none;margin-top:10px;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#f1c40f">Uploading...</div>
+  </div>
 </div>
 
 <!-- MAINTENANCE MODAL -->
@@ -843,6 +874,7 @@ body.delmode .del-col{display:table-cell}
     </div>
     <div class="fgrp"><label class="flbl">Parts / Details</label><input class="fin" id="mt-parts" placeholder="e.g. Delo 15W-40, CAT 1R-0739 filter"></div>
     <div class="fgrp" style="margin-top:8px"><label class="flbl">Notes</label><textarea class="fta" id="mt-notes" placeholder="Shop name, warranty info..."></textarea></div>
+    <div class="fgrp" style="margin-top:8px"><label class="flbl">Receipt / Invoice Photo / PDF</label><input type="file" id="mt-file" accept="image/*,.pdf" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;padding:9px;width:100%;font-size:13px"></div>
     <div class="macts"><button class="btn btn-ghost btn-sm" onclick="closeM('m-maint')">Cancel</button><button class="btn btn-chrome btn-sm" onclick="saveMaint()">Save</button></div>
   </div>
 </div>
@@ -858,6 +890,7 @@ body.delmode .del-col{display:table-cell}
       <div class="fgrp"><label class="flbl">Gallons</label><input class="fin" id="fl-gallons" type="number" placeholder="0.0" step="0.1"></div>
       <div class="fgrp"><label class="flbl">Cost ($)</label><input class="fin" id="fl-cost" type="number" placeholder="0.00" step="0.01"></div>
       <div class="fgrp"><label class="flbl">Station</label><input class="fin" id="fl-station" placeholder="e.g. Shell, Leduc"></div>
+      <div class="fgrp full"><label class="flbl">Receipt Photo / PDF</label><input type="file" id="fl-file" accept="image/*,.pdf" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;padding:9px;width:100%;font-size:13px"></div>
     </div>
     <div class="macts"><button class="btn btn-ghost btn-sm" onclick="closeM('m-fuel')">Cancel</button><button class="btn btn-chrome btn-sm" onclick="saveFuel()">Save</button></div>
   </div>
@@ -1552,6 +1585,8 @@ function renderChart() {
     months.push({ key: d.getFullYear() + "-" + d.getMonth(), label: d.toLocaleDateString("en-CA", {month:"short"}), total: 0, current: i === 0 });
   }
   quotes.forEach(function(q) {
+    if (q.deleted) return;
+    if (q.status !== "Accepted") return;
     if (!q.date && !q.created) return;
     var d = new Date((q.date || q.created.slice(0,10)) + "T12:00:00");
     var key = d.getFullYear() + "-" + d.getMonth();
@@ -1589,6 +1624,8 @@ function renderDailyChart(tf) {
     days.push({ key: d.toISOString().slice(0,10), label: d.toLocaleDateString("en-CA",{weekday:"narrow"}), total: 0, current: d.toDateString() === now.toDateString() });
   }
   quotes.forEach(function(q) {
+    if (q.deleted) return;
+    if (q.status !== "Accepted") return;
     if (!q.date && !q.created) return;
     var key = (q.date || q.created.slice(0,10));
     var m = days.find(function(x){ return x.key === key; });
@@ -1710,7 +1747,7 @@ function renderTbl() {
 
   // Revenue calcs respect the active TIME filter (but not status filter, so totals stay meaningful)
   var tf2 = document.getElementById("f-time").value;
-  var timeScoped = quotes.filter(function(q){ return inTime(q, tf2); });
+  var timeScoped = quotes.filter(function(q){ return !q.deleted && inTime(q, tf2); });
 
   var won = timeScoped.filter(function(q){return q.status==="Accepted";}).reduce(function(s,q){return s+(parseFloat(q.total)||0);},0);
   var pipeline = timeScoped.filter(function(q){return q.status==="Pending"||q.status==="Sent";}).reduce(function(s,q){return s+(parseFloat(q.total)||0);},0);
@@ -2612,6 +2649,7 @@ function loadFleetData() {
   renderMaintLog();
   renderFuelLog();
   renderServiceReminders();
+  renderFleetDocs();
 }
 
 function saveFleetData() {
@@ -2687,11 +2725,18 @@ function saveMaint() {
   };
   fleetData.maint.unshift(rec);
   if (rec.odo > fleetData.odo) { fleetData.odo = rec.odo; document.getElementById("odo-current").value = rec.odo; }
+  var mtFileEl = document.getElementById("mt-file");
+  var mtFile = mtFileEl && mtFileEl.files ? mtFileEl.files[0] : null;
+  if(mtFile){
+    uploadFleetFile(mtFile, "maint", rec.id, function(url){
+      if(url){ rec.fileUrl = url; saveFleetData(); renderMaintLog(); showToast("Service record + receipt saved"); }
+    });
+  }
   saveFleetData();
   renderMaintLog();
   renderServiceReminders();
   closeM("m-maint");
-  showToast("Service record saved");
+  if(!mtFile) showToast("Service record saved");
 }
 
 function renderMaintLog() {
@@ -2706,6 +2751,7 @@ function renderMaintLog() {
       + '<div class="maint-info"><div class="maint-type">' + r.type + '</div>'
       + (r.parts ? '<div class="maint-detail">' + r.parts + '</div>' : '')
       + (r.notes ? '<div class="maint-detail" style="color:#444;font-style:italic">' + r.notes + '</div>' : '')
+      + (r.fileUrl ? '<div class="maint-detail"><a href="' + r.fileUrl + '" target="_blank" style="color:#2ecc71;text-decoration:none">View Receipt</a></div>' : '')
       + '</div>'
       + '<div style="text-align:right;flex-shrink:0"><div class="maint-cost">$' + r.cost.toFixed(0) + '</div>'
       + (r.odo ? '<div class="maint-miles">' + r.odo.toLocaleString() + ' mi</div>' : '')
@@ -2726,6 +2772,78 @@ function openFuelModal() {
   document.getElementById("m-fuel").classList.add("open");
 }
 
+
+
+// FLEET DOCUMENTS
+function openDocUpload(){
+  document.getElementById("doc-name").value = "";
+  document.getElementById("doc-cat").value = "CVIP Inspection";
+  var f = document.getElementById("doc-file"); if(f) f.value = "";
+  document.getElementById("doc-status").style.display = "none";
+  document.getElementById("m-doc").classList.add("open");
+}
+function saveDoc(){
+  var name = document.getElementById("doc-name").value.trim();
+  var cat = document.getElementById("doc-cat").value;
+  var fileEl = document.getElementById("doc-file");
+  var file = fileEl && fileEl.files ? fileEl.files[0] : null;
+  if(!file){ showToast("Select a file"); return; }
+  if(!name){ name = cat; }
+  var status = document.getElementById("doc-status");
+  if(status) status.style.display = "block";
+  var recId = Date.now().toString();
+  uploadFleetFile(file, "docs", recId, function(url){
+    if(status) status.style.display = "none";
+    if(!url) return;
+    if(!fleetData.docs) fleetData.docs = [];
+    fleetData.docs.unshift({ id: recId, name: name, cat: cat, url: url, date: new Date().toISOString().slice(0,10) });
+    saveFleetData();
+    renderFleetDocs();
+    closeM("m-doc");
+    showToast("Document uploaded");
+  });
+}
+function deleteDoc(id){
+  if(!confirm("Remove this document from the list? The file stays in storage.")) return;
+  if(fleetData.docs) fleetData.docs = fleetData.docs.filter(function(d){ return d.id !== id; });
+  saveFleetData();
+  renderFleetDocs();
+  showToast("Document removed");
+}
+function renderFleetDocs(){
+  var list = document.getElementById("fleet-docs-list");
+  var empty = document.getElementById("fleet-docs-empty");
+  if(!list) return;
+  var docs = (fleetData && fleetData.docs) ? fleetData.docs : [];
+  if(!docs.length){ list.innerHTML = ""; if(empty) empty.style.display = "block"; return; }
+  if(empty) empty.style.display = "none";
+  list.innerHTML = docs.map(function(d){
+    return '<div class="maint-row">'
+      + '<div class="maint-date">' + fmtDate(d.date) + '</div>'
+      + '<div class="maint-info"><div class="maint-type">' + d.name + '</div><div class="maint-detail">' + d.cat + '</div></div>'
+      + '<div style="display:flex;gap:8px;align-items:center;flex-shrink:0">'
+      + '<a href="' + d.url + '" target="_blank" style="color:#2ecc71;text-decoration:none;font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em">VIEW</a>'
+      + '<button class="exp-del-btn" onclick="deleteDoc(\'' + d.id + '\')">x</button>'
+      + '</div></div>';
+  }).join("");
+}
+
+// Generic fleet record file upload to Supabase receipts bucket
+function uploadFleetFile(file, kind, recId, cb){
+  if(!file){ if(cb) cb(null); return; }
+  if(file.size > 5*1024*1024){ showToast("File too large (max 5MB)"); if(cb) cb(null); return; }
+  var ext = file.name.split(".").pop();
+  var uid = (typeof currentUser !== "undefined" && currentUser && currentUser.id) ? currentUser.id : "anon";
+  var path = uid + "/fleet/" + kind + "/" + recId + "/" + Date.now() + "." + ext;
+  showToast("Uploading file...");
+  fetch(SB_URL + "/storage/v1/object/receipts/" + path, {
+    method:"POST", headers:{"Authorization":"Bearer "+SB_KEY,"x-upsert":"true"}, body:file
+  }).then(function(r){ return r.json(); }).then(function(data){
+    if(data.error) throw new Error(data.error.message||"Upload failed");
+    if(cb) cb(SB_URL + "/storage/v1/object/public/receipts/" + path);
+  }).catch(function(err){ showToast("Upload failed: "+err.message); if(cb) cb(null); });
+}
+
 function saveFuel() {
   var rec = {
     id: Date.now().toString(),
@@ -2738,11 +2856,19 @@ function saveFuel() {
   if (!rec.gallons) { showToast("Enter gallons"); return; }
   fleetData.fuel.unshift(rec);
   if (rec.odo > fleetData.odo) { fleetData.odo = rec.odo; document.getElementById("odo-current").value = rec.odo; }
+  var fuelFileEl = document.getElementById("fl-file");
+  var fuelFile = fuelFileEl && fuelFileEl.files ? fuelFileEl.files[0] : null;
+  if(fuelFile){
+    uploadFleetFile(fuelFile, "fuel", rec.id, function(url){
+      if(url){ rec.fileUrl = url; saveFleetData(); fuelToExpense(rec); renderFuelLog(); showToast("Fuel fill + receipt saved"); }
+    });
+  }
   saveFleetData();
   fuelToExpense(rec);
   renderFuelLog();
   closeM("m-fuel");
-  showToast("Fuel fill saved + expense logged");
+  if(!fuelFile) showToast("Fuel fill saved + expense logged");
+  else closeM("m-fuel");
 }
 
 function renderFuelLog() {
@@ -2763,6 +2889,7 @@ function renderFuelLog() {
       + '<div class="maint-date">' + fmtDate(r.date) + '</div>'
       + '<div class="maint-info"><div class="maint-type">' + r.gallons.toFixed(1) + ' gal' + (r.station ? ' @ ' + r.station : '') + '</div>'
       + (mpg ? '<div class="maint-detail" style="color:#2ecc71">' + mpg + '</div>' : '')
+      + (r.fileUrl ? '<div class="maint-detail"><a href="' + r.fileUrl + '" target="_blank" style="color:#2ecc71;text-decoration:none">View Receipt</a></div>' : '')
       + '</div>'
       + '<div style="text-align:right;flex-shrink:0"><div class="maint-cost">$' + r.cost.toFixed(2) + '</div>'
       + (ppg ? '<div class="maint-miles">$' + ppg + '/gal</div>' : '')
@@ -3067,8 +3194,38 @@ function filterToCustomer(name){
 // ── EXPENSES ──
 var expenses = [];
 var catColors = {"Fuel":"#f1c40f","Maintenance":"#3498db","Tires":"#9b59b6","Insurance":"#e74c3c","Registration":"#e67e22","Permits":"#1abc9c","Scales / Weigh":"#95a5a6","Tolls":"#d35400","Meals":"#27ae60","Lodging":"#2980b9","Phone / Communications":"#8e44ad","Office / Admin":"#7f8c8d","Repairs":"#c0392b","Parts":"#2c3e50","Other":"#555"};
-function saveExpenses(){ try{ localStorage.setItem("rebar_expenses", JSON.stringify(expenses)); }catch(e){} }
-function loadExpenses(){ try{ expenses = JSON.parse(localStorage.getItem("rebar_expenses")||"[]"); }catch(e){ expenses=[]; } }
+// Expenses: localStorage cache + Supabase sync (table: expenses)
+// If the Supabase "expenses" table exists, data syncs across devices.
+// localStorage always holds a cache so the app works offline / if table missing.
+function saveExpenses(){
+  try{ localStorage.setItem("rebar_expenses", JSON.stringify(expenses)); }catch(e){}
+}
+function expenseToDb(e){
+  return { id: e.id, date: e.date||null, amt: e.amt||0, cat: e.cat||"", vendor: e.vendor||"", notes: e.notes||"", receipt: e.receipt||"", receipt_url: e.receiptUrl||null, receipt_path: e.receiptPath||null };
+}
+function expenseFromDb(r){
+  return { id: r.id, date: r.date||"", amt: parseFloat(r.amt)||0, cat: r.cat||"", vendor: r.vendor||"", notes: r.notes||"", receipt: r.receipt||"", receiptUrl: r.receipt_url||"", receiptPath: r.receipt_path||"" };
+}
+function pushExpense(e){
+  // upsert single expense to Supabase (best-effort)
+  sbFetch("/rest/v1/expenses", "POST", expenseToDb(e)).catch(function(){});
+}
+function deleteExpenseDb(id){
+  sbFetch("/rest/v1/expenses?id=eq."+id, "DELETE").catch(function(){});
+}
+function loadExpenses(){
+  // Load cache immediately
+  try{ expenses = JSON.parse(localStorage.getItem("rebar_expenses")||"[]"); }catch(e){ expenses=[]; }
+  // Then try to pull from Supabase
+  sbFetch("/rest/v1/expenses?select=*&order=date.desc", "GET").then(function(data){
+    if(Array.isArray(data)){
+      expenses = data.map(expenseFromDb);
+      try{ localStorage.setItem("rebar_expenses", JSON.stringify(expenses)); }catch(e){}
+      if(typeof renderExpenses === "function") renderExpenses();
+      if(typeof renderFinancials === "function"){ var fv=document.getElementById("view-financials"); if(fv && fv.classList.contains("active")) renderFinancials(); }
+    }
+  }).catch(function(){ /* table missing or offline - keep cache */ });
+}
 function buildExpMonthOptions(){
   var sel = document.getElementById("exp-filter-month"); if(!sel) return;
   var months = {}; expenses.forEach(function(e){ if(e.date) months[e.date.slice(0,7)] = true; });
@@ -3136,17 +3293,18 @@ function saveExpense(){
       rec.receiptPath = path;
       var idx2 = expenses.findIndex(function(e){ return e.id===rec.id; });
       if(idx2>-1) expenses[idx2] = rec;
-      saveExpenses(); renderExpenses();
+      saveExpenses(); pushExpense(rec); renderExpenses();
       showToast("Expense + receipt saved");
     }).catch(function(err){ renderExpenses(); showToast("Expense saved, receipt failed: "+err.message); });
     closeM("m-expense");
     return;
   }
+  pushExpense(rec);
   renderExpenses(); closeM("m-expense"); showToast("Expense saved");
 }
 function deleteExpense(id){
   expenses = expenses.filter(function(e){ return e.id !== id; });
-  saveExpenses(); renderExpenses(); showToast("Expense deleted");
+  saveExpenses(); deleteExpenseDb(id); renderExpenses(); showToast("Expense deleted");
 }
 function renderExpenses(){
   buildExpMonthOptions();
@@ -3602,6 +3760,7 @@ function fuelToExpense(rec){
   if(existing > -1) expenses[existing] = exp;
   else expenses.unshift(exp);
   saveExpenses();
+  if(typeof pushExpense === "function") pushExpense(exp);
 }
 
 // ════════════════════════════════════════
