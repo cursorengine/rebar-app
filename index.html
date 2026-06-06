@@ -2922,6 +2922,7 @@ function renderExpenses(){
         +"<div class=\"exp-cat-lbl\">"+e.cat+(e.receipt?" - #"+e.receipt:"")+"</div></div>"
         +"<div class=\"exp-date-lbl\">"+fmtDate(e.date)+"</div>"
         +"<div class=\"exp-amt\">$"+(e.amt||0).toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2})+"</div>"
+        +"<button class=\"rcpt-btn\" onclick=\"event.stopPropagation();openReceiptModal('"+e.id+"')\" style=\"color:"+(e.receiptUrl?"\"#2ecc71\"":"\"#333\"")+"\">"+(e.receiptUrl?"R":"+R")+"</button>"
         +"<button class=\"exp-del-btn\" onclick=\"event.stopPropagation();deleteExpense('"+e.id+"')\">x</button>"
         +"</div>";
     });
@@ -3219,33 +3220,6 @@ document.addEventListener("DOMContentLoaded", function(){
     } else { prev.style.display = "none"; }
   });
 });
-
-// Patch renderExpenses to add receipt buttons
-var _origRenderExp = renderExpenses;
-renderExpenses = function(){
-  _origRenderExp();
-  var list = document.getElementById("expenses-list");
-  if(!list) return;
-  var rows = list.querySelectorAll(".exp-row");
-  rows.forEach(function(row){
-    var oc = row.getAttribute("onclick");
-    if(!oc) return;
-    var m = oc.match(/openExpenseModal\('([^']+)'\)/);
-    if(!m) return;
-    var eid = m[1];
-    var exp = expenses.find(function(e){ return e.id === eid; });
-    if(!exp) return;
-    var rb = document.createElement("button");
-    rb.className = "rcpt-btn";
-    rb.title = exp.receiptUrl ? "View/Replace Receipt" : "Upload Receipt";
-    rb.textContent = exp.receiptUrl ? "R" : "+R";
-    rb.style.color = exp.receiptUrl ? "#2ecc71" : "#333";
-    rb.onclick = function(ev){ ev.stopPropagation(); openReceiptModal(eid); };
-    var del = row.querySelector(".exp-del-btn");
-    if(del) row.insertBefore(rb, del);
-    else row.appendChild(rb);
-  });
-};
 
 </script>
 </body>
