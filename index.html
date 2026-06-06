@@ -446,9 +446,9 @@ body.delmode .del-col{display:table-cell}
     <button class="nav-tab" onclick="switchView('builder')">Builder</button>
     <button class="nav-tab hide-mob" onclick="switchView('loads')">Loads</button>
     <button class="nav-tab hide-mob" onclick="switchView('contacts')">Contacts</button>
-    <button class="nav-tab hide-mob" onclick="switchView('expenses')">Expenses</button>
     <button class="nav-tab hide-mob" onclick="switchView('fleet')">Fleet</button>
-    <button class="nav-tab hide-mob" onclick="switchView('financials')">Financials</button>
+    <button class="nav-tab hide-mob" onclick="switchView('expenses')">Expenses</button>
+    <button class="nav-tab hide-mob" onclick="switchView('financials')">Account</button>
     <button id="hamburger" class="hamburger-btn" onclick="toggleHamburger()" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
@@ -869,9 +869,9 @@ body.delmode .del-col{display:table-cell}
 <div id="hamburger-menu" style="display:none;position:fixed;top:var(--nav-h);right:0;z-index:99;background:rgba(0,0,0,0.98);border:1px solid rgba(255,255,255,0.1);border-top:none;padding:8px 0;min-width:170px">
   <button class="ham-item" id="hm-loads" onclick="hamSwitch('loads')">Loads</button>
   <button class="ham-item" id="hm-contacts" onclick="hamSwitch('contacts')">Contacts</button>
-  <button class="ham-item" id="hm-expenses" onclick="hamSwitch('expenses')">Expenses</button>
   <button class="ham-item" id="hm-fleet" onclick="hamSwitch('fleet')">Fleet</button>
-  <button class="ham-item" id="hm-financials" onclick="hamSwitch('financials')">Financials</button>
+  <button class="ham-item" id="hm-expenses" onclick="hamSwitch('expenses')">Expenses</button>
+  <button class="ham-item" id="hm-financials" onclick="hamSwitch('financials')">Account</button>
 </div>
 
 <!-- LOADS VIEW -->
@@ -1252,7 +1252,7 @@ function switchView(v) {
   document.querySelectorAll(".view").forEach(function(el) { el.classList.remove("active"); });
   document.querySelectorAll(".nav-tab").forEach(function(el) { el.classList.remove("active"); });
   document.getElementById("view-" + v).classList.add("active");
-  var tabMap = {"tracker":0,"builder":1,"loads":2,"contacts":3,"expenses":4,"fleet":5,"financials":6};
+  var tabMap = {"tracker":0,"builder":1,"loads":2,"contacts":3,"fleet":4,"expenses":5,"financials":6};
   var tabs = document.querySelectorAll(".nav-tab");
   if(tabMap[v] !== undefined && tabs[tabMap[v]]) tabs[tabMap[v]].classList.add("active");
   // close hamburger
