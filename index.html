@@ -1824,28 +1824,25 @@ function renderExpenses(){
 // ── COMMANDDECK BOOT ──
 function runBootSequence(){
   var title = document.getElementById("boot-title");
-  var sub = document.getElementById("boot-sub");
   if(!title) return;
-  var loginBox = document.querySelector(".login-box");
-  var fields = loginBox ? loginBox.querySelectorAll(".login-field,.login-err,.login-btn,.login-sync") : [];
-  fields.forEach(function(el){ el.style.opacity="0"; el.style.transition="opacity 0.4s"; });
-  if(sub){ sub.style.opacity="0"; sub.style.transition="opacity 0.5s"; }
+  // Only run if login screen is actually visible
+  var ls = document.getElementById("login-screen");
+  if(!ls || ls.style.display === "none") return;
   var full = "COMMAND DECK";
   title.textContent = "";
   var i = 0;
   var t = setInterval(function(){
+    // Stop if login screen got hidden
+    if(ls.style.display === "none"){ clearInterval(t); title.textContent = full; return; }
     title.textContent += full[i]; i++;
     if(i >= full.length){
       clearInterval(t);
       setTimeout(function(){
-        if(sub) sub.style.opacity = "1";
-        setTimeout(function(){
-          fields.forEach(function(el){ el.style.opacity="1"; });
-          setTimeout(function(){ var em=document.getElementById("login-email"); if(em) em.focus(); },300);
-        },400);
-      },200);
+        var em = document.getElementById("login-email");
+        if(em && ls.style.display !== "none") em.focus();
+      }, 200);
     }
-  },65);
+  }, 65);
 }
 
 // ── INIT ADDITIONS ──
