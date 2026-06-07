@@ -15,7 +15,7 @@
   --nav-h:58px;--nav-h-mobile:94px;
 }
 html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
-body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:100vh}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden}
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-track{background:#0a0a0a}
 ::-webkit-scrollbar-thumb{background:#2a2a2a}
@@ -67,6 +67,11 @@ a{color:inherit}
 /* VIEWS */
 .view{display:none;padding-top:var(--nav-h);min-height:100vh}
 .view.active{display:block}
+@keyframes vSlideR{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes vSlideL{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+.view.va-r{animation:vSlideR 0.26s cubic-bezier(0.22,0.61,0.36,1)}
+.view.va-l{animation:vSlideL 0.26s cubic-bezier(0.22,0.61,0.36,1)}
+@media(prefers-reduced-motion:reduce){.view.va-r,.view.va-l{animation:none}}
 
 /* STATS */
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
@@ -155,7 +160,8 @@ body.delmode .del-col{display:table-cell}
 
 /* BUILDER */
 #view-builder{background:#161616}
-.bbar{padding:8px 14px;display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.92);position:sticky;top:var(--nav-h);z-index:50}
+.bbar{padding:8px 14px;display:flex;flex-direction:column;gap:7px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.92);position:sticky;top:var(--nav-h);z-index:50}
+.bbar-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .bbar .btn{flex-shrink:0}
 .bbar-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#2a2a2a;flex-shrink:0;white-space:nowrap}
 #qdoc{max-width:760px;margin:16px auto;background:#fff;color:#111;box-shadow:0 12px 40px rgba(0,0,0,0.5);position:relative;z-index:1}
@@ -415,11 +421,7 @@ body.delmode .del-col{display:table-cell}
 .ham-item{display:block;width:100%;text-align:left;padding:12px 20px;background:none;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#666;border-left:3px solid transparent;transition:color 0.15s,border-color 0.15s,background 0.15s;white-space:nowrap}
 .ham-item:hover,.ham-item:active{background:rgba(255,255,255,0.05);color:#fff}
 .ham-item.active{color:#fff;border-left-color:#fff;background:rgba(255,255,255,0.04)}
-/* slide-in drawer */
-.ham-menu{position:fixed;top:0;right:0;height:100vh;width:240px;max-width:80vw;z-index:200;background:rgba(8,8,8,0.99);border-left:1px solid rgba(255,255,255,0.1);padding-top:calc(var(--nav-h-mobile) + 8px);transform:translateX(100%);transition:transform 0.25s ease;backdrop-filter:blur(10px);box-shadow:-12px 0 40px rgba(0,0,0,0.5)}
-.ham-menu.open{transform:translateX(0)}
-#ham-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:150;opacity:0;visibility:hidden;transition:opacity 0.25s,visibility 0.25s}
-#ham-backdrop.open{opacity:1;visibility:visible}
+.ham-menu{display:none;position:fixed;top:var(--nav-h-mobile);right:0;z-index:99;background:rgba(0,0,0,0.98);border:1px solid rgba(255,255,255,0.1);border-top:none;padding:8px 0;min-width:180px;box-shadow:-8px 8px 30px rgba(0,0,0,0.45)}
 @media(max-width:640px){
   .hamburger-btn{display:flex}
   .hide-mob{display:none!important}
@@ -626,15 +628,19 @@ body.delmode .del-col{display:table-cell}
 <!-- BUILDER -->
 <div id="view-builder" class="view">
   <div class="bbar">
-    <button class="btn btn-sm" id="doctype-toggle" onclick="toggleDocType()" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">Mode: Quote</button>
-    <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
-    <button class="btn btn-sm" onclick="openRateCalc()" style="background:rgba(241,196,15,0.15);color:#f1c40f;border:1px solid rgba(241,196,15,0.3)">Rate Calc</button>
-    <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
-    <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
-    <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
-    <button class="btn btn-ghost btn-sm" onclick="saveTemplate()">Save Tmpl</button>
-    <select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value)" style="max-width:120px;font-size:10px"><option value="">Load Template...</option></select>
-    <button class="btn btn-ghost btn-sm" onclick="clearQ()" style="color:#e74c3c">Clear</button>
+    <div class="bbar-row">
+      <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
+      <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveTemplate()">Save Tmpl</button>
+      <select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value)" style="max-width:120px;font-size:10px"><option value="">Load Template...</option></select>
+    </div>
+    <div class="bbar-row">
+      <button class="btn btn-sm" id="doctype-toggle" onclick="toggleDocType()" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">Mode: Quote</button>
+      <button class="btn btn-sm" onclick="openRateCalc()" style="background:rgba(241,196,15,0.15);color:#f1c40f;border:1px solid rgba(241,196,15,0.3)">Rate Calc</button>
+      <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearQ()" style="color:#e74c3c">Clear</button>
+    </div>
   </div>
   <div id="qdoc">
     <div class="pdf-hdr">
@@ -1015,7 +1021,6 @@ body.delmode .del-col{display:table-cell}
 <div class="toast" id="toast"></div>
 
 <!-- MOBILE HAMBURGER MENU -->
-<div id="ham-backdrop" onclick="closeHam()"></div>
 <div id="hamburger-menu" class="ham-menu">
   <button class="ham-item" id="hm-loads" onclick="hamSwitch('loads')">Loads</button>
   <button class="ham-item" id="hm-fleet" onclick="hamSwitch('fleet')">Fleet</button>
@@ -1050,6 +1055,7 @@ body.delmode .del-col{display:table-cell}
       <div style="display:flex;gap:6px;align-items:center">
         <button class="btn btn-ghost btn-sm" id="req-filter-new" onclick="filterRequests('new')" style="color:#f1c40f;border-color:rgba(241,196,15,0.3)">New</button>
         <button class="btn btn-ghost btn-sm" id="req-filter-all" onclick="filterRequests('all')">All</button>
+        <button class="btn btn-ghost btn-sm" id="req-filter-archived" onclick="filterRequests('archived')" style="opacity:0.5">Archive</button>
         <button class="btn btn-ghost btn-sm" onclick="loadRequests()" title="Refresh">&#8635;</button>
       </div>
     </div>
@@ -1458,6 +1464,14 @@ function switchView(v) {
   var tabMap = {"tracker":0,"builder":1,"requests":2,"contacts":3,"loads":4,"fleet":5,"expenses":6,"financials":7};
   var tabs = document.querySelectorAll(".nav-tab");
   if(tabMap[v] !== undefined && tabs[tabMap[v]]) tabs[tabMap[v]].classList.add("active");
+  // slide animation in the direction of travel
+  var newIdx = tabMap[v] !== undefined ? tabMap[v] : 0;
+  var dir = newIdx < (window.__viewIdx || 0) ? "va-l" : "va-r";
+  window.__viewIdx = newIdx;
+  var ve = document.getElementById("view-" + v);
+  ve.classList.remove("va-r", "va-l");
+  void ve.offsetWidth;
+  ve.classList.add(dir);
   // close hamburger
   if(typeof closeHam === "function") closeHam();
   // update ham active
@@ -3091,19 +3105,15 @@ document.addEventListener("DOMContentLoaded", function() {
 // ── HAMBURGER ──
 function toggleHamburger(){
   var menu = document.getElementById("hamburger-menu");
-  var bd = document.getElementById("ham-backdrop");
   var btn = document.getElementById("hamburger");
-  var open = menu.classList.contains("open");
-  menu.classList.toggle("open", !open);
-  if(bd) bd.classList.toggle("open", !open);
+  var open = menu.style.display === "block";
+  menu.style.display = open ? "none" : "block";
   if(btn) btn.classList.toggle("open", !open);
 }
 function closeHam(){
   var menu = document.getElementById("hamburger-menu");
-  var bd = document.getElementById("ham-backdrop");
   var btn = document.getElementById("hamburger");
-  if(menu) menu.classList.remove("open");
-  if(bd) bd.classList.remove("open");
+  if(menu) menu.style.display = "none";
   if(btn) btn.classList.remove("open");
 }
 function hamSwitch(v){
@@ -3112,7 +3122,7 @@ function hamSwitch(v){
 document.addEventListener("click", function(e){
   var menu = document.getElementById("hamburger-menu");
   var btn = document.getElementById("hamburger");
-  if(menu && menu.classList.contains("open")){
+  if(menu && menu.style.display === "block"){
     if(!menu.contains(e.target) && btn && !btn.contains(e.target)) closeHam();
   }
 });
@@ -4090,6 +4100,8 @@ function filterRequests(f) {
   reqFilter = f;
   document.getElementById("req-filter-new").style.opacity = f === "new" ? "1" : "0.5";
   document.getElementById("req-filter-all").style.opacity = f === "all" ? "1" : "0.5";
+  var av = document.getElementById("req-filter-archived");
+  if (av) av.style.opacity = f === "archived" ? "1" : "0.5";
   renderRequests();
 }
 
@@ -4098,7 +4110,10 @@ function renderRequests() {
   var empty = document.getElementById("requests-empty");
   if (!box) return;
   var list = quoteRequests.filter(function(r){
-    return reqFilter === "all" ? (r.status || "new") !== "archived" : (r.status || "new") === "new";
+    var s = r.status || "new";
+    if (reqFilter === "archived") return s === "archived";
+    if (reqFilter === "all") return s !== "archived";
+    return s === "new";
   });
   if (!list.length) { box.innerHTML = ""; empty.style.display = "block"; return; }
   empty.style.display = "none";
@@ -4108,12 +4123,15 @@ function renderRequests() {
     var name = r.company || r.name || "Unknown";
     var when = r.created_at ? new Date(r.created_at).toLocaleDateString("en-CA",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "";
     var lane = [r.pickup, r.delivery].filter(Boolean).join(" \u2192 ");
-    var quoted = (r.status || "new") === "quoted";
-    html += '<div class="fleet-card" style="margin-bottom:12px;padding:14px 16px;border-color:' + (quoted ? "var(--border)" : "rgba(241,196,15,0.3)") + '">'
+    var status = r.status || "new";
+    var quoted = status === "quoted";
+    var archived = status === "archived";
+    var accent = archived ? "var(--border)" : (quoted ? "var(--border)" : "rgba(241,196,15,0.3)");
+    html += '<div class="fleet-card" style="margin-bottom:12px;padding:14px 16px;border-color:' + accent + (archived ? ';opacity:0.7' : '') + '">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px">'
       + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:0.03em;color:#fff">' + esc(name) + '</div>'
       + '<div style="font-size:11px;color:#555;margin-top:2px">' + esc(when) + (quoted ? ' &middot; <span style="color:#2ecc71">Quoted</span>' : '') + '</div></div>'
-      + (quoted ? '' : '<div class="fleet-badge" style="background:rgba(241,196,15,0.12);color:#f1c40f">New</div>')
+      + (archived ? '<div class="fleet-badge" style="background:rgba(255,255,255,0.06);color:#777">Archived</div>' : (quoted ? '' : '<div class="fleet-badge" style="background:rgba(241,196,15,0.12);color:#f1c40f">New</div>'))
       + '</div>';
     var rows = [];
     if (lane) rows.push(['Lane', esc(lane)]);
@@ -4130,10 +4148,15 @@ function renderRequests() {
     if (r.message) {
       html += '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border-left:2px solid var(--border2);font-size:12px;color:#999;line-height:1.5">' + esc(r.message) + '</div>';
     }
-    html += '<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">'
-      + '<button class="btn btn-chrome btn-sm" onclick="requestToQuote(\'' + r.id + '\')">Create Quote</button>'
-      + '<button class="btn btn-ghost btn-sm" onclick="archiveRequest(\'' + r.id + '\')" style="color:#777">Archive</button>'
-      + '</div></div>';
+    html += '<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">';
+    if (archived) {
+      html += '<button class="btn btn-ghost btn-sm" onclick="restoreRequest(\'' + r.id + '\')" style="color:#2ecc71">Restore</button>'
+        + '<button class="btn btn-ghost btn-sm" onclick="deleteRequestForever(\'' + r.id + '\')" style="color:#e74c3c">Delete Forever</button>';
+    } else {
+      html += '<button class="btn btn-chrome btn-sm" onclick="requestToQuote(\'' + r.id + '\')">Create Quote</button>'
+        + '<button class="btn btn-ghost btn-sm" onclick="archiveRequest(\'' + r.id + '\')" style="color:#777">Archive</button>';
+    }
+    html += '</div></div>';
   });
   box.innerHTML = html;
 }
@@ -4169,11 +4192,42 @@ function requestToQuote(id) {
 function archiveRequest(id) {
   var r = quoteRequests.find(function(x){ return x.id == id; });
   if (!r) return;
+  var who = r.company || r.name || "this request";
+  if (!confirm("Archive " + who + "? You can restore it from the Archive tab.")) return;
   r.status = "archived";
   sbFetch("/rest/v1/quote_requests?id=eq." + id, "PATCH", { status: "archived" }).catch(function(){});
   renderRequests();
   updateReqBadge();
-  showToast("Request archived");
+  showToast("Moved to archive");
+}
+
+function restoreRequest(id) {
+  var r = quoteRequests.find(function(x){ return x.id == id; });
+  if (!r) return;
+  r.status = "new";
+  sbFetch("/rest/v1/quote_requests?id=eq." + id, "PATCH", { status: "new" }).catch(function(){});
+  renderRequests();
+  updateReqBadge();
+  showToast("Restored to New");
+}
+
+function deleteRequestForever(id) {
+  var r = quoteRequests.find(function(x){ return x.id == id; });
+  if (!r) return;
+  var who = r.company || r.name || "this request";
+  if (!confirm("Permanently delete " + who + "? This cannot be undone.")) return;
+  fetch(SB_URL + "/rest/v1/quote_requests?id=eq." + id, {
+    method: "DELETE",
+    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + (currentUser ? currentUser.access_token : SB_KEY) }
+  })
+    .then(function(resp){
+      if (!resp.ok) throw new Error("del " + resp.status);
+      quoteRequests = quoteRequests.filter(function(x){ return x.id != id; });
+      renderRequests();
+      updateReqBadge();
+      showToast("Deleted");
+    })
+    .catch(function(){ showToast("Delete needs permission \u2014 run the delete SQL"); });
 }
 
 </script>
