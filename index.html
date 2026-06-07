@@ -160,8 +160,8 @@ body.delmode .del-col{display:table-cell}
 
 /* BUILDER */
 #view-builder{background:#161616}
-.bbar{padding:8px 14px;display:flex;flex-direction:column;gap:7px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.92);position:sticky;top:var(--nav-h);z-index:50}
-.bbar-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.bbar{padding:8px 14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.92);position:sticky;top:var(--nav-h);z-index:50}
+.build-menu{display:none;position:fixed;z-index:120;background:rgba(0,0,0,0.98);border:1px solid rgba(255,255,255,0.12);padding:6px 0;min-width:200px;box-shadow:0 12px 34px rgba(0,0,0,0.55)}
 .bbar .btn{flex-shrink:0}
 .bbar-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#2a2a2a;flex-shrink:0;white-space:nowrap}
 #qdoc{max-width:760px;margin:16px auto;background:#fff;color:#111;box-shadow:0 12px 40px rgba(0,0,0,0.5);position:relative;z-index:1}
@@ -628,19 +628,18 @@ body.delmode .del-col{display:table-cell}
 <!-- BUILDER -->
 <div id="view-builder" class="view">
   <div class="bbar">
-    <div class="bbar-row">
-      <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
-      <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
-      <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
-      <button class="btn btn-ghost btn-sm" onclick="saveTemplate()">Save Tmpl</button>
-      <select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value)" style="max-width:120px;font-size:10px"><option value="">Load Template...</option></select>
-    </div>
-    <div class="bbar-row">
-      <button class="btn btn-sm" id="doctype-toggle" onclick="toggleDocType()" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">Mode: Quote</button>
-      <button class="btn btn-sm" onclick="openRateCalc()" style="background:rgba(241,196,15,0.15);color:#f1c40f;border:1px solid rgba(241,196,15,0.3)">Rate Calc</button>
-      <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
-      <button class="btn btn-ghost btn-sm" onclick="clearQ()" style="color:#e74c3c">Clear</button>
-    </div>
+    <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
+    <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
+    <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
+    <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleBuildMenu(event)">More &#9662;</button>
+  </div>
+  <div id="build-menu" class="build-menu">
+    <button class="ham-item" id="doctype-toggle" onclick="toggleDocType()">Mode: Quote</button>
+    <button class="ham-item" onclick="openRateCalc();closeBuildMenu()">Rate Calculator</button>
+    <button class="ham-item" onclick="saveTemplate();closeBuildMenu()">Save as Template</button>
+    <div style="padding:8px 16px"><select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value);closeBuildMenu()" style="width:100%;font-size:11px"><option value="">Load Template...</option></select></div>
+    <button class="ham-item" onclick="clearQ();closeBuildMenu()" style="color:#e74c3c">Clear</button>
   </div>
   <div id="qdoc">
     <div class="pdf-hdr">
@@ -3119,6 +3118,24 @@ function closeHam(){
 function hamSwitch(v){
   switchView(v);
 }
+function toggleBuildMenu(e){
+  e.stopPropagation();
+  var m = document.getElementById("build-menu");
+  if(!m) return;
+  if(m.style.display === "block"){ m.style.display = "none"; return; }
+  var r = e.currentTarget.getBoundingClientRect();
+  m.style.top = (r.bottom + 4) + "px";
+  m.style.right = Math.max(8, window.innerWidth - r.right) + "px";
+  m.style.display = "block";
+}
+function closeBuildMenu(){
+  var m = document.getElementById("build-menu");
+  if(m) m.style.display = "none";
+}
+document.addEventListener("click", function(e){
+  var m = document.getElementById("build-menu");
+  if(m && m.style.display === "block" && !m.contains(e.target)) m.style.display = "none";
+});
 document.addEventListener("click", function(e){
   var menu = document.getElementById("hamburger-menu");
   var btn = document.getElementById("hamburger");
