@@ -12,7 +12,7 @@
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
   --silver:#b0b0b0;--chrome:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);
   --green:#2ecc71;--yellow:#f1c40f;--blue:#3498db;--red:#e74c3c;
-  --nav-h:58px;
+  --nav-h:58px;--nav-h-mobile:94px;
 }
 html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
 body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:100vh}
@@ -415,9 +415,23 @@ body.delmode .del-col{display:table-cell}
 .ham-item{display:block;width:100%;text-align:left;padding:12px 20px;background:none;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#666;border-left:3px solid transparent;transition:color 0.15s,border-color 0.15s,background 0.15s;white-space:nowrap}
 .ham-item:hover,.ham-item:active{background:rgba(255,255,255,0.05);color:#fff}
 .ham-item.active{color:#fff;border-left-color:#fff;background:rgba(255,255,255,0.04)}
+/* slide-in drawer */
+.ham-menu{position:fixed;top:0;right:0;height:100vh;width:240px;max-width:80vw;z-index:200;background:rgba(8,8,8,0.99);border-left:1px solid rgba(255,255,255,0.1);padding-top:calc(var(--nav-h-mobile) + 8px);transform:translateX(100%);transition:transform 0.25s ease;backdrop-filter:blur(10px);box-shadow:-12px 0 40px rgba(0,0,0,0.5)}
+.ham-menu.open{transform:translateX(0)}
+#ham-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:150;opacity:0;visibility:hidden;transition:opacity 0.25s,visibility 0.25s}
+#ham-backdrop.open{opacity:1;visibility:visible}
 @media(max-width:640px){
   .hamburger-btn{display:flex}
   .hide-mob{display:none!important}
+  /* two-row mobile nav */
+  #nav{height:auto;flex-wrap:wrap;align-items:center;padding:0 12px;overflow:visible;gap:0}
+  .nav-logo{order:1;height:26px}
+  .nav-right{order:2;margin-left:auto;height:48px;align-items:center}
+  .nav-tabs{order:3;flex-basis:100%;width:100%;justify-content:center;height:46px;align-items:stretch;border-top:1px solid var(--border);gap:4px}
+  .nav-tab{display:flex;align-items:center;padding:0 14px;font-size:12px;letter-spacing:0.1em;border-bottom:none;border-top:2px solid transparent}
+  .nav-tab.active{border-bottom:none;border-top-color:#fff}
+  .view{padding-top:var(--nav-h-mobile)}
+  .bbar{top:var(--nav-h-mobile)}
 }
 
 /* LOADS */
@@ -512,18 +526,16 @@ body.delmode .del-col{display:table-cell}
     <button class="nav-tab active" onclick="switchView('tracker')">Tracker</button>
     <button class="nav-tab" onclick="switchView('builder')">Builder</button>
     <button class="nav-tab" id="tab-requests" onclick="switchView('requests')">Requests<span id="req-badge" style="display:none;background:#e74c3c;color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;margin-left:5px;vertical-align:middle;font-family:'Barlow Condensed',sans-serif"></span></button>
+    <button class="nav-tab" onclick="switchView('contacts')">Contacts</button>
     <button class="nav-tab hide-mob" onclick="switchView('loads')">Loads</button>
-    <button class="nav-tab hide-mob" onclick="switchView('contacts')">Contacts</button>
     <button class="nav-tab hide-mob" onclick="switchView('fleet')">Fleet</button>
     <button class="nav-tab hide-mob" onclick="switchView('expenses')">Expenses</button>
     <button class="nav-tab hide-mob" onclick="switchView('financials')">Account</button>
-    <button id="hamburger" class="hamburger-btn" onclick="toggleHamburger()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
   </div>
   <div class="nav-right">
     <div class="sync-dot" id="sync-dot" title="Sync status"></div>
     <button class="btn btn-ghost btn-sm hide-mob" onclick="exportCSV()">CSV</button>
+    <button id="hamburger" class="hamburger-btn" onclick="toggleHamburger()" aria-label="Menu"><span></span><span></span><span></span></button>
     <button class="btn btn-ghost btn-xs" onclick="doLogout()" style="color:#555">Out</button>
   </div>
 </nav>
@@ -1003,12 +1015,13 @@ body.delmode .del-col{display:table-cell}
 <div class="toast" id="toast"></div>
 
 <!-- MOBILE HAMBURGER MENU -->
-<div id="hamburger-menu" style="display:none;position:fixed;top:var(--nav-h);right:0;z-index:99;background:rgba(0,0,0,0.98);border:1px solid rgba(255,255,255,0.1);border-top:none;padding:8px 0;min-width:170px">
+<div id="ham-backdrop" onclick="closeHam()"></div>
+<div id="hamburger-menu" class="ham-menu">
   <button class="ham-item" id="hm-loads" onclick="hamSwitch('loads')">Loads</button>
-  <button class="ham-item" id="hm-contacts" onclick="hamSwitch('contacts')">Contacts</button>
   <button class="ham-item" id="hm-fleet" onclick="hamSwitch('fleet')">Fleet</button>
   <button class="ham-item" id="hm-expenses" onclick="hamSwitch('expenses')">Expenses</button>
   <button class="ham-item" id="hm-financials" onclick="hamSwitch('financials')">Account</button>
+  <button class="ham-item" onclick="exportCSV();closeHam()">Export CSV</button>
 </div>
 
 <!-- LOADS VIEW -->
@@ -1442,14 +1455,11 @@ function switchView(v) {
   document.querySelectorAll(".view").forEach(function(el) { el.classList.remove("active"); });
   document.querySelectorAll(".nav-tab").forEach(function(el) { el.classList.remove("active"); });
   document.getElementById("view-" + v).classList.add("active");
-  var tabMap = {"tracker":0,"builder":1,"requests":2,"loads":3,"contacts":4,"fleet":5,"expenses":6,"financials":7};
+  var tabMap = {"tracker":0,"builder":1,"requests":2,"contacts":3,"loads":4,"fleet":5,"expenses":6,"financials":7};
   var tabs = document.querySelectorAll(".nav-tab");
   if(tabMap[v] !== undefined && tabs[tabMap[v]]) tabs[tabMap[v]].classList.add("active");
   // close hamburger
-  var hm = document.getElementById("hamburger-menu");
-  var hb = document.getElementById("hamburger");
-  if(hm) hm.style.display = "none";
-  if(hb) hb.classList.remove("open");
+  if(typeof closeHam === "function") closeHam();
   // update ham active
   document.querySelectorAll(".ham-item").forEach(function(el){ el.classList.remove("active"); });
   var hmItem = document.getElementById("hm-" + v);
@@ -3081,10 +3091,20 @@ document.addEventListener("DOMContentLoaded", function() {
 // ── HAMBURGER ──
 function toggleHamburger(){
   var menu = document.getElementById("hamburger-menu");
+  var bd = document.getElementById("ham-backdrop");
   var btn = document.getElementById("hamburger");
-  var open = menu.style.display === "block";
-  menu.style.display = open ? "none" : "block";
-  btn.classList.toggle("open", !open);
+  var open = menu.classList.contains("open");
+  menu.classList.toggle("open", !open);
+  if(bd) bd.classList.toggle("open", !open);
+  if(btn) btn.classList.toggle("open", !open);
+}
+function closeHam(){
+  var menu = document.getElementById("hamburger-menu");
+  var bd = document.getElementById("ham-backdrop");
+  var btn = document.getElementById("hamburger");
+  if(menu) menu.classList.remove("open");
+  if(bd) bd.classList.remove("open");
+  if(btn) btn.classList.remove("open");
 }
 function hamSwitch(v){
   switchView(v);
@@ -3092,11 +3112,8 @@ function hamSwitch(v){
 document.addEventListener("click", function(e){
   var menu = document.getElementById("hamburger-menu");
   var btn = document.getElementById("hamburger");
-  if(menu && menu.style.display === "block"){
-    if(!menu.contains(e.target) && btn && !btn.contains(e.target)){
-      menu.style.display = "none";
-      btn.classList.remove("open");
-    }
+  if(menu && menu.classList.contains("open")){
+    if(!menu.contains(e.target) && btn && !btn.contains(e.target)) closeHam();
   }
 });
 
