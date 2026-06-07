@@ -53,7 +53,7 @@ a{color:inherit}
 /* NAV */
 #nav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:rgba(0,0,0,0.98);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;padding:0 10px;backdrop-filter:blur(10px);overflow:hidden}
 .nav-logo{height:28px;object-fit:contain;cursor:pointer;flex-shrink:0}
-.nav-tabs{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1;scrollbar-width:none}
+.nav-tabs{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1;scrollbar-width:none;justify-content:center}
 .nav-tabs::-webkit-scrollbar{display:none}
 .nav-tab{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;padding:8px 11px;cursor:pointer;color:#444;background:none;border:none;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;white-space:nowrap;flex-shrink:0}
 .nav-tab.active{color:#fff;border-bottom-color:#fff}
@@ -160,7 +160,7 @@ body.delmode .del-col{display:table-cell}
 
 /* BUILDER */
 #view-builder{background:#161616}
-.bbar{padding:8px 14px;display:flex;align-items:center;gap:7px;flex-wrap:nowrap;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.92);position:sticky;top:var(--nav-h);z-index:50}
+.bbar{padding:8px 14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.92);position:sticky;top:var(--nav-h);z-index:50}
 .build-menu{display:none;position:fixed;z-index:120;background:rgba(0,0,0,0.98);border:1px solid rgba(255,255,255,0.12);padding:6px 0;min-width:200px;max-width:calc(100vw - 16px);box-shadow:0 12px 34px rgba(0,0,0,0.55)}
 .bbar .btn{flex-shrink:0}
 .bbar-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#2a2a2a;flex-shrink:0;white-space:nowrap}
@@ -433,8 +433,8 @@ body.delmode .del-col{display:table-cell}
   .nav-tab{display:flex;align-items:center;padding:0 14px;font-size:12px;letter-spacing:0.1em;border-bottom:none;border-top:2px solid transparent}
   .nav-tab.active{border-bottom:none;border-top-color:#fff}
   .view{padding-top:var(--nav-h-mobile)}
-  .bbar{top:var(--nav-h-mobile)}
-  .bbar .btn{padding:7px 9px;font-size:10px;letter-spacing:0.05em}
+  .bbar{top:var(--nav-h-mobile);justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  #bbar-more{margin-left:auto}
 }
 
 /* LOADS */
@@ -629,15 +629,15 @@ body.delmode .del-col{display:table-cell}
 <!-- BUILDER -->
 <div id="view-builder" class="view">
   <div class="bbar">
+    <button class="btn btn-sm" id="doctype-toggle" onclick="toggleDocType()" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">Mode: Quote</button>
     <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
     <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
+    <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
     <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
-    <button class="btn btn-ghost btn-sm" onclick="toggleBuildMenu(event)" style="margin-left:auto">More &#9662;</button>
+    <button class="btn btn-ghost btn-sm" id="bbar-more" onclick="toggleBuildMenu(event)">More &#9662;</button>
   </div>
   <div id="build-menu" class="build-menu">
-    <button class="ham-item" id="doctype-toggle" onclick="toggleDocType()">Mode: Quote</button>
-    <button class="ham-item" onclick="doEmail();closeBuildMenu()">&#9993; Email</button>
-    <button class="ham-item" onclick="openRateCalc();closeBuildMenu()">Rate Calculator</button>
+    <button class="ham-item" onclick="openRateCalc();closeBuildMenu()" style="color:#f1c40f">Rate Calculator</button>
     <button class="ham-item" onclick="saveTemplate();closeBuildMenu()">Save as Template</button>
     <div style="padding:8px 16px"><select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value);closeBuildMenu()" style="width:100%;font-size:11px"><option value="">Load Template...</option></select></div>
     <button class="ham-item" onclick="clearQ();closeBuildMenu()" style="color:#e74c3c">Clear</button>
@@ -1468,6 +1468,7 @@ function switchView(v) {
   var newIdx = tabMap[v] !== undefined ? tabMap[v] : 0;
   var dir = newIdx < (window.__viewIdx || 0) ? "va-l" : "va-r";
   window.__viewIdx = newIdx;
+  window.__curView = v;
   var ve = document.getElementById("view-" + v);
   ve.classList.remove("va-r", "va-l");
   void ve.offsetWidth;
@@ -3222,13 +3223,16 @@ function buildContactsMap(){
   // Active (non-deleted) quotes drive jobs/revenue stats; deleted ones still preserve the contact record.
   quotes.filter(function(q){ return q.co; }).forEach(function(q){
     var key = q.co.trim().toLowerCase();
-    if(!map[key]) map[key] = {name:q.co,phone:q.phone||"",email:q.email||"",jobs:0,totalRev:0,lastJob:"",wins:0};
+    if(!map[key]) map[key] = {name:q.co,phone:q.phone||"",email:q.email||"",contact:q.contact||"",jobs:0,totalRev:0,lastJob:"",firstJob:"",wins:0,pending:0};
     if(!q.deleted){
       map[key].jobs++;
       map[key].totalRev += parseFloat(q.total)||0;
       if(q.status === "Accepted") map[key].wins++;
+      if(q.status === "Pending") map[key].pending++;
       if(!map[key].lastJob || q.date > map[key].lastJob) map[key].lastJob = q.date;
+      if(q.date && (!map[key].firstJob || q.date < map[key].firstJob)) map[key].firstJob = q.date;
     }
+    if(!map[key].contact && q.contact) map[key].contact = q.contact;
     if(!map[key].phone && q.phone) map[key].phone = q.phone;
     if(!map[key].email && q.email) map[key].email = q.email;
   });
@@ -3265,14 +3269,22 @@ function renderContacts(){
   var html = "";
   contacts.forEach(function(c){
     var wr = c.jobs > 0 ? Math.round((c.wins/c.jobs)*100) : 0;
+    var avg = c.jobs > 0 ? Math.round(c.totalRev/c.jobs) : 0;
     var safeN = c.name.replace(/\\/g,"\\\\").replace(/"/g,"&quot;");
+    var title = c.contact ? c.contact : c.name;
+    var subName = (c.contact && c.name) ? c.name : "";
     html += "<div class=\"contact-card\">"
-      +"<div class=\"contact-name\">"+c.name+"</div>"
+      +"<div class=\"contact-name\">"+title+"</div>"
+      +(subName ? "<div style=\"font-size:13px;color:#999;margin:-2px 0 4px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.04em\">"+subName+"</div>" : "")
+      +((c.phone||c.email) ? "<div style=\"font-size:11px;color:#666;margin-bottom:6px\">"+[c.phone,c.email].filter(Boolean).join(" &middot; ")+"</div>" : "")
       +"<div class=\"contact-meta\">"
       +"<div class=\"contact-stat\">"+c.jobs+" <span>quotes</span></div>"
       +"<div class=\"contact-stat\">"+c.wins+" <span>won</span></div>"
+      +(c.pending > 0 ? "<div class=\"contact-stat\" style=\"color:#f1c40f\">"+c.pending+" <span>pending</span></div>" : "")
       +"<div class=\"contact-stat\">"+wr+"% <span>win rate</span></div>"
       +"<div class=\"contact-stat\">$"+c.totalRev.toLocaleString("en-CA",{maximumFractionDigits:0})+" <span>total</span></div>"
+      +"<div class=\"contact-stat\">$"+avg.toLocaleString("en-CA",{maximumFractionDigits:0})+" <span>avg quote</span></div>"
+      +(c.firstJob ? "<div class=\"contact-stat\">"+fmtDate(c.firstJob)+" <span>customer since</span></div>" : "")
       +(c.lastJob ? "<div class=\"contact-stat\">"+fmtDate(c.lastJob)+" <span>last job</span></div>" : "")
       +(function(){ var ps=customerPayStats(c.name); return ps ? "<div class=\"contact-stat\" style=\"color:"+(ps.avgDays<=30?"#2ecc71":"#e74c3c")+"\">"+ps.avgDays+"d <span>avg pay</span></div>" + (ps.late>0?"<div class=\"contact-stat\" style=\"color:#e74c3c\">"+ps.late+" <span>late</span></div>":"") : ""; })()
       +"</div>"
@@ -4250,6 +4262,31 @@ function deleteRequestForever(id) {
     })
     .catch(function(){ showToast("Delete needs permission \u2014 run the delete SQL"); });
 }
+
+// ════════════════════════════════════════
+// Swipe between primary tabs (mobile)
+// ════════════════════════════════════════
+(function(){
+  var sx = 0, sy = 0, track = false;
+  var order = ["tracker","builder","requests","contacts"];
+  var blocked = "input,textarea,select,button,a,.bbar,.tbl-wrap,.build-menu,.ham-menu,#nav,.modal";
+  document.addEventListener("touchstart", function(e){
+    if(e.touches.length !== 1){ track = false; return; }
+    if(e.target.closest && e.target.closest(blocked)){ track = false; return; }
+    if(document.querySelector(".mbg.open")){ track = false; return; }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; track = true;
+  }, {passive:true});
+  document.addEventListener("touchend", function(e){
+    if(!track) return; track = false;
+    var dx = e.changedTouches[0].clientX - sx;
+    var dy = e.changedTouches[0].clientY - sy;
+    if(Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    var i = order.indexOf(window.__curView || "tracker");
+    if(i === -1) return;
+    if(dx < 0 && i < order.length - 1) switchView(order[i + 1]);
+    else if(dx > 0 && i > 0) switchView(order[i - 1]);
+  }, {passive:true});
+})();
 
 </script>
 </body>
