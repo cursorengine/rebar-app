@@ -3724,7 +3724,7 @@ async function runBOLExtraction(base64, mediaType){
   try {
     var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 800,
@@ -3887,7 +3887,7 @@ async function renderMorningBriefing(force){
   try {
     var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 250, messages: [{role:"user",content:prompt}] })
     });
     var data = await resp.json();
@@ -4984,7 +4984,7 @@ async function runAIResearch(r) {
     aqSetProgress(30, "AI analyzing company profile...");
     var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 1000,
@@ -5067,7 +5067,7 @@ async function buildAIQuote(r, intel) {
   try {
     var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 400,
@@ -5790,7 +5790,7 @@ async function aideckSend(){
 
     var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 800,
@@ -6072,7 +6072,7 @@ async function runPasteParser(){
   try {
     var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 500,
