@@ -1189,6 +1189,59 @@ body.delmode .del-col{display:table-cell}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- AI QUOTE PIPELINE MODAL -->
+<style>
+#aq-progress-bar{height:2px;background:rgba(255,255,255,0.06);position:relative;overflow:hidden;margin-bottom:16px}
+#aq-progress{height:100%;background:linear-gradient(90deg,#888,#f0f0f0);width:0%;transition:width 0.6s ease}
+#aq-status{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#555;margin-bottom:14px}
+.aq-lead-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:6px 10px;font-size:12px;color:#888;margin-bottom:14px;flex-wrap:wrap}
+.aq-lead-pill b{color:#ccc;font-weight:600}
+#aq-actions{gap:8px;flex-wrap:wrap;margin-top:14px}
+#aq-actions .btn{flex:1;min-width:120px;padding:14px 10px;font-size:12px}
+.aq-section-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#333;margin-bottom:6px}
+</style>
+<div class="mbg" id="m-ai-quote">
+  <div class="modal" style="max-width:560px">
+    <button class="mclose" onclick="closeM('m-ai-quote')">&#x2715;</button>
+    <div style="margin-bottom:14px">
+      <h2 style="margin-bottom:2px">AI Quote Pipeline</h2>
+      <div style="font-size:11px;color:#555;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em">Auto-research &middot; Auto-quote &middot; You close it</div>
+    </div>
+    <div class="aq-lead-pill">
+      <b id="aq-lead-name">Company</b>
+      <span>&middot;</span>
+      <span id="aq-lead-lane">—</span>
+      <span>&middot;</span>
+      <span id="aq-lead-load">—</span>
+    </div>
+    <div id="aq-progress-bar"><div id="aq-progress"></div></div>
+    <div id="aq-status">Starting...</div>
+    <div id="aq-step-research" style="display:none">
+      <div class="aq-section-lbl">Company Intelligence</div>
+      <div id="aq-research-out"></div>
+    </div>
+    <div id="aq-step-quote" style="display:none;margin-top:12px">
+      <div class="aq-section-lbl">Generated Quote</div>
+      <div id="aq-quote-out"></div>
+    </div>
+    <div id="aq-step-notify" style="display:none;margin-top:12px">
+      <div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25);padding:10px 14px;display:flex;align-items:center;gap:10px">
+        <div style="font-size:18px;color:#2ecc71">&#9679;</div>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2ecc71">Quote Ready</div>
+          <div style="font-size:12px;color:#888;margin-top:1px">Research complete &middot; How do you want to close this?</div>
+        </div>
+      </div>
+    </div>
+    <div id="aq-actions" style="display:none;flex-wrap:wrap;gap:8px;margin-top:14px">
+      <button class="btn btn-green" onclick="aqSendEmail()">&#9993; Email Quote</button>
+      <button class="btn btn-blue" onclick="aqAgentCall()">&#9990; AI Agent Call</button>
+      <button class="btn btn-ghost" onclick="aqCallYourself()">&#9742; Call Yourself</button>
+      <button class="btn btn-chrome btn-sm" onclick="aqSaveToTracker()" style="flex-basis:100%;margin-top:4px">Save to Tracker &amp; Edit</button>
+    </div>
+  </div>
+</div>
+
 <!-- MOBILE HAMBURGER MENU -->
 <div id="hamburger-menu" class="ham-menu">
   <button class="ham-item" id="hm-jobboard" onclick="hamSwitch('jobboard')">Jobs Board</button>
@@ -4360,7 +4413,7 @@ function renderRequests() {
       html += '<button class="btn btn-ghost btn-sm" onclick="restoreRequest(\'' + r.id + '\')" style="color:#2ecc71">Restore</button>'
         + '<button class="btn btn-ghost btn-sm" onclick="deleteRequestForever(\'' + r.id + '\')" style="color:#e74c3c">Delete Forever</button>';
     } else {
-      html += '<button class="btn btn-chrome btn-sm" onclick="requestToQuote(\'' + r.id + '\')">Create Quote</button>'
+      html += '<button class="btn btn-chrome btn-sm" onclick="requestToQuote(\'' + r.id + '\')">&#9889; AI Quote</button>'
         + '<button class="btn btn-ghost btn-sm" onclick="archiveRequest(\'' + r.id + '\')" style="color:#777">Archive</button>';
     }
     html += '</div></div>';
@@ -4368,33 +4421,256 @@ function renderRequests() {
   box.innerHTML = html;
 }
 
+// ════════════════════════════════════════
+// AI QUOTE PIPELINE
+// Lead in → AI researches company → builds quote → notifies user → 3 close actions
+// ════════════════════════════════════════
+
+var _aqActiveId = null;
+var _aqResult = null;
+
 function requestToQuote(id) {
   var r = quoteRequests.find(function(x){ return x.id == id; });
   if (!r) { showToast("Request not found"); return; }
+  _aqActiveId = id;
+  _aqResult = null;
+  openAIQuotePipeline(r);
+}
+
+function openAIQuotePipeline(r) {
+  var m = document.getElementById("m-ai-quote");
+  if (!m) return;
+  // reset
+  document.getElementById("aq-step-research").style.display = "block";
+  document.getElementById("aq-step-quote").style.display = "none";
+  document.getElementById("aq-step-notify").style.display = "none";
+  document.getElementById("aq-research-out").innerHTML = "";
+  document.getElementById("aq-quote-out").innerHTML = "";
+  document.getElementById("aq-progress").style.width = "0%";
+  document.getElementById("aq-status").textContent = "Starting research...";
+  document.getElementById("aq-actions").style.display = "none";
+  document.getElementById("aq-lead-name").textContent = r.company || r.name || "Unknown Company";
+  document.getElementById("aq-lead-lane").textContent = [r.pickup, r.delivery].filter(Boolean).join(" → ") || "—";
+  document.getElementById("aq-lead-load").textContent = [r.load_type, r.weight].filter(Boolean).join(" · ") || "—";
+  m.classList.add("open");
+  setTimeout(function(){ runAIResearch(r); }, 400);
+}
+
+function aqSetProgress(pct, msg) {
+  document.getElementById("aq-progress").style.width = pct + "%";
+  document.getElementById("aq-status").textContent = msg;
+}
+
+async function runAIResearch(r) {
+  var company = r.company || r.name || "";
+  var pickup = r.pickup || "";
+  var delivery = r.delivery || "";
+  var loadType = r.load_type || "freight";
+  var weight = r.weight || "";
+  var pickupDate = r.pickup_date || "";
+  var message = r.message || "";
+
+  aqSetProgress(15, "Researching " + (company || "company") + "...");
+
+  var researchPrompt = "You are a trucking dispatch assistant for a Canadian carrier. A quote request came in. Research this company and provide a concise intelligence brief.\n\nCompany: " + company + "\nPickup: " + pickup + "\nDelivery: " + delivery + "\nLoad type: " + loadType + "\nWeight: " + weight + "\nRequested date: " + pickupDate + "\nMessage from requester: " + message + "\n\nProvide a JSON response with these exact fields:\n{\n  \"company_type\": \"freight broker | direct shipper | unknown\",\n  \"trust_score\": 1-10,\n  \"trust_label\": \"High / Medium / Low / Unknown\",\n  \"industry\": \"short industry description\",\n  \"size\": \"estimated company size\",\n  \"red_flags\": [\"list any concerns or empty array\"],\n  \"positives\": [\"list positive signals or empty array\"],\n  \"recommended_approach\": \"one sentence on how to handle this lead\",\n  \"estimated_lane_miles\": 0,\n  \"rate_suggestion_cad\": 0,\n  \"rate_reasoning\": \"brief explanation of rate\"\n}\n\nFor the rate: Alberta trucking rates typically run $2.50-$4.50 CAD/mile loaded for flatdeck/step deck, $2.00-$3.50 for dry van. Factor in distance, freight type, and market conditions. Return ONLY valid JSON, no other text.";
+
+  try {
+    aqSetProgress(30, "AI analyzing company profile...");
+    var resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: researchPrompt }]
+      })
+    });
+    var data = await resp.json();
+    var text = (data.content || []).filter(function(b){ return b.type === "text"; }).map(function(b){ return b.text; }).join("");
+    var clean = text.replace(/```json|```/g, "").trim();
+    var jsonStart = clean.indexOf("{");
+    var jsonEnd = clean.lastIndexOf("}");
+    if (jsonStart !== -1 && jsonEnd !== -1) clean = clean.slice(jsonStart, jsonEnd + 1);
+    var intel = JSON.parse(clean);
+
+    aqSetProgress(60, "Building quote...");
+    renderResearchCard(intel, r);
+    await buildAIQuote(r, intel);
+  } catch(e) {
+    aqSetProgress(60, "Building quote from request data...");
+    var fallback = {
+      company_type: "unknown",
+      trust_score: 5,
+      trust_label: "Unknown",
+      industry: "Unknown",
+      size: "Unknown",
+      red_flags: [],
+      positives: ["Submitted a detailed quote request"],
+      recommended_approach: "Follow up promptly and qualify on the call.",
+      estimated_lane_miles: 0,
+      rate_suggestion_cad: 0,
+      rate_reasoning: "Manually calculate based on your operating costs."
+    };
+    renderResearchCard(fallback, r);
+    await buildAIQuote(r, fallback);
+  }
+}
+
+function renderResearchCard(intel, r) {
+  var trustColor = intel.trust_score >= 7 ? "#2ecc71" : intel.trust_score >= 4 ? "#f1c40f" : "#e74c3c";
+  var html = '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border2);padding:14px;margin-bottom:10px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px">'
+    + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#555;margin-bottom:3px">Company Intelligence</div>'
+    + '<div style="font-size:13px;color:#ccc">' + esc(intel.industry) + ' &middot; ' + esc(intel.size) + '</div>'
+    + '<div style="font-size:12px;color:#888;margin-top:2px">' + esc(intel.company_type === "freight broker" ? "Freight Broker" : intel.company_type === "direct shipper" ? "Direct Shipper" : "Unknown Type") + '</div></div>'
+    + '<div style="text-align:right;flex-shrink:0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:32px;font-weight:800;color:' + trustColor + ';line-height:1">' + intel.trust_score + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:' + trustColor + '">' + esc(intel.trust_label) + '</div></div></div>';
+  if (intel.positives && intel.positives.length) {
+    html += '<div style="margin-bottom:8px">';
+    intel.positives.forEach(function(p){ html += '<div style="font-size:12px;color:#2ecc71;margin-bottom:2px">&#10003; ' + esc(p) + '</div>'; });
+    html += '</div>';
+  }
+  if (intel.red_flags && intel.red_flags.length) {
+    html += '<div style="margin-bottom:8px">';
+    intel.red_flags.forEach(function(f){ html += '<div style="font-size:12px;color:#e74c3c;margin-bottom:2px">&#9888; ' + esc(f) + '</div>'; });
+    html += '</div>';
+  }
+  if (intel.rate_suggestion_cad > 0) {
+    html += '<div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);padding:10px 12px;margin-top:8px">'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#2ecc71;margin-bottom:3px">Suggested Rate</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:24px;font-weight:800;color:#fff">$' + Number(intel.rate_suggestion_cad).toLocaleString("en-CA",{minimumFractionDigits:2}) + ' CAD</div>'
+      + '<div style="font-size:11px;color:#888;margin-top:3px">' + esc(intel.rate_reasoning) + '</div></div>';
+  }
+  html += '<div style="font-size:12px;color:#888;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-style:italic">' + esc(intel.recommended_approach) + '</div>';
+  html += '</div>';
+  document.getElementById("aq-research-out").innerHTML = html;
+  document.getElementById("aq-step-research").style.display = "block";
+  _aqResult = _aqResult || {};
+  _aqResult.intel = intel;
+}
+
+async function buildAIQuote(r, intel) {
+  aqSetProgress(75, "Writing quote...");
+  var rate = intel.rate_suggestion_cad > 0 ? intel.rate_suggestion_cad : null;
+  var company = r.company || r.name || "";
+  var quoteNum = typeof genNum === "function" ? genNum() : ("RB-" + Math.floor(Date.now()/1000));
+  var today = new Date().toISOString().slice(0, 10);
+  var expiry = new Date(Date.now() + 7*86400000).toISOString().slice(0, 10);
+  var quotePrompt = "You are a professional Canadian trucking dispatcher writing a freight quote. Write a concise, professional email quote.\n\nCompany: " + company + "\nContact email: " + (r.email||"") + "\nLane: " + (r.pickup||"") + " to " + (r.delivery||"") + "\nLoad type: " + (r.load_type||"freight") + "\nWeight: " + (r.weight||"TBD") + "\nPickup date: " + (r.pickup_date||"TBD") + (rate ? "\nRate: $" + rate + " CAD" : "") + "\nQuote #: " + quoteNum + "\nValid until: " + expiry + "\n\nWrite a short professional email quote body (3-4 sentences). Start with 'Thank you for your quote request.' Include the rate if provided, the lane, and a call to action. Sign off as CommandDeck Transport. Return ONLY the email body text, no subject line.";
+  try {
+    var resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 400,
+        messages: [{ role: "user", content: quotePrompt }]
+      })
+    });
+    var data = await resp.json();
+    var emailBody = (data.content || []).filter(function(b){ return b.type==="text"; }).map(function(b){ return b.text; }).join("").trim();
+    _aqResult = _aqResult || {};
+    _aqResult.emailBody = emailBody;
+    _aqResult.quoteNum = quoteNum;
+    _aqResult.rate = rate;
+    _aqResult.r = r;
+    renderQuotePreview(emailBody, quoteNum, rate, r);
+  } catch(e) {
+    var fallbackBody = "Thank you for your quote request. We would be happy to move your " + (r.load_type||"freight") + " from " + (r.pickup||"origin") + " to " + (r.delivery||"destination") + (rate ? " at a rate of $" + Number(rate).toLocaleString("en-CA",{minimumFractionDigits:2}) + " CAD" : "") + ". This quote is valid until " + expiry + ". Please reply to confirm or call us to discuss. — CommandDeck Transport";
+    _aqResult = _aqResult || {};
+    _aqResult.emailBody = fallbackBody;
+    _aqResult.quoteNum = quoteNum;
+    _aqResult.rate = rate;
+    _aqResult.r = r;
+    renderQuotePreview(fallbackBody, quoteNum, rate, r);
+  }
+}
+
+function renderQuotePreview(emailBody, quoteNum, rate, r) {
+  aqSetProgress(100, "Ready to send");
+  var html = '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border2);padding:14px">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#555;margin-bottom:10px">Quote Preview · ' + esc(quoteNum) + '</div>'
+    + '<div style="font-size:12px;color:#888;margin-bottom:6px"><b style="color:#ccc">To:</b> ' + esc(r.email || "—") + '</div>'
+    + '<div style="font-size:12px;color:#888;margin-bottom:10px"><b style="color:#ccc">Subject:</b> Freight Quote – ' + esc([r.pickup, r.delivery].filter(Boolean).join(" to ")) + ' – ' + esc(quoteNum) + '</div>'
+    + '<div style="font-size:13px;color:#ccc;line-height:1.65;padding:10px 12px;background:rgba(0,0,0,0.3);border-left:2px solid var(--border2);white-space:pre-wrap">' + esc(emailBody) + '</div>'
+    + '</div>';
+  document.getElementById("aq-quote-out").innerHTML = html;
+  document.getElementById("aq-step-quote").style.display = "block";
+  document.getElementById("aq-step-notify").style.display = "block";
+  document.getElementById("aq-actions").style.display = "flex";
+}
+
+function aqSendEmail() {
+  if (!_aqResult) return;
+  var r = _aqResult.r;
+  var subject = "Freight Quote – " + [r.pickup, r.delivery].filter(Boolean).join(" to ") + " – " + _aqResult.quoteNum;
+  var body = _aqResult.emailBody || "";
+  window.location.href = "mailto:" + encodeURIComponent(r.email || "") + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  aqMarkQuoted();
+}
+
+function aqAgentCall() {
+  if (!_aqResult) return;
+  var r = _aqResult.r;
+  var phone = r.phone || "";
+  if (!phone) { showToast("No phone number on file"); return; }
+  // Open tel link — in production this would trigger your AI voice agent (Retell/Vapi)
+  if (confirm("Launch AI voice agent to call " + phone + "?\n\nThe agent will quote the load and attempt to book.")) {
+    window.location.href = "tel:" + phone.replace(/\D/g,"");
+    aqMarkQuoted();
+    showToast("AI agent call initiated");
+  }
+}
+
+function aqCallYourself() {
+  if (!_aqResult) return;
+  var r = _aqResult.r;
+  var phone = r.phone || "";
+  if (!phone) { showToast("No phone number on file"); return; }
+  window.location.href = "tel:" + phone.replace(/\D/g,"");
+  aqMarkQuoted();
+}
+
+function aqSaveToTracker() {
+  if (!_aqResult) return;
+  var r = _aqResult.r;
+  closeM("m-ai-quote");
   openNewQuote();
-  document.getElementById("m-co").value = r.company || r.name || "";
-  document.getElementById("m-phone").value = r.phone || "";
-  document.getElementById("m-email").value = r.email || "";
-  document.getElementById("m-pickup").value = r.pickup || "";
-  document.getElementById("m-delivery").value = r.delivery || "";
-  document.getElementById("m-weight").value = r.weight || "";
-  if (r.load_type) {
-    var sel = document.getElementById("m-load");
-    var match = Array.prototype.slice.call(sel.options).find(function(o){ return o.value.toLowerCase() === (r.load_type + "").toLowerCase(); });
-    sel.value = match ? match.value : "Other";
-  }
-  if (r.pickup_date) document.getElementById("m-pdate").value = r.pickup_date;
-  if (r.message) {
-    var nEl = document.getElementById("m-notes");
-    nEl.value = "From website request: " + r.message;
-  }
-  // mark as quoted (best-effort)
-  r.status = "quoted";
-  sbFetch("/rest/v1/quote_requests?id=eq." + id, "PATCH", { status: "quoted" }).catch(function(){});
+  setTimeout(function(){
+    document.getElementById("m-co").value = r.company || r.name || "";
+    document.getElementById("m-phone").value = r.phone || "";
+    document.getElementById("m-email").value = r.email || "";
+    document.getElementById("m-pickup").value = r.pickup || "";
+    document.getElementById("m-delivery").value = r.delivery || "";
+    document.getElementById("m-weight").value = r.weight || "";
+    document.getElementById("m-num").value = _aqResult.quoteNum || "";
+    if (_aqResult.rate) document.getElementById("m-total").value = Number(_aqResult.rate).toFixed(2);
+    if (r.pickup_date) document.getElementById("m-pdate").value = r.pickup_date;
+    var intel = _aqResult.intel || {};
+    var notes = "AI Research: " + intel.trust_label + " trust (" + intel.trust_score + "/10) · " + intel.recommended_approach;
+    document.getElementById("m-notes").value = notes;
+    if (r.load_type) {
+      var sel = document.getElementById("m-load");
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value.toLowerCase().indexOf((r.load_type+"").toLowerCase().slice(0,4)) > -1) { sel.selectedIndex = i; break; }
+      }
+    }
+    showToast("AI quote loaded — review & save");
+  }, 200);
+  aqMarkQuoted();
+}
+
+function aqMarkQuoted() {
+  if (!_aqActiveId) return;
+  var r = quoteRequests.find(function(x){ return x.id == _aqActiveId; });
+  if (r) r.status = "quoted";
+  sbFetch("/rest/v1/quote_requests?id=eq." + _aqActiveId, "PATCH", { status: "quoted" }).catch(function(){});
   renderRequests();
   updateReqBadge();
-  showToast("Request loaded \u2014 price & save");
 }
+
+function esc(s){ return (s == null ? "" : (s + "")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
 function archiveRequest(id) {
   var r = quoteRequests.find(function(x){ return x.id == id; });
