@@ -3722,9 +3722,9 @@ function handleBOLScan(event){
 async function runBOLExtraction(base64, mediaType){
   var prompt = "You are reading a Bill of Lading (BOL) or freight document for a trucking company. Extract the shipment details and return ONLY valid JSON with these fields (use empty string if not found):\n{\n  \"shipper\": \"company shipping the freight\",\n  \"consignee\": \"company receiving the freight\",\n  \"pickup\": \"pickup city and province/state\",\n  \"delivery\": \"delivery city and province/state\",\n  \"load_type\": \"freight/commodity description\",\n  \"weight\": \"total weight with unit\",\n  \"reference\": \"BOL number, PO number, or pro number\",\n  \"pickup_date\": \"YYYY-MM-DD if shown, else empty\",\n  \"pieces\": \"piece/pallet count\",\n  \"notes\": \"special instructions, hazmat, or anything notable\"\n}\nReturn ONLY the JSON, no other text.";
   try {
-    var resp = await fetch("https://api.anthropic.com/v1/messages", {
+    var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 800,
@@ -3885,9 +3885,9 @@ async function renderMorningBriefing(force){
     + "Maintenance alerts: " + (d.maintAlerts.length ? d.maintAlerts.map(function(a){return a.name+" "+a.detail;}).join(", ") : "none") + "\n\n"
     + "Write only the briefing text.";
   try {
-    var resp = await fetch("https://api.anthropic.com/v1/messages", {
+    var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
       body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 250, messages: [{role:"user",content:prompt}] })
     });
     var data = await resp.json();
@@ -4982,9 +4982,9 @@ async function runAIResearch(r) {
 
   try {
     aqSetProgress(30, "AI analyzing company profile...");
-    var resp = await fetch("https://api.anthropic.com/v1/messages", {
+    var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 1000,
@@ -5065,9 +5065,9 @@ async function buildAIQuote(r, intel) {
   var expiry = new Date(Date.now() + 7*86400000).toISOString().slice(0, 10);
   var quotePrompt = "You are a professional Canadian trucking dispatcher writing a freight quote. Write a concise, professional email quote.\n\nCompany: " + company + "\nContact email: " + (r.email||"") + "\nLane: " + (r.pickup||"") + " to " + (r.delivery||"") + "\nLoad type: " + (r.load_type||"freight") + "\nWeight: " + (r.weight||"TBD") + "\nPickup date: " + (r.pickup_date||"TBD") + (rate ? "\nRate: $" + rate + " CAD" : "") + "\nQuote #: " + quoteNum + "\nValid until: " + expiry + "\n\nWrite a short professional email quote body (3-4 sentences). Start with 'Thank you for your quote request.' Include the rate if provided, the lane, and a call to action. Sign off as CommandDeck Transport. Return ONLY the email body text, no subject line.";
   try {
-    var resp = await fetch("https://api.anthropic.com/v1/messages", {
+    var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 400,
@@ -5788,9 +5788,9 @@ async function aideckSend(){
     // keep last 12 turns max to save tokens
     if(messages.length > 12) messages = messages.slice(messages.length - 12);
 
-    var resp = await fetch("https://api.anthropic.com/v1/messages", {
+    var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 800,
@@ -6070,9 +6070,9 @@ async function runPasteParser(){
   var prompt = "You are parsing a trucking load board listing. Extract the details and return ONLY valid JSON with these exact fields (use empty string or 0 if not found):\n{\n  \"broker\": \"broker or source name\",\n  \"equip\": \"equipment type (Flat Deck|Dry Van|Step Deck|RGN|Lowboy|Other)\",\n  \"pickup\": \"pickup city, province/state\",\n  \"delivery\": \"delivery city, province/state\",\n  \"miles\": 0,\n  \"dead\": 0,\n  \"rate\": 0,\n  \"load\": \"commodity or freight description\",\n  \"weight\": \"weight with unit\",\n  \"pdate\": \"YYYY-MM-DD pickup date or empty\",\n  \"notes\": \"broker contact, special instructions, or anything else notable\"\n}\nFor rate: extract the dollar amount only (no $ sign, just the number). For miles: loaded miles only. For dead: deadhead/DH miles. Return ONLY the JSON.\n\nLoad listing:\n" + text;
 
   try {
-    var resp = await fetch("https://api.anthropic.com/v1/messages", {
+    var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "apikey": SB_KEY },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 500,
