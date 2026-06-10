@@ -3726,7 +3726,7 @@ async function runBOLExtraction(base64, mediaType){
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 800,
         messages: [{
           role: "user",
@@ -3888,7 +3888,7 @@ async function renderMorningBriefing(force){
     var resp = await fetch("https://mgdiyhyzbuzkspojsrql.supabase.co/functions/v1/aideck-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 250, messages: [{role:"user",content:prompt}] })
+      body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 250, messages: [{role:"user",content:prompt}] })
     });
     var data = await resp.json();
     var text = (data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").trim();
@@ -4986,7 +4986,7 @@ async function runAIResearch(r) {
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 1000,
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         messages: [{ role: "user", content: researchPrompt }]
@@ -5069,7 +5069,7 @@ async function buildAIQuote(r, intel) {
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 400,
         messages: [{ role: "user", content: quotePrompt }]
       })
@@ -5792,13 +5792,14 @@ async function aideckSend(){
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 800,
         system: systemPrompt,
         messages: messages
       })
     });
     var data = await resp.json();
+    if(!resp.ok) throw new Error(resp.status);
     var reply = (data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").trim();
     if(!reply) throw new Error("empty");
 
@@ -5808,8 +5809,8 @@ async function aideckSend(){
     thinkEl.textContent = reply;
   } catch(err) {
     thinkEl.className = "aideck-msg ai";
-    thinkEl.textContent = "Sorry, couldn't reach the AI right now. Check your connection and try again.";
-    _aideckHistory.pop(); // remove failed user message from history
+    thinkEl.textContent = "Couldn't reach AIDeck right now — check your connection and try again.";
+    _aideckHistory.pop();
   }
 
   msgs.scrollTop = msgs.scrollHeight;
@@ -6074,7 +6075,7 @@ async function runPasteParser(){
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 500,
         messages: [{ role: "user", content: prompt }]
       })
