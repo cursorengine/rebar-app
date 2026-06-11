@@ -126,7 +126,7 @@ a{color:inherit}
 /* NAV — two-row layout on all screen sizes */
 #nav{position:fixed;top:0;left:0;right:0;z-index:100;height:auto;background:rgba(0,0,0,0.98);border-bottom:1px solid rgba(255,255,255,0.18);display:flex;flex-wrap:wrap;align-items:center;padding:0 12px;backdrop-filter:blur(10px);overflow:visible;gap:0}
 .nav-logo{height:28px;object-fit:contain;cursor:pointer;flex-shrink:0;order:1}
-.nav-tabs{order:3;flex-basis:100%;width:100%;display:flex;height:46px;align-items:stretch;border-top:1px solid var(--border);gap:2px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;justify-content:flex-start;padding-left:2px;padding-right:2px}
+.nav-tabs{order:3;flex-basis:100%;width:100%;display:flex;height:46px;align-items:stretch;border-top:1px solid var(--border);gap:2px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;justify-content:center;justify-content:safe center;padding-left:2px;padding-right:2px}
 .nav-tabs::-webkit-scrollbar{display:none}
 .nav-tab{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:0 14px;cursor:pointer;color:var(--text-muted);background:none;border:none;border-top:2px solid transparent;border-bottom:none;transition:color 0.15s,border-color 0.15s;white-space:nowrap;flex-shrink:0;display:flex;align-items:center}
 .nav-tab.active{color:var(--text-primary);border-top-color:var(--text-primary);border-bottom:none}
@@ -162,6 +162,12 @@ a{color:inherit}
 .notif-title{font-size:13px;color:var(--text-secondary);font-weight:500;line-height:1.3}
 .notif-sub{font-size:11px;color:var(--text-muted);margin-top:2px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.04em}
 .notif-empty{padding:28px 16px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim)}
+.notif-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.notif-act{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--border2);background:rgba(255,255,255,0.05);color:#bbb;cursor:pointer;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);transition:filter 0.15s,transform 0.1s;-webkit-tap-highlight-color:transparent}
+.notif-act:active{transform:scale(0.95)}
+.notif-act.green{background:rgba(46,204,113,0.15);border-color:rgba(46,204,113,0.35);color:#2ecc71}
+.notif-act.blue{background:rgba(52,152,219,0.15);border-color:rgba(52,152,219,0.35);color:#3498db}
+.notif-act:hover{filter:brightness(1.2)}
 
 /* VIEWS */
 .view{display:none;padding-top:var(--nav-h);min-height:100vh}
@@ -356,6 +362,17 @@ body.delmode .del-col{display:table-cell}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;border:1px solid var(--border2);color:#fff;padding:10px 20px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;z-index:9999;transition:transform 0.3s ease;white-space:nowrap;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
+/* IMAGE LIGHTBOX */
+#lightbox{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.94);align-items:center;justify-content:center;padding:24px;-webkit-tap-highlight-color:transparent}
+#lightbox.open{display:flex}
+#lb-img{max-width:100%;max-height:90vh;object-fit:contain;box-shadow:0 8px 48px rgba(0,0,0,0.6)}
+.lb-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#fff;font-size:34px;line-height:1;cursor:pointer;padding:6px 10px;opacity:0.8;transition:opacity 0.15s;font-family:monospace}
+.lb-close:hover{opacity:1}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:10px 16px;opacity:0.85;transition:opacity 0.15s,background 0.15s}
+.lb-nav:hover{opacity:1;background:rgba(255,255,255,0.16)}
+.lb-prev{left:12px}.lb-next{right:12px}
+.lb-count{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.14em;color:#aaa}
+
 
 /* REVENUE CHART */
 #chart-section{border-bottom:1px solid var(--border)}
@@ -439,7 +456,8 @@ body.delmode .del-col{display:table-cell}
 .acct-h1{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;font-style:italic;text-transform:uppercase;letter-spacing:0.03em;line-height:1;background:var(--chrome);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .acct-h2{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#777;margin-top:3px}
 .acct-top-r{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.acct-year-sel{background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:0.04em;padding:7px 12px;outline:none;cursor:pointer}
+.acct-year-sel{background:rgba(255,255,255,0.06);border:1px solid var(--border2);color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:8px 14px;outline:none;cursor:pointer;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);-webkit-appearance:none;appearance:none}
+.acct-year-sel:hover{background:rgba(255,255,255,0.1);color:#fff}
 .acct-year-sel option{background:#111;color:#fff}
 
 /* HERO net GST card */
@@ -490,6 +508,44 @@ body.delmode .del-col{display:table-cell}
 .acct-ded-row.tot{border-top:1px solid rgba(255,255,255,0.12)}
 .acct-ded-row.tot .cat{color:#fff;font-weight:700}
 .acct-ded-bar{height:3px;background:rgba(255,255,255,0.06);margin-top:4px;position:relative;width:90px}
+.acct-ar-buckets{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+@media(max-width:480px){.acct-ar-buckets{grid-template-columns:repeat(2,1fr)}}
+.acct-ar-bucket{background:var(--card);padding:13px 14px;text-align:center}
+.acct-ar-bucket .ar-range{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#777;margin-bottom:5px}
+.acct-ar-bucket .ar-amt{font-family:'Barlow Condensed',sans-serif;font-size:21px;font-weight:800;line-height:1}
+.acct-ar-bucket .ar-cnt{font-size:10px;color:#4a4a4a;margin-top:3px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em}
+.acct-ar-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid rgba(255,255,255,0.04);font-size:13px;cursor:pointer;transition:background 0.12s}
+.acct-ar-row:hover{background:rgba(255,255,255,0.02)}
+.acct-ar-row .ar-co{color:#ccc;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-ar-row .ar-sub{font-size:11px;color:#666;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.04em}
+.acct-ar-row .ar-amt2{font-family:'Barlow Condensed',sans-serif;font-weight:700;white-space:nowrap;flex-shrink:0}
+.acct-ar-total{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid rgba(255,255,255,0.12);font-family:'Barlow Condensed',sans-serif;font-weight:800}
+.acct-ar-empty{padding:18px 16px;font-size:12px;color:#666;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.04em}
+
+/* PIPELINE */
+.pipe-stages{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:12px}
+@media(max-width:480px){.pipe-stages{grid-template-columns:repeat(5,1fr)}}
+.pipe-stage{background:var(--card);padding:9px 6px;text-align:center;cursor:pointer;transition:background 0.15s;border-top:2px solid transparent}
+.pipe-stage:hover{background:rgba(255,255,255,0.03)}
+.pipe-stage.active{background:rgba(255,255,255,0.04)}
+.pipe-stage .num{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;line-height:1}
+.pipe-stage .lbl{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-top:3px}
+.pipe-stage[data-st="New"] .num{color:#f1c40f}.pipe-stage[data-st="New"].active{border-top-color:#f1c40f}
+.pipe-stage[data-st="Warm"] .num{color:#e67e22}.pipe-stage[data-st="Warm"].active{border-top-color:#e67e22}
+.pipe-stage[data-st="Quoted"] .num{color:#3498db}.pipe-stage[data-st="Quoted"].active{border-top-color:#3498db}
+.pipe-stage[data-st="Won"] .num{color:#2ecc71}.pipe-stage[data-st="Won"].active{border-top-color:#2ecc71}
+.pipe-stage[data-st="Lost"] .num{color:#e74c3c}.pipe-stage[data-st="Lost"].active{border-top-color:#e74c3c}
+.pipe-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.pipe-chip{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 11px;border:1px solid var(--border2);background:rgba(255,255,255,0.04);color:#999;cursor:pointer;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)}
+.pipe-chip.active{background:rgba(255,255,255,0.12);color:#fff;border-color:var(--border2)}
+.pipe-src{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;flex-shrink:0}
+.pipe-src.web{background:rgba(167,139,250,0.14);color:#a78bfa}
+.pipe-src.manual{background:rgba(52,152,219,0.14);color:#3498db}
+.pipe-status-sel{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:7px 8px;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:#ccc;outline:none;cursor:pointer}
+.pipe-status-sel option{background:#111;color:#fff}
+.pipe-fu{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;flex-shrink:0}
+.pipe-fu.overdue{background:rgba(231,76,60,0.14);color:#e74c3c}
+.pipe-fu.soon{background:rgba(241,196,15,0.12);color:#f1c40f}
 .acct-ded-bar span{position:absolute;left:0;top:0;height:100%}
 
 /* T2125 rows */
@@ -684,7 +740,7 @@ body.delmode .del-col{display:table-cell}
     <button class="nav-tab active" onclick="switchView('tracker')">Tracker</button>
     <button class="nav-tab" onclick="switchView('loads')">Loads</button>
     <button class="nav-tab" onclick="switchView('builder')">Builder</button>
-    <button class="nav-tab" id="tab-requests" onclick="switchView('requests')">Requests<span id="req-badge" style="display:none;background:#e74c3c;color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;margin-left:5px;vertical-align:middle;font-family:'Barlow Condensed',sans-serif"></span></button>
+    <button class="nav-tab" id="tab-requests" onclick="switchView('requests')">Pipeline<span id="req-badge" style="display:none;background:#e74c3c;color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;margin-left:5px;vertical-align:middle;font-family:'Barlow Condensed',sans-serif"></span></button>
     <button class="nav-tab" onclick="switchView('contacts')">Contacts</button>
     <button class="nav-tab" onclick="switchView('aideck')" style="color:#a78bfa;gap:5px"><span style="font-size:9px;line-height:1">&#9670;</span><span>AIDeck</button>
     <button class="nav-tab" onclick="switchView('stats')" style="color:#22d3ee;gap:5px"><span style="font-size:9px;line-height:1">&#9641;</span><span>Stats</button>
@@ -1268,6 +1324,7 @@ body.delmode .del-col{display:table-cell}
     <div id="d-body"></div>
     <div class="macts" style="flex-wrap:wrap;gap:6px;justify-content:flex-start">
       <button class="btn btn-green btn-sm" id="d-email">Email</button>
+      <button class="btn btn-sm" id="d-accept" style="background:rgba(46,204,113,0.18);color:#2ecc71;border:1px solid rgba(46,204,113,0.4)">Approve Link</button>
       <button class="btn btn-sm" id="d-to-invoice" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">To Invoice</button>
       <button class="btn btn-blue btn-sm" id="d-rebook">Rebook</button>
       <button class="btn btn-blue btn-sm" id="d-dupe">Duplicate</button>
@@ -1369,17 +1426,40 @@ body.delmode .del-col{display:table-cell}
 <div id="view-requests" class="view">
   <div style="max-width:760px;margin:0 auto;padding:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#555">Quote Requests</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#555">Sales Pipeline</div>
       <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn btn-ghost btn-sm" id="req-filter-new" onclick="filterRequests('new')" style="color:#f1c40f;border-color:rgba(241,196,15,0.3)">New</button>
-        <button class="btn btn-ghost btn-sm" id="req-filter-all" onclick="filterRequests('all')">All</button>
-        <button class="btn btn-ghost btn-sm" id="req-filter-archived" onclick="filterRequests('archived')" style="opacity:0.5">Archive</button>
-        <button class="btn btn-ghost btn-sm" onclick="loadRequests()" title="Refresh">&#8635;</button>
+        <button class="btn btn-chrome btn-sm" onclick="openLeadModal()">+ Add Lead</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadRequests();loadLeads();" title="Refresh">&#8635;</button>
       </div>
     </div>
-    <div style="font-size:11px;color:#4a4a4a;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em;margin-bottom:14px">Incoming requests from rebartransport.ca</div>
+    <div style="font-size:11px;color:#4a4a4a;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em;margin-bottom:12px">Web requests &amp; manual leads in one funnel</div>
+    <div id="pipeline-stages" class="pipe-stages"></div>
+    <div id="pipeline-filters" class="pipe-filters"></div>
     <div id="requests-list"></div>
-    <div id="requests-empty" class="empty" style="display:none"><div class="empty-icon">📩</div><div class="empty-t">No Requests</div><div class="empty-s">Website quote requests will appear here</div></div>
+    <div id="requests-empty" class="empty" style="display:none"><div class="empty-icon">📊</div><div class="empty-t">Pipeline Empty</div><div class="empty-s">Add a lead or wait for a website request</div></div>
+  </div>
+</div>
+
+<!-- ADD / EDIT LEAD MODAL -->
+<div class="mbg" id="m-lead">
+  <div class="modal" style="max-width:480px">
+    <button class="mclose" onclick="closeM('m-lead')">x</button>
+    <h2 id="lead-modal-title">Add Lead</h2>
+    <div class="fg">
+      <div class="fgrp"><label class="flbl">Company / Name</label><input class="fin" id="lead-company" placeholder="Company"></div>
+      <div class="fgrp"><label class="flbl">Contact</label><input class="fin" id="lead-contact" placeholder="Contact person"></div>
+      <div class="fgrp"><label class="flbl">Phone</label><input class="fin" id="lead-phone" inputmode="tel" placeholder="Phone"></div>
+      <div class="fgrp"><label class="flbl">Email</label><input class="fin" id="lead-email" inputmode="email" placeholder="Email"></div>
+      <div class="fgrp"><label class="flbl">Source</label><select class="fsel" id="lead-source"><option>Cold Call</option><option>LinkedIn</option><option>Referral</option><option>Load Board</option><option>Repeat Customer</option><option>Other</option></select></div>
+      <div class="fgrp"><label class="flbl">Stage</label><select class="fsel" id="lead-status"><option>New</option><option>Warm</option><option>Quoted</option><option>Won</option><option>Lost</option></select></div>
+      <div class="fgrp"><label class="flbl">Follow-up Date</label><input class="fin" id="lead-followup" type="date"></div>
+    </div>
+    <div class="fgrp full" style="margin-top:10px"><label class="flbl">Notes</label><textarea class="fta" id="lead-notes" placeholder="What's the opportunity? Next step?"></textarea></div>
+    <div class="macts">
+      <button class="btn btn-danger btn-xs" id="lead-del-btn" onclick="deleteLeadFromModal()" style="display:none">Delete</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeM('m-lead')">Cancel</button>
+      <button class="btn btn-chrome btn-sm" onclick="saveLead()">Save Lead</button>
+    </div>
   </div>
 </div>
 
@@ -1651,7 +1731,6 @@ body.delmode .del-col{display:table-cell}
       </div>
       <div class="acct-top-r">
         <select class="acct-year-sel" id="fin-year" onchange="renderFinancials()"></select>
-        <button class="btn btn-ghost btn-sm" onclick="exportFinCSV()">CSV</button>
         <button class="btn btn-chrome btn-sm" onclick="exportTaxPackage()">Tax Package</button>
       </div>
     </div>
@@ -1663,6 +1742,12 @@ body.delmode .del-col{display:table-cell}
 
     <!-- Revenue / Expense / Net income trio -->
     <div id="fin-trio" class="acct-trio"></div>
+
+    <!-- A/R Aging — current unpaid invoices -->
+    <div class="acct-card">
+      <div class="acct-card-head"><span>A/R Aging — Outstanding</span><span class="acct-card-tag" id="fin-ar-tag">as of today</span></div>
+      <div id="fin-ar"></div>
+    </div>
 
     <!-- GST breakdown grid -->
     <div class="acct-card">
@@ -1700,6 +1785,15 @@ body.delmode .del-col{display:table-cell}
 
     <div class="acct-note">Estimates for reference — verify with your accountant. Invoiced = accrual basis &middot; Collected = cash basis. ITCs exclude GST-exempt insurance.</div>
   </div>
+</div>
+
+<!-- IMAGE LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox(event)">
+  <button class="lb-close" onclick="closeLightbox()" aria-label="Close">&times;</button>
+  <button class="lb-nav lb-prev" onclick="lbStep(-1,event)" aria-label="Previous">&#8249;</button>
+  <img id="lb-img" src="" alt="">
+  <button class="lb-nav lb-next" onclick="lbStep(1,event)" aria-label="Next">&#8250;</button>
+  <div id="lb-count" class="lb-count"></div>
 </div>
 
 <!-- RECEIPT UPLOAD MODAL -->
@@ -1780,6 +1874,8 @@ function doLogin() {
         document.getElementById("nav").style.display = "flex";
         loadQuotes();
         loadRequests();
+        loadLeads();
+        loadAcceptances();
         loadJobs();
         restoreViewFromHash();
         showToast("Welcome back");
@@ -1819,6 +1915,8 @@ function checkSession() {
       document.getElementById("nav").style.display = "flex";
       loadQuotes();
       loadRequests();
+      loadLeads();
+      loadAcceptances();
       loadJobs();
       restoreViewFromHash();
       return;
@@ -1860,6 +1958,7 @@ function loadQuotes() {
         initBuilder();
         if(typeof renderMorningBriefing === "function") setTimeout(function(){ renderMorningBriefing(); updateMaintNavBadge(); }, 300);
         setTimeout(refreshNotifBadge, 400);
+        if(typeof syncAcceptances === "function") syncAcceptances();
       } else {
         // Might be expired token - try refresh
         refreshSession(function(ok) {
@@ -1954,6 +2053,8 @@ document.addEventListener("visibilitychange", function() {
   if(!document.hidden && typeof currentUser !== "undefined" && currentUser) {
     loadQuotes();
     loadRequests();
+    loadLeads();
+    loadAcceptances();
     loadJobs();
   }
 });
@@ -2004,7 +2105,7 @@ function switchView(v) {
   if(v === "loads") renderLoads();
   if(v === "expenses") renderExpenses();
   if(v === "jobboard") { renderJobs(); updateJobBadge(); }
-  if(v === "requests") { renderRequests(); loadRequests(); }
+  if(v === "requests") { renderRequests(); loadRequests(); loadLeads(); }
   if(v === "stats") renderStats();
   window.scrollTo(0, 0);
   // Fix 4: persist current view in hash so refresh stays on same page
@@ -2596,12 +2697,17 @@ function viewQ(id) {
     + ( q.doctype === "Invoice" ? `<div class="drow"><span class="dlbl">Payment</span><span class="dval">${ q.paid ? `<span style="color:#2ecc71;font-weight:700">PAID ${q.paiddate?fmtDate(q.paiddate):""}</span>` : `<span style="color:#e74c3c;font-weight:700">UNPAID</span>` }</span></div>` : ( q.status === "Accepted" ? `<div class="drow"><span class="dlbl">Payment</span><span class="dval">${ q.paid ? `<span style="color:#2ecc71;font-weight:700">PAID</span>` : `<span style="color:#e74c3c;font-weight:700">UNPAID</span>` }</span></div>` : "" ) )
     + `<div class="drow"><span class="dlbl">Total</span><span class="dval" style="font-family:'Barlow Condensed';font-size:20px;font-weight:800;background:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${fmtAmt(q.total)}</span></div>`
     + ( q.notes ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="dlbl">Notes</span><span class="dval" style="text-align:left;color:#666;font-size:12px;line-height:1.6">${q.notes}</span></div>` : "" )
-    + ( (q.photos && q.photos.length) ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:6px"><span class="dlbl">Photos</span><div style="display:flex;gap:6px;flex-wrap:wrap">${q.photos.map(function(p){return `<a href="${p}" target="_blank"><img src="${p}" style="width:60px;height:60px;object-fit:cover;border:1px solid #333"></a>`;}).join("")}</div></div>` : "" );
+    + ( (q.photos && q.photos.length) ? `<div class="drow" style="flex-direction:column;align-items:flex-start;gap:6px"><span class="dlbl">Photos</span><div style="display:flex;gap:6px;flex-wrap:wrap">${q.photos.map(function(p,pi){return `<img src="${p}" onclick="lbQuote('${q.id}',${pi})" style="width:60px;height:60px;object-fit:cover;border:1px solid #333;cursor:pointer">`;}).join("")}</div></div>` : "" );
   document.getElementById("d-body").innerHTML = html;
   document.getElementById("d-del").onclick = function() { delQ(id); };
   document.getElementById("d-edit").onclick = function() { editQ(id); };
   document.getElementById("d-open-builder").onclick = function() { openInBuilder(id); };
   document.getElementById("d-email").onclick = function() { emailQuote(id); };
+  var acceptBtn = document.getElementById("d-accept");
+  if(acceptBtn){
+    acceptBtn.style.display = (q.doctype === "Invoice") ? "none" : "";
+    acceptBtn.onclick = function() { sendAcceptanceLink(id); };
+  }
   document.getElementById("d-dupe").onclick = function() { duplicateQuote(id); };
   var paidBtn = document.getElementById("d-paid");
   paidBtn.textContent = q.paid ? "Mark Unpaid" : "Mark Paid";
@@ -3660,7 +3766,11 @@ function buildNotifications(){
       dot: "red",
       title: (q.co || "Client") + " — $" + (parseFloat(q.total)||0).toLocaleString("en-CA",{maximumFractionDigits:0}),
       sub: invoiceOverdueDays(q) + " days overdue",
-      action: function(){ openDetail(q.id); }
+      action: function(){ viewQ(q.id); },
+      actions: [
+        { label: "Mark Paid", cls: "green", call: "notifMarkPaid('" + q.id + "')" },
+        { label: "Send Reminder", cls: "blue", call: "notifSendInvoiceReminder('" + q.id + "')" }
+      ]
     });
   });
 
@@ -3676,7 +3786,10 @@ function buildNotifications(){
       dot: "yellow",
       title: (q.co || "Quote") + (q.num ? " #" + q.num : ""),
       sub: days === 0 ? "Follow-up due today" : days + " day" + (days>1?"s":"") + " overdue",
-      action: function(){ openDetail(q.id); }
+      action: function(){ viewQ(q.id); },
+      actions: q.email ? [
+        { label: "Send Follow-up", cls: "blue", call: "notifSendFollowup('" + q.id + "')" }
+      ] : null
     });
   });
 
@@ -3711,6 +3824,23 @@ function buildNotifications(){
       action: function(){ switchView("fleet"); }
     });
   });
+
+  // Lead follow-ups due today or overdue (manual pipeline)
+  if(typeof leads !== "undefined" && leads.length){
+    leads.forEach(function(l){
+      if(!l.followup || l.followup > today) return;
+      if(l.status === "Won" || l.status === "Lost") return;
+      var d = Math.round((new Date(today) - new Date(l.followup + "T00:00:00")) / 86400000);
+      items.push({
+        id: "lead-" + l.id,
+        group: "Pipeline",
+        dot: d > 0 ? "red" : "yellow",
+        title: (l.company || l.contact || "Lead") + " — " + (l.status || "New"),
+        sub: d === 0 ? "Follow-up due today" : "Follow-up " + d + " day" + (d>1?"s":"") + " overdue",
+        action: function(){ switchView("requests"); }
+      });
+    });
+  }
 
   // filter dismissed
   return items.filter(function(it){ return _notifDismissed.indexOf(it.id) === -1; });
@@ -3752,10 +3882,16 @@ function renderNotifPanel(){
   groupOrder.forEach(function(g){
     html += "<div class=\"notif-group\"><div class=\"notif-group-lbl\">" + g + "</div>";
     groups[g].forEach(function(it){
+      var actsHtml = "";
+      if(it.actions && it.actions.length){
+        actsHtml = "<div class=\"notif-actions\">" + it.actions.map(function(a){
+          return "<button class=\"notif-act " + (a.cls||"") + "\" onclick=\"event.stopPropagation();" + a.call + "\">" + a.label + "</button>";
+        }).join("") + "</div>";
+      }
       html += "<div class=\"notif-item\" data-nid=\"" + it.id + "\" onclick=\"notifItemClick('" + it.id + "')\">"
         + "<div class=\"notif-dot " + it.dot + "\"></div>"
         + "<div class=\"notif-body\"><div class=\"notif-title\">" + it.title + "</div>"
-        + "<div class=\"notif-sub\">" + it.sub + "</div></div></div>";
+        + "<div class=\"notif-sub\">" + it.sub + "</div>" + actsHtml + "</div></div>";
     });
     html += "</div>";
   });
@@ -3786,6 +3922,47 @@ function dismissNotifs(){
   try { localStorage.setItem("rebar_notif_dismissed", JSON.stringify(_notifDismissed)); } catch(e){}
   renderNotifPanel();
   refreshNotifBadge();
+}
+// ── Inline actions from the bell / briefing ──
+function notifMarkPaid(id){
+  var q = quotes.find(function(x){ return x.id === id; }); if(!q) return;
+  if(q.paid){ showToast("Already marked paid"); return; }
+  q.paid = true;
+  q.paiddate = new Date().toISOString().slice(0,10);
+  logActivity(id, "Marked paid", "From briefing");
+  sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", { paid: true, paiddate: q.paiddate, updated_at: new Date().toISOString() }).catch(function(){});
+  saveLocal();
+  if(typeof renderTbl === "function") renderTbl();
+  if(typeof renderMorningBriefing === "function") renderMorningBriefing(true);
+  renderNotifPanel();
+  refreshNotifBadge();
+  showToast("Marked paid — " + (q.co || q.num || "invoice"));
+}
+function notifSendInvoiceReminder(id){
+  var q = quotes.find(function(x){ return x.id === id; }); if(!q) return;
+  if(!q.email){ showToast("No email on file — add one via the invoice"); return; }
+  var days = invoiceOverdueDays(q);
+  var subject = "Payment reminder — Invoice " + (q.num || "") + " — ReBar Transportation Services Ltd";
+  var lines = [];
+  lines.push("Hi" + (q.co ? " " + q.co : "") + ",");
+  lines.push("");
+  lines.push("A friendly reminder that invoice " + (q.num || "") + " for " + fmtAmt(q.total) + " is now " + days + " day" + (days>1?"s":"") + " past due.");
+  if(q.pickup || q.delivery) lines.push("Lane: " + (q.pickup||"") + " to " + (q.delivery||""));
+  lines.push("");
+  lines.push("If payment is already on its way, please disregard this note. Otherwise we'd appreciate settling at your earliest convenience.");
+  lines.push("");
+  lines.push("Thank you,");
+  lines.push("Reg Nicolas");
+  lines.push("ReBar Transportation Services Ltd");
+  lines.push("780.387.1747 | rebartransport.ca");
+  var mailto = "mailto:" + encodeURIComponent(q.email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
+  document.getElementById("notif-panel").classList.remove("open");
+  window.location.href = mailto;
+  showToast("Opening reminder email");
+}
+function notifSendFollowup(id){
+  document.getElementById("notif-panel").classList.remove("open");
+  emailQuote(id);
 }
 // close panel on outside click
 document.addEventListener("click", function(e){
@@ -4001,6 +4178,140 @@ function sendTrackingEmail(q){
 }
 
 // ════════════════════════════════════════
+// FEATURE #4: ONLINE QUOTE ACCEPTANCE LINK
+// Customer opens a public page (accept.html), taps Accept/Decline,
+// the app syncs the response and flips the quote's status.
+// ════════════════════════════════════════
+var acceptances = [];
+var _acceptSeen = [];
+try { _acceptSeen = JSON.parse(localStorage.getItem("rebar_accept_seen") || "[]"); } catch(e){}
+
+function genAcceptId(){
+  var c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  var s = "";
+  for(var i=0;i<8;i++) s += c[Math.floor(Math.random()*c.length)];
+  return s;
+}
+function loadAcceptances(){
+  sbFetch("/rest/v1/quote_acceptance?select=*", "GET")
+    .then(function(data){
+      if(Array.isArray(data)){
+        acceptances = data;
+        try { localStorage.setItem("rebar_accept_cache", JSON.stringify(data)); } catch(e){}
+      } else {
+        try { acceptances = JSON.parse(localStorage.getItem("rebar_accept_cache") || "[]"); } catch(e){ acceptances = []; }
+      }
+      syncAcceptances();
+    })
+    .catch(function(){
+      try { acceptances = JSON.parse(localStorage.getItem("rebar_accept_cache") || "[]"); } catch(e){ acceptances = []; }
+      syncAcceptances();
+    });
+}
+function syncAcceptances(){
+  if(!acceptances || !acceptances.length) return;
+  var changed = false;
+  acceptances.forEach(function(a){
+    if(!a.quote_id) return;
+    if(a.status !== "Accepted" && a.status !== "Declined") return;
+    var key = a.id + ":" + (a.responded_at || a.status);
+    if(_acceptSeen.indexOf(key) !== -1) return;
+    var q = quotes.find(function(x){ return x.id === a.quote_id; });
+    if(!q) return; // quotes not loaded yet — retry next cycle (don't mark seen)
+    if(a.status === "Accepted" && q.status !== "Accepted"){
+      q.status = "Accepted";
+      if(!q.loadStatus) q.loadStatus = "Booked";
+      sbFetch("/rest/v1/quotes?id=eq." + q.id, "PATCH", { status: "Accepted", updated_at: new Date().toISOString() }).catch(function(){});
+      if(typeof logActivity === "function") logActivity(q.id, "Customer accepted online", "via acceptance link");
+      showToast("\u2713 " + (q.co || q.num || "Quote") + " accepted by customer");
+      changed = true;
+    } else if(a.status === "Declined" && q.status !== "Declined"){
+      q.status = "Declined";
+      sbFetch("/rest/v1/quotes?id=eq." + q.id, "PATCH", { status: "Declined", updated_at: new Date().toISOString() }).catch(function(){});
+      if(typeof logActivity === "function") logActivity(q.id, "Customer declined online", "via acceptance link");
+      showToast((q.co || q.num || "Quote") + " was declined by customer");
+      changed = true;
+    }
+    _acceptSeen.push(key);
+  });
+  try { localStorage.setItem("rebar_accept_seen", JSON.stringify(_acceptSeen)); } catch(e){}
+  if(changed){
+    saveLocal();
+    if(typeof renderTbl === "function") renderTbl();
+    refreshNotifBadge();
+  }
+}
+function acceptRowFor(q){ return acceptances.find(function(a){ return a.quote_id === q.id; }); }
+function acceptUrl(a){
+  var base = window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
+  return base + "accept.html?id=" + a.accept_id;
+}
+function ensureAcceptance(q, cb){
+  var existing = acceptRowFor(q);
+  if(existing){ cb(existing); return; }
+  var rec = {
+    accept_id: genAcceptId(),
+    quote_id: q.id,
+    quote_num: q.num || "",
+    company: q.co || "",
+    contact: q.contact || "",
+    pickup: q.pickup || "",
+    delivery: q.delivery || "",
+    load_type: q.load || "",
+    weight: q.weight || "",
+    pickup_date: q.pdate || "",
+    total: parseFloat(q.total) || 0,
+    status: "Pending",
+    created_at: new Date().toISOString()
+  };
+  sbFetch("/rest/v1/quote_acceptance", "POST", rec).then(function(res){
+    var row = (Array.isArray(res) && res[0]) ? res[0] : rec;
+    acceptances.push(row);
+    try { localStorage.setItem("rebar_accept_cache", JSON.stringify(acceptances)); } catch(e){}
+    cb(row);
+  }).catch(function(){ acceptances.push(rec); cb(rec); });
+}
+function copyTextToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(function(){ window.prompt("Copy this link:", text); });
+  } else {
+    window.prompt("Copy this link:", text);
+  }
+}
+function sendAcceptanceLink(id){
+  var q = quotes.find(function(x){ return x.id === id; }); if(!q) return;
+  ensureAcceptance(q, function(a){
+    var url = acceptUrl(a);
+    if(q.email){
+      var subject = "Approve your freight quote " + (q.num || "") + " — ReBar Transportation Services Ltd";
+      var lines = [];
+      lines.push("Hi" + (q.co ? " " + q.co : "") + ",");
+      lines.push("");
+      lines.push("Your freight quote is ready. You can review and approve it online with one tap:");
+      lines.push("");
+      lines.push(url);
+      lines.push("");
+      if(q.pickup || q.delivery) lines.push("Lane: " + (q.pickup||"") + " to " + (q.delivery||""));
+      if(q.total) lines.push("Total: " + fmtAmt(q.total) + " (incl. GST)");
+      lines.push("");
+      lines.push("Once you approve, we'll get your load booked right away.");
+      lines.push("");
+      lines.push("Thank you,");
+      lines.push("Reg Nicolas");
+      lines.push("ReBar Transportation Services Ltd");
+      lines.push("780.387.1747 | rebartransport.ca");
+      var mailto = "mailto:" + encodeURIComponent(q.email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
+      closeM("m-detail");
+      window.location.href = mailto;
+      showToast("Opening approval email");
+    } else {
+      copyTextToClipboard(url);
+      showToast("Approval link copied — no email on file");
+    }
+  });
+}
+
+// ════════════════════════════════════════
 // FEATURE: BOL / DOCUMENT SCANNER
 // Photo of a bill of lading -> Claude reads it -> pre-fills a new quote/load
 // ════════════════════════════════════════
@@ -4138,7 +4449,7 @@ function getMaintenanceAlerts(){
     if(!dateStr) return;
     var days = Math.ceil((new Date(dateStr+"T12:00:00") - new Date())/86400000);
     if(days < 0) alerts.push({name:label, detail:"expired "+Math.abs(days)+"d ago", urgent:true});
-    else if(days <= 21) alerts.push({name:label, detail:days+"d left", urgent:days<=7});
+    else if(days <= 30) alerts.push({name:label, detail:days+"d left", urgent:days<=7});
   }
   var ins = (fleetData&&fleetData.ins)||{}, reg = (fleetData&&fleetData.reg)||{};
   chkExpiry(ins.expiry,"Insurance"); chkExpiry(reg.expiry,"Registration"); chkExpiry(reg.cvip,"CVIP Inspection");
@@ -4284,7 +4595,7 @@ function briefingShell(text, maintAlerts, d, loading){
     if(rows.length){
       html += '<div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.05);padding-top:10px;display:flex;flex-direction:column;gap:2px">';
       rows.forEach(function(r){
-        html += '<div onclick="document.getElementById(\'morning-briefing\').style.display=\'none\';openDetail(\''+r.qid+'\')" style="display:flex;align-items:center;gap:10px;padding:7px 10px;cursor:pointer;background:rgba(255,255,255,0.02);transition:background 0.12s;border-left:2px solid '+r.col+'22" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.02)\'"><div style="width:6px;height:6px;border-radius:50%;background:'+r.col+';flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:13px;color:#ccc;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.label+'</div><div style="font-size:11px;color:#555;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:0.03em">'+r.sub+'</div></div><div style="font-size:10px;color:#333;font-family:\'Barlow Condensed\',sans-serif;flex-shrink:0">Open ›</div></div>';
+        html += '<div onclick="document.getElementById(\'morning-briefing\').style.display=\'none\';viewQ(\''+r.qid+'\')" style="display:flex;align-items:center;gap:10px;padding:7px 10px;cursor:pointer;background:rgba(255,255,255,0.02);transition:background 0.12s;border-left:2px solid '+r.col+'22" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.02)\'"><div style="width:6px;height:6px;border-radius:50%;background:'+r.col+';flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:13px;color:#ccc;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.label+'</div><div style="font-size:11px;color:#555;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:0.03em">'+r.sub+'</div></div><div style="font-size:10px;color:#333;font-family:\'Barlow Condensed\',sans-serif;flex-shrink:0">Open ›</div></div>';
       });
       html += '</div>';
     }
@@ -4446,7 +4757,7 @@ function openExpenseModal(id){
   var curLink = document.getElementById("exp-receipt-current-link");
   if(id){
     var ex0 = expenses.find(function(e){ return e.id === id; });
-    if(ex0 && ex0.receiptUrl && curEl && curLink){ curEl.style.display="block"; curLink.innerHTML = "<a href=\""+ex0.receiptUrl+"\" target=\"_blank\" style=\"color:#2ecc71\">Receipt attached - view</a>"; }
+    if(ex0 && ex0.receiptUrl && curEl && curLink){ curEl.style.display="block"; curLink.innerHTML = "<a href=\"javascript:void(0)\" onclick=\"lbExpense('"+ex0.id+"')\" style=\"color:#2ecc71\">Receipt attached - view</a>"; }
     else if(curEl){ curEl.style.display="none"; }
   } else if(curEl){ curEl.style.display="none"; }
   if(id){
@@ -4656,6 +4967,53 @@ function renderFinancials(){
       +'<div class="acct-trio-box"><div class="acct-trio-lbl">Net Income</div><div class="acct-trio-val '+(netIncome>=0?"chrome":"red")+'">'+fmt0(netIncome)+'</div><div class="acct-trio-sub">Before income tax</div></div>';
   }
 
+  // A/R AGING — current snapshot of all unpaid invoices (not year-filtered; receivables are a live balance)
+  var arEl = document.getElementById("fin-ar");
+  if(arEl){
+    var nowMs = Date.now();
+    var unpaid = quotes.filter(function(q){ return !q.deleted && q.doctype === "Invoice" && !q.paid && q.date; });
+    var buckets = [
+      { lbl: "0–30 days", min: 0,  max: 30,       amt: 0, items: [], color: "#2ecc71" },
+      { lbl: "31–60 days", min: 31, max: 60,       amt: 0, items: [], color: "#f1c40f" },
+      { lbl: "61–90 days", min: 61, max: 90,       amt: 0, items: [], color: "#f39c12" },
+      { lbl: "90+ days",   min: 91, max: Infinity, amt: 0, items: [], color: "#e74c3c" }
+    ];
+    unpaid.forEach(function(q){
+      var age = Math.floor((nowMs - new Date(q.date + "T12:00:00").getTime()) / 86400000);
+      if(age < 0) age = 0;
+      var b = buckets.find(function(x){ return age >= x.min && age <= x.max; }) || buckets[buckets.length-1];
+      var amt = parseFloat(q.total) || 0;
+      b.amt += amt;
+      b.items.push({ q: q, age: age, amt: amt });
+    });
+    var totalOutstanding = buckets.reduce(function(s,b){ return s + b.amt; }, 0);
+    var arTag = document.getElementById("fin-ar-tag");
+    if(arTag) arTag.textContent = unpaid.length + " unpaid · as of today";
+    if(!unpaid.length){
+      arEl.innerHTML = '<div class="acct-ar-empty">No outstanding invoices. All caught up.</div>';
+    } else {
+      var arHtml = '<div class="acct-ar-buckets">';
+      buckets.forEach(function(b){
+        arHtml += '<div class="acct-ar-bucket"><div class="ar-range">'+b.lbl+'</div>'
+          + '<div class="ar-amt" style="color:'+(b.amt>0?b.color:"#3a3a3a")+'">'+fmt0(b.amt)+'</div>'
+          + '<div class="ar-cnt">'+b.items.length+' invoice'+(b.items.length===1?"":"s")+'</div></div>';
+      });
+      arHtml += '</div>';
+      // line items, oldest first
+      var allItems = [];
+      buckets.forEach(function(b){ b.items.forEach(function(it){ it.color = b.color; allItems.push(it); }); });
+      allItems.sort(function(a,b){ return b.age - a.age; });
+      allItems.forEach(function(it){
+        arHtml += '<div class="acct-ar-row" onclick="viewQ(\''+it.q.id+'\')">'
+          + '<div style="min-width:0"><div class="ar-co">'+esc(it.q.co || it.q.num || "Invoice")+'</div>'
+          + '<div class="ar-sub">'+(it.q.num?esc(it.q.num)+" · ":"")+'invoiced '+fmtDate(it.q.date)+' · '+it.age+'d</div></div>'
+          + '<div class="ar-amt2" style="color:'+it.color+'">'+fmt(it.amt)+'</div></div>';
+      });
+      arHtml += '<div class="acct-ar-total"><span>Total Outstanding</span><span style="color:#fff">'+fmt(totalOutstanding)+'</span></div>';
+      arEl.innerHTML = arHtml;
+    }
+  }
+
   // GST mini-grid
   var tag = document.getElementById("fin-gst-tag");
   if(tag) tag.textContent = yr;
@@ -4796,7 +5154,7 @@ function openReceiptModal(eid){
   var exLink = document.getElementById("rcpt-existing-link");
   if(exp.receiptUrl){
     ex.style.display = "block";
-    exLink.innerHTML = "<a href=\""+exp.receiptUrl+"\" target=\"_blank\" style=\"color:#3498db\">View current receipt</a>";
+    exLink.innerHTML = "<a href=\"javascript:void(0)\" onclick=\"lbExpense('"+exp.id+"')\" style=\"color:#3498db\">View current receipt</a>";
   } else {
     ex.style.display = "none";
   }
@@ -5191,7 +5549,7 @@ function useRateCalcInQuote(){
 // FEATURE 6: Website quote requests
 // ════════════════════════════════════════
 var quoteRequests = [];
-var reqFilter = "new";
+var reqFilter = "all";
 
 function loadRequests() {
   sbFetch("/rest/v1/quote_requests?select=*&order=created_at.desc", "GET")
@@ -5212,8 +5570,14 @@ function loadRequests() {
 function updateReqBadge() {
   var badge = document.getElementById("req-badge");
   if (!badge) return;
+  var today = new Date().toISOString().slice(0,10);
   var newReqs = quoteRequests.filter(function(r){ return (r.status || "new") === "new"; });
-  var n = newReqs.length;
+  var newLeads = (typeof leads !== "undefined" ? leads : []).filter(function(l){ return (l.status||"New") === "New"; });
+  var dueLeads = (typeof leads !== "undefined" ? leads : []).filter(function(l){
+    return l.followup && l.followup <= today && l.status !== "Won" && l.status !== "Lost";
+  });
+  // unique-ish actionable count: new web requests + new leads + leads with a due follow-up not already counted
+  var n = newReqs.length + newLeads.length + dueLeads.filter(function(l){ return (l.status||"New") !== "New"; }).length;
   if (n > 0) { badge.textContent = n; badge.style.display = "inline-block"; }
   else { badge.style.display = "none"; }
   // Fix 5: push quote request notifications to the bell panel
@@ -5252,69 +5616,269 @@ function pushReqNotifsToPanel(newReqs) {
   refreshNotifBadge();
 }
 
-function filterRequests(f) {
-  reqFilter = f;
-  document.getElementById("req-filter-new").style.opacity = f === "new" ? "1" : "0.5";
-  document.getElementById("req-filter-all").style.opacity = f === "all" ? "1" : "0.5";
-  var av = document.getElementById("req-filter-archived");
-  if (av) av.style.opacity = f === "archived" ? "1" : "0.5";
-  renderRequests();
+// ════════════════════════════════════════
+// UNIFIED SALES PIPELINE — manual leads + web requests in one funnel
+// Stages: New -> Warm -> Quoted -> Won -> Lost  (+ Archived)
+// ════════════════════════════════════════
+var leads = [];
+var PIPE_STAGES = ["New","Warm","Quoted","Won","Lost"];
+var _reqStatusMap = { "new":"New","warm":"Warm","quoted":"Quoted","won":"Won","lost":"Lost","archived":"Archived" };
+
+function saveLeadsLocal(){ try { localStorage.setItem("rebar_leads_cache", JSON.stringify(leads)); } catch(e){} }
+function loadLeads(){
+  sbFetch("/rest/v1/leads?select=*&order=created_at.desc", "GET")
+    .then(function(data){
+      if(Array.isArray(data)){ leads = data; saveLeadsLocal(); }
+      else { try { leads = JSON.parse(localStorage.getItem("rebar_leads_cache") || "[]"); } catch(e){ leads = []; } }
+      if(window.__curView === "requests") renderRequests();
+      updateReqBadge();
+    })
+    .catch(function(){
+      try { leads = JSON.parse(localStorage.getItem("rebar_leads_cache") || "[]"); } catch(e){ leads = []; }
+      if(window.__curView === "requests") renderRequests();
+      updateReqBadge();
+    });
 }
+function genLeadId(){ return "lead_" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+// Normalize leads + requests into one shape
+function pipelineItems(){
+  var items = [];
+  leads.forEach(function(l){
+    items.push({
+      kind:"lead", id:l.id, src:"manual", srcLabel:(l.source||"Manual"),
+      company:l.company||l.contact||"Lead", contact:l.contact||"",
+      phone:l.phone||"", email:l.email||"",
+      status:l.status||"New", followup:l.followup||"", notes:l.notes||"",
+      lane:"", load:"", weight:"", pdate:"",
+      when:l.created_at
+    });
+  });
+  quoteRequests.forEach(function(r){
+    var st = _reqStatusMap[(r.status||"new")] || "New";
+    items.push({
+      kind:"request", id:r.id, src:"web", srcLabel:"Web Form",
+      company:r.company||r.name||"Unknown", contact:r.name||"",
+      phone:r.phone||"", email:r.email||"",
+      status:st, followup:"", notes:r.message||"",
+      lane:[r.pickup,r.delivery].filter(Boolean).join(" \u2192 "),
+      load:r.load_type||"", weight:r.weight||"", pdate:r.pickup_date||"",
+      when:r.created_at
+    });
+  });
+  // newest first
+  items.sort(function(a,b){ return new Date(b.when||0) - new Date(a.when||0); });
+  return items;
+}
+
+function filterRequests(f) { reqFilter = f; renderRequests(); }
 
 function renderRequests() {
   var box = document.getElementById("requests-list");
   var empty = document.getElementById("requests-empty");
   if (!box) return;
-  var list = quoteRequests.filter(function(r){
-    var s = r.status || "new";
-    if (reqFilter === "archived") return s === "archived";
-    if (reqFilter === "all") return s !== "archived";
-    return s === "new";
+  var esc = function(s){ return (s == null ? "" : (s + "")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); };
+  var all = pipelineItems();
+  var today = new Date().toISOString().slice(0,10);
+
+  // Stage summary strip (active items only, excludes Archived)
+  var stageEl = document.getElementById("pipeline-stages");
+  if(stageEl){
+    var counts = {};
+    PIPE_STAGES.forEach(function(s){ counts[s]=0; });
+    all.forEach(function(it){ if(counts[it.status]!==undefined) counts[it.status]++; });
+    stageEl.innerHTML = PIPE_STAGES.map(function(s){
+      return '<div class="pipe-stage'+(reqFilter===s?" active":"")+'" data-st="'+s+'" onclick="filterRequests(\''+(reqFilter===s?"all":s)+'\')">'
+        + '<div class="num">'+counts[s]+'</div><div class="lbl">'+s+'</div></div>';
+    }).join("");
+  }
+
+  // Filter chips
+  var filtEl = document.getElementById("pipeline-filters");
+  if(filtEl){
+    var chips = [["all","All"],["New","New"],["Warm","Warm"],["Quoted","Quoted"],["Won","Won"],["Lost","Lost"],["archived","Archive"]];
+    filtEl.innerHTML = chips.map(function(c){
+      return '<button class="pipe-chip'+(reqFilter===c[0]?" active":"")+'" onclick="filterRequests(\''+c[0]+'\')">'+c[1]+'</button>';
+    }).join("");
+  }
+
+  // Apply filter
+  var list = all.filter(function(it){
+    if(reqFilter==="archived") return it.status==="Archived";
+    if(reqFilter==="all") return it.status!=="Archived";
+    return it.status===reqFilter;
   });
+
   if (!list.length) { box.innerHTML = ""; empty.style.display = "block"; return; }
   empty.style.display = "none";
-  var esc = function(s){ return (s == null ? "" : (s + "")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); };
+
+  var statusColors = {"New":"#f1c40f","Warm":"#e67e22","Quoted":"#3498db","Won":"#2ecc71","Lost":"#e74c3c","Archived":"#777"};
   var html = "";
-  list.forEach(function(r) {
-    var name = r.company || r.name || "Unknown";
-    var when = r.created_at ? new Date(r.created_at).toLocaleDateString("en-CA",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "";
-    var lane = [r.pickup, r.delivery].filter(Boolean).join(" \u2192 ");
-    var status = r.status || "new";
-    var quoted = status === "quoted";
-    var archived = status === "archived";
-    var accent = archived ? "var(--border)" : (quoted ? "var(--border)" : "rgba(241,196,15,0.3)");
-    html += '<div class="fleet-card" style="margin-bottom:12px;padding:14px 16px;border-color:' + accent + (archived ? ';opacity:0.7' : '') + '">'
+  list.forEach(function(it) {
+    var when = it.when ? new Date(it.when).toLocaleDateString("en-CA",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "";
+    var archived = it.status==="Archived";
+    var accent = statusColors[it.status] || "var(--border)";
+
+    // follow-up badge (leads)
+    var fuBadge = "";
+    if(it.followup){
+      var overdue = it.followup < today;
+      var soon = it.followup === today;
+      if(overdue || soon) fuBadge = '<span class="pipe-fu '+(overdue?"overdue":"soon")+'">'+(overdue?"Follow-up due":"Due today")+'</span>';
+      else fuBadge = '<span style="font-size:10px;color:#666;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:0.04em">Follow-up '+fmtDate(it.followup)+'</span>';
+    }
+
+    html += '<div class="fleet-card" style="margin-bottom:12px;padding:14px 16px;border-left:3px solid '+accent+(archived?';opacity:0.65':'')+'">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px">'
-      + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:0.03em;color:#fff">' + esc(name) + '</div>'
-      + '<div style="font-size:11px;color:#555;margin-top:2px">' + esc(when) + (quoted ? ' &middot; <span style="color:#2ecc71">Quoted</span>' : '') + '</div></div>'
-      + (archived ? '<div class="fleet-badge" style="background:rgba(255,255,255,0.06);color:#777">Archived</div>' : (quoted ? '' : '<div class="fleet-badge" style="background:rgba(241,196,15,0.12);color:#f1c40f">New</div>'))
+      + '<div style="min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:0.03em;color:#fff">'+esc(it.company)+'</span>'
+      + '<span class="pipe-src '+it.src+'">'+esc(it.srcLabel)+'</span></div>'
+      + '<div style="font-size:11px;color:#555;margin-top:3px">'+esc(when)+'</div></div>'
+      + '<div class="fleet-badge" style="background:'+accent+'22;color:'+accent+'">'+it.status+'</div>'
       + '</div>';
+
     var rows = [];
-    if (lane) rows.push(['Lane', esc(lane)]);
-    if (r.load_type) rows.push(['Load', esc(r.load_type)]);
-    if (r.weight) rows.push(['Weight', esc(r.weight)]);
-    if (r.pickup_date) rows.push(['Pickup', esc(r.pickup_date)]);
-    if (r.phone) rows.push(['Phone', '<a href="tel:' + esc(r.phone) + '" style="color:#3498db;text-decoration:none">' + esc(r.phone) + '</a>']);
-    if (r.email) rows.push(['Email', '<a href="mailto:' + esc(r.email) + '" style="color:#3498db;text-decoration:none">' + esc(r.email) + '</a>']);
+    if (it.contact && it.contact !== it.company) rows.push(['Contact', esc(it.contact)]);
+    if (it.lane) rows.push(['Lane', esc(it.lane)]);
+    if (it.load) rows.push(['Load', esc(it.load)]);
+    if (it.weight) rows.push(['Weight', esc(it.weight)]);
+    if (it.pdate) rows.push(['Pickup', esc(it.pdate)]);
+    if (it.phone) rows.push(['Phone', '<a href="tel:' + esc(it.phone) + '" style="color:#3498db;text-decoration:none">' + esc(it.phone) + '</a>']);
+    if (it.email) rows.push(['Email', '<a href="mailto:' + esc(it.email) + '" style="color:#3498db;text-decoration:none">' + esc(it.email) + '</a>']);
     rows.forEach(function(row){
       html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;gap:10px">'
         + '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#777;flex-shrink:0;padding-top:2px">' + row[0] + '</span>'
         + '<span style="color:#ccc;text-align:right;word-break:break-word">' + row[1] + '</span></div>';
     });
-    if (r.message) {
-      html += '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border-left:2px solid var(--border2);font-size:12px;color:#999;line-height:1.5">' + esc(r.message) + '</div>';
-    }
-    html += '<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">';
+    if (fuBadge) html += '<div style="margin-top:8px">'+fuBadge+'</div>';
+    if (it.notes) html += '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border-left:2px solid var(--border2);font-size:12px;color:#999;line-height:1.5">' + esc(it.notes) + '</div>';
+
+    // Actions
+    html += '<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;align-items:center">';
     if (archived) {
-      html += '<button class="btn btn-ghost btn-sm" onclick="restoreRequest(\'' + r.id + '\')" style="color:#2ecc71">Restore</button>'
-        + '<button class="btn btn-ghost btn-sm" onclick="deleteRequestForever(\'' + r.id + '\')" style="color:#e74c3c">Delete Forever</button>';
+      html += '<button class="btn btn-ghost btn-sm" onclick="restoreRequest(\'' + it.id + '\')" style="color:#2ecc71">Restore</button>'
+        + '<button class="btn btn-ghost btn-sm" onclick="deleteRequestForever(\'' + it.id + '\')" style="color:#e74c3c">Delete Forever</button>';
     } else {
-      html += '<button class="btn btn-chrome btn-sm" onclick="requestToQuote(\'' + r.id + '\')">&#9889; AI Quote</button>'
-        + '<button class="btn btn-ghost btn-sm" onclick="archiveRequest(\'' + r.id + '\')" style="color:#777">Archive</button>';
+      // primary convert action
+      if(it.kind==="request"){
+        html += '<button class="btn btn-chrome btn-sm" onclick="requestToQuote(\'' + it.id + '\')">&#9889; AI Quote</button>';
+      } else {
+        html += '<button class="btn btn-chrome btn-sm" onclick="convertLeadToQuote(\'' + it.id + '\')">&#8594; Quote</button>';
+      }
+      // stage selector
+      html += '<select class="pipe-status-sel" onchange="setPipelineStatus(\''+it.kind+'\',\''+it.id+'\',this.value)">'
+        + PIPE_STAGES.map(function(s){ return '<option'+(s===it.status?" selected":"")+'>'+s+'</option>'; }).join("")
+        + '</select>';
+      if(it.kind==="lead"){
+        html += '<button class="btn btn-ghost btn-sm" onclick="openLeadModal(\'' + it.id + '\')">Edit</button>';
+      } else {
+        html += '<button class="btn btn-ghost btn-sm" onclick="archiveRequest(\'' + it.id + '\')" style="color:#777">Archive</button>';
+      }
     }
     html += '</div></div>';
   });
   box.innerHTML = html;
+}
+
+// Move a pipeline item to a new stage
+function setPipelineStatus(kind, id, val){
+  if(kind==="lead"){
+    var l = leads.find(function(x){ return x.id === id; }); if(!l) return;
+    l.status = val; l.updated_at = new Date().toISOString();
+    saveLeadsLocal();
+    sbFetch("/rest/v1/leads?id=eq." + id, "PATCH", { status: val, updated_at: l.updated_at }).catch(function(){});
+  } else {
+    var r = quoteRequests.find(function(x){ return x.id == id; }); if(!r) return;
+    r.status = val.toLowerCase();
+    sbFetch("/rest/v1/quote_requests?id=eq." + id, "PATCH", { status: val.toLowerCase() }).catch(function(){});
+  }
+  renderRequests();
+  updateReqBadge();
+  showToast("Moved to " + val);
+}
+
+// ── Lead CRUD ──
+var _editingLeadId = null;
+function openLeadModal(id){
+  _editingLeadId = id || null;
+  var l = id ? leads.find(function(x){ return x.id === id; }) : null;
+  document.getElementById("lead-modal-title").textContent = l ? "Edit Lead" : "Add Lead";
+  document.getElementById("lead-company").value = l ? (l.company||"") : "";
+  document.getElementById("lead-contact").value = l ? (l.contact||"") : "";
+  document.getElementById("lead-phone").value = l ? (l.phone||"") : "";
+  document.getElementById("lead-email").value = l ? (l.email||"") : "";
+  document.getElementById("lead-source").value = l ? (l.source||"Cold Call") : "Cold Call";
+  document.getElementById("lead-status").value = l ? (l.status||"New") : "New";
+  document.getElementById("lead-followup").value = l ? (l.followup||"") : "";
+  document.getElementById("lead-notes").value = l ? (l.notes||"") : "";
+  document.getElementById("lead-del-btn").style.display = l ? "" : "none";
+  document.getElementById("m-lead").classList.add("open");
+}
+function saveLead(){
+  var company = document.getElementById("lead-company").value.trim();
+  var contact = document.getElementById("lead-contact").value.trim();
+  if(!company && !contact){ showToast("Add a company or contact name"); return; }
+  var data = {
+    company: company,
+    contact: contact,
+    phone: document.getElementById("lead-phone").value.trim(),
+    email: document.getElementById("lead-email").value.trim(),
+    source: document.getElementById("lead-source").value,
+    status: document.getElementById("lead-status").value,
+    followup: document.getElementById("lead-followup").value || null,
+    notes: document.getElementById("lead-notes").value.trim(),
+    updated_at: new Date().toISOString()
+  };
+  if(_editingLeadId){
+    var l = leads.find(function(x){ return x.id === _editingLeadId; });
+    if(l){ Object.keys(data).forEach(function(k){ l[k] = data[k]; }); }
+    sbFetch("/rest/v1/leads?id=eq." + _editingLeadId, "PATCH", data).catch(function(){});
+    showToast("Lead updated");
+  } else {
+    data.id = genLeadId();
+    data.created_at = new Date().toISOString();
+    leads.unshift(data);
+    sbFetch("/rest/v1/leads", "POST", data).catch(function(){});
+    showToast("Lead added");
+  }
+  saveLeadsLocal();
+  _editingLeadId = null;
+  closeM("m-lead");
+  renderRequests();
+  updateReqBadge();
+}
+function deleteLeadFromModal(){
+  if(!_editingLeadId) return;
+  var id = _editingLeadId;
+  var l = leads.find(function(x){ return x.id === id; });
+  if(!confirm("Delete " + (l ? (l.company||l.contact||"this lead") : "this lead") + "? This can't be undone.")) return;
+  leads = leads.filter(function(x){ return x.id !== id; });
+  saveLeadsLocal();
+  fetch(SB_URL + "/rest/v1/leads?id=eq." + id, {
+    method: "DELETE",
+    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + (currentUser ? currentUser.access_token : SB_KEY) }
+  }).catch(function(){});
+  _editingLeadId = null;
+  closeM("m-lead");
+  renderRequests();
+  updateReqBadge();
+  showToast("Lead deleted");
+}
+function convertLeadToQuote(id){
+  var l = leads.find(function(x){ return x.id === id; }); if(!l) return;
+  switchView("builder");
+  setTimeout(function(){
+    var set = function(elid, val){ var el = document.getElementById(elid); if(el && val) el.value = val; };
+    set("b-co", l.company);
+    set("b-contact", l.contact);
+    set("b-phone", l.phone);
+    set("b-email", l.email);
+    if(l.notes){ var rf = document.getElementById("b-ref"); if(rf && !rf.value) rf.value = l.notes.slice(0,120); }
+  }, 180);
+  l.status = "Quoted"; l.updated_at = new Date().toISOString();
+  saveLeadsLocal();
+  sbFetch("/rest/v1/leads?id=eq." + id, "PATCH", { status: "Quoted", updated_at: l.updated_at }).catch(function(){});
+  updateReqBadge();
+  showToast("Opened in Builder — lead marked Quoted");
 }
 
 // ════════════════════════════════════════
@@ -5568,6 +6132,66 @@ function aqMarkQuoted() {
 }
 
 function esc(s){ return (s == null ? "" : (s + "")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ── IMAGE LIGHTBOX (in-app viewer for BOL photos & receipts) ──
+var _lbImgs = [], _lbIdx = 0;
+function isPdfUrl(u){ return /\.pdf(\?|#|$)/i.test(u || ""); }
+function lbUpdate(){
+  var img = document.getElementById("lb-img");
+  var cnt = document.getElementById("lb-count");
+  var prev = document.querySelector(".lb-prev");
+  var next = document.querySelector(".lb-next");
+  if(!_lbImgs.length) return;
+  if(img) img.src = _lbImgs[_lbIdx];
+  var multi = _lbImgs.length > 1;
+  if(prev) prev.style.display = multi ? "block" : "none";
+  if(next) next.style.display = multi ? "block" : "none";
+  if(cnt) cnt.textContent = multi ? (_lbIdx + 1) + " / " + _lbImgs.length : "";
+}
+function openLightbox(imgs, idx){
+  imgs = (imgs || []).filter(function(u){ return u; });
+  if(!imgs.length) return;
+  _lbImgs = imgs;
+  _lbIdx = Math.min(Math.max(idx || 0, 0), imgs.length - 1);
+  lbUpdate();
+  var lb = document.getElementById("lightbox");
+  if(lb) lb.classList.add("open");
+}
+function closeLightbox(e){
+  // clicking the image itself shouldn't close; backdrop / close button should
+  if(e && e.target && e.target.id === "lb-img") return;
+  var lb = document.getElementById("lightbox");
+  if(lb) lb.classList.remove("open");
+}
+function lbStep(d, e){
+  if(e) e.stopPropagation();
+  if(!_lbImgs.length) return;
+  _lbIdx = (_lbIdx + d + _lbImgs.length) % _lbImgs.length;
+  lbUpdate();
+}
+// Open a BOL photo set from a quote by id (avoids URL-escaping in onclick)
+function lbQuote(qid, idx){
+  var q = quotes.find(function(x){ return x.id === qid; });
+  if(q && q.photos && q.photos.length) openLightbox(q.photos, idx);
+}
+// Open a receipt: image -> lightbox, PDF -> new tab
+function openReceipt(url){
+  if(!url) return;
+  if(isPdfUrl(url)) window.open(url, "_blank");
+  else openLightbox([url], 0);
+}
+function lbExpense(eid){
+  var ex = (typeof expenses !== "undefined") ? expenses.find(function(e){ return e.id === eid; }) : null;
+  if(ex && ex.receiptUrl) openReceipt(ex.receiptUrl);
+}
+// Esc key closes the viewer
+document.addEventListener("keydown", function(e){
+  var lb = document.getElementById("lightbox");
+  if(!lb || !lb.classList.contains("open")) return;
+  if(e.key === "Escape") closeLightbox();
+  else if(e.key === "ArrowLeft") lbStep(-1);
+  else if(e.key === "ArrowRight") lbStep(1);
+});
 
 function archiveRequest(id) {
   var r = quoteRequests.find(function(x){ return x.id == id; });

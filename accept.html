@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Approve Your Quote · CommandDeck Transport</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--card:#141414;--border:rgba(255,255,255,0.08);--green:#2ecc71;--blue:#3498db;--red:#e74c3c;--chrome:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8)}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+.wrap{width:100%;max-width:520px}
+.brand{text-align:center;margin-bottom:28px}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;font-style:italic;text-transform:uppercase;letter-spacing:0.04em;background:var(--chrome);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#444;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--border);padding:22px;margin-bottom:14px}
+.hero{text-align:center;padding:10px 0 18px}
+.hero-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#555;margin-bottom:8px}
+.hero-co{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;color:#fff}
+.route{display:flex;align-items:center;justify-content:center;gap:12px;margin:18px 0;flex-wrap:wrap}
+.route-city{text-align:center}
+.route-city-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff}
+.route-city-lbl{font-size:10px;color:#555;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px}
+.route-arrow{color:#444;font-size:20px}
+.detail-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+.detail-row:last-child{border:none}
+.detail-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#444;padding-top:2px}
+.detail-val{color:#ccc;text-align:right}
+.total-box{text-align:center;padding:18px 0 6px}
+.total-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#555;margin-bottom:6px}
+.total-val{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;background:var(--chrome);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-sub{font-size:11px;color:#555;margin-top:6px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em}
+.actions{display:flex;gap:10px;margin-top:6px}
+.btn{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;padding:16px;border:none;cursor:pointer;transition:filter 0.15s,transform 0.1s;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)}
+.btn:active{transform:scale(0.97)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-accept{background:linear-gradient(135deg,#2ecc71,#27a35d);color:#04240f}
+.btn-decline{background:rgba(255,255,255,0.05);color:#999;border:1px solid var(--border)}
+.result{text-align:center;padding:30px 16px}
+.result-icon{font-size:40px;margin-bottom:12px}
+.result-title{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;margin-bottom:8px}
+.result-title.ok{color:var(--green)}
+.result-title.no{color:#999}
+.result-sub{font-size:13px;color:#888;line-height:1.6}
+.loading,.error{text-align:center;padding:48px 16px;color:#555}
+.loading-spin{width:28px;height:28px;border:2px solid #222;border-top-color:#888;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ftr{text-align:center;font-size:11px;color:#333;margin-top:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-name">CommandDeck Transport</div>
+    <div class="brand-sub">Freight Quote Approval</div>
+  </div>
+  <div id="content">
+    <div class="loading"><div class="loading-spin"></div>Loading your quote...</div>
+  </div>
+  <div class="ftr">Questions? Reply to your quote email or call 780.387.1747.</div>
+</div>
+
+<script>
+var SB_URL = "https://mgdiyhyzbuzkspojsrql.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZGl5aHl6YnV6a3Nwb2pzcnFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTQzMzYsImV4cCI6MjA5NjE3MDMzNn0.Bfr_TaR-g3u2L2qcAqUgtp6cXSmmsIxFjrsDBw3WBpo";
+
+function getParam(n){ var m = new RegExp("[?&]"+n+"=([^&]+)").exec(window.location.search); return m ? decodeURIComponent(m[1]) : ""; }
+function esc(s){ return (s==null?"":(s+"")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function money(v){ var n = parseFloat(v)||0; return "$" + n.toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+var REC = null;
+var ID = getParam("id");
+
+function headers(){ return { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" }; }
+
+function renderQuote(rec){
+  var html = '<div class="card">'
+    + '<div class="hero"><div class="hero-lbl">Quote For</div><div class="hero-co">' + esc(rec.company || "Your Company") + '</div></div>'
+    + '<div class="route">'
+    + '<div class="route-city"><div class="route-city-name">' + esc(rec.pickup || "Origin") + '</div><div class="route-city-lbl">From</div></div>'
+    + '<div class="route-arrow">&rarr;</div>'
+    + '<div class="route-city"><div class="route-city-name">' + esc(rec.delivery || "Destination") + '</div><div class="route-city-lbl">To</div></div>'
+    + '</div>';
+  var rows = [];
+  if(rec.quote_num) rows.push(["Reference", esc(rec.quote_num)]);
+  if(rec.load_type) rows.push(["Freight", esc(rec.load_type)]);
+  if(rec.weight) rows.push(["Weight", esc(rec.weight)]);
+  if(rec.pickup_date) rows.push(["Pickup", esc(rec.pickup_date)]);
+  rows.forEach(function(r){ html += '<div class="detail-row"><span class="detail-lbl">'+r[0]+'</span><span class="detail-val">'+r[1]+'</span></div>'; });
+  if(rec.total){
+    html += '<div class="total-box"><div class="total-lbl">Total</div><div class="total-val">' + money(rec.total) + '</div><div class="total-sub">Includes GST</div></div>';
+  }
+  html += '</div>';
+
+  if((rec.status||"Pending") === "Pending"){
+    html += '<div class="card"><div style="text-align:center;font-size:13px;color:#999;margin-bottom:14px;line-height:1.5">Approve this quote and we\'ll get your load booked right away.</div>'
+      + '<div class="actions">'
+      + '<button class="btn btn-decline" id="btn-decline" onclick="respond(\'Declined\')">Decline</button>'
+      + '<button class="btn btn-accept" id="btn-accept" onclick="respond(\'Accepted\')">Approve Quote</button>'
+      + '</div></div>';
+  } else {
+    html += resultCard(rec.status);
+  }
+  document.getElementById("content").innerHTML = html;
+}
+
+function resultCard(status){
+  if(status === "Accepted"){
+    return '<div class="card"><div class="result"><div class="result-icon">&#10003;</div>'
+      + '<div class="result-title ok">Quote Approved</div>'
+      + '<div class="result-sub">Thank you! Your approval has been received and we\'re booking your load. You\'ll get a tracking link once it\'s picked up.</div></div></div>';
+  }
+  return '<div class="card"><div class="result"><div class="result-icon">&#8212;</div>'
+    + '<div class="result-title no">Quote Declined</div>'
+    + '<div class="result-sub">No problem. If anything changes or you\'d like a revised quote, just reply to your quote email or give us a call.</div></div></div>';
+}
+
+function respond(decision){
+  var ab = document.getElementById("btn-accept"), db = document.getElementById("btn-decline");
+  if(ab) ab.disabled = true;
+  if(db) db.disabled = true;
+  if(ab && decision === "Accepted") ab.textContent = "Submitting...";
+  if(db && decision === "Declined") db.textContent = "Submitting...";
+  fetch(SB_URL + "/rest/v1/quote_acceptance?accept_id=eq." + encodeURIComponent(ID), {
+    method: "PATCH",
+    headers: headers(),
+    body: JSON.stringify({ status: decision, responded_at: new Date().toISOString() })
+  })
+  .then(function(r){
+    if(!r.ok) throw new Error("save " + r.status);
+    document.getElementById("content").innerHTML = resultCard(decision);
+  })
+  .catch(function(){
+    if(ab){ ab.disabled = false; ab.textContent = "Approve Quote"; }
+    if(db){ db.disabled = false; db.textContent = "Decline"; }
+    alert("Couldn't submit just now — please try again, or reply to your quote email.");
+  });
+}
+
+function load(){
+  if(!ID){
+    document.getElementById("content").innerHTML = '<div class="error">No quote link provided.</div>';
+    return;
+  }
+  fetch(SB_URL + "/rest/v1/quote_acceptance?accept_id=eq." + encodeURIComponent(ID) + "&select=*", { headers: headers() })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(Array.isArray(data) && data.length){ REC = data[0]; renderQuote(REC); }
+      else { document.getElementById("content").innerHTML = '<div class="error">Quote not found. Check your link or contact us.</div>'; }
+    })
+    .catch(function(){
+      document.getElementById("content").innerHTML = '<div class="error">Couldn\'t load your quote. Please try again shortly.</div>';
+    });
+}
+
+load();
+</script>
+</body>
+</html>

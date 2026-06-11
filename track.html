@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Your Shipment · CommandDeck Transport</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--card:#141414;--border:rgba(255,255,255,0.08);--green:#2ecc71;--blue:#3498db;--chrome:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8)}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+.wrap{width:100%;max-width:520px}
+.brand{text-align:center;margin-bottom:28px}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;font-style:italic;text-transform:uppercase;letter-spacing:0.04em;background:var(--chrome);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#444;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--border);padding:22px;margin-bottom:14px}
+.status-hero{text-align:center;padding:10px 0 18px}
+.status-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#555;margin-bottom:8px}
+.status-big{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;color:var(--green)}
+.route{display:flex;align-items:center;justify-content:center;gap:12px;margin:18px 0;flex-wrap:wrap}
+.route-city{text-align:center}
+.route-city-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff}
+.route-city-lbl{font-size:10px;color:#555;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px}
+.route-arrow{color:#444;font-size:20px}
+.timeline{margin-top:8px}
+.tl-step{display:flex;gap:14px;align-items:flex-start;position:relative;padding-bottom:22px}
+.tl-step:last-child{padding-bottom:0}
+.tl-step::before{content:'';position:absolute;left:8px;top:20px;bottom:0;width:2px;background:rgba(255,255,255,0.08)}
+.tl-step:last-child::before{display:none}
+.tl-dot{width:18px;height:18px;border-radius:50%;border:2px solid #2a2a2a;background:#0a0a0a;flex-shrink:0;z-index:1;margin-top:1px}
+.tl-step.done .tl-dot{background:var(--green);border-color:var(--green)}
+.tl-step.active .tl-dot{background:var(--blue);border-color:var(--blue);box-shadow:0 0 0 4px rgba(52,152,219,0.15)}
+.tl-step.done::before{background:var(--green)}
+.tl-label{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#666}
+.tl-step.done .tl-label,.tl-step.active .tl-label{color:#fff}
+.tl-time{font-size:11px;color:#555;margin-top:1px}
+.detail-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+.detail-row:last-child{border:none}
+.detail-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#444;padding-top:2px}
+.detail-val{color:#ccc;text-align:right}
+.loading,.error{text-align:center;padding:48px 16px;color:#555}
+.loading-spin{width:28px;height:28px;border:2px solid #222;border-top-color:#888;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ftr{text-align:center;font-size:11px;color:#333;margin-top:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em}
+.ftr a{color:#555;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-name">CommandDeck Transport</div>
+    <div class="brand-sub">Live Shipment Tracking</div>
+  </div>
+  <div id="content">
+    <div class="loading"><div class="loading-spin"></div>Loading shipment...</div>
+  </div>
+  <div class="ftr">Questions? Reply to your quote email or call your dispatcher.</div>
+</div>
+
+<script>
+var SB_URL = "https://mgdiyhyzbuzkspojsrql.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZGl5aHl6YnV6a3Nwb2pzcnFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTQzMzYsImV4cCI6MjA5NjE3MDMzNn0.Bfr_TaR-g3u2L2qcAqUgtp6cXSmmsIxFjrsDBw3WBpo";
+
+function getParam(n){ var m = new RegExp("[?&]"+n+"=([^&]+)").exec(window.location.search); return m ? decodeURIComponent(m[1]) : ""; }
+
+var STEPS = ["Booked","Picked Up","In Transit","Delivered"];
+
+function fmtTime(iso){
+  if(!iso) return "";
+  var d = new Date(iso);
+  return d.toLocaleDateString("en-CA",{month:"short",day:"numeric"}) + " · " + d.toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"});
+}
+
+function esc(s){ return (s==null?"":(s+"")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function render(rec){
+  var status = rec.status || "Picked Up";
+  // map Picked Up to In Transit visual progress
+  var currentIdx = STEPS.indexOf(status);
+  if(status === "Picked Up") currentIdx = 1;
+  if(status === "Delivered") currentIdx = 3;
+  var statusDisplay = status === "Picked Up" ? "In Transit" : status;
+
+  var html = '<div class="card">'
+    + '<div class="status-hero"><div class="status-label">Current Status</div><div class="status-big">' + esc(statusDisplay) + '</div></div>'
+    + '<div class="route">'
+    + '<div class="route-city"><div class="route-city-name">' + esc(rec.pickup || "Origin") + '</div><div class="route-city-lbl">From</div></div>'
+    + '<div class="route-arrow">&rarr;</div>'
+    + '<div class="route-city"><div class="route-city-name">' + esc(rec.delivery || "Destination") + '</div><div class="route-city-lbl">To</div></div>'
+    + '</div>';
+
+  html += '<div class="timeline">';
+  STEPS.forEach(function(s, i){
+    var cls = i < currentIdx ? "done" : i === currentIdx ? "active" : "";
+    var time = "";
+    if(s === "Picked Up" && rec.pickup_confirmed_at) time = fmtTime(rec.pickup_confirmed_at);
+    if(s === "Delivered" && rec.delivered_at) time = fmtTime(rec.delivered_at);
+    html += '<div class="tl-step ' + cls + '"><div class="tl-dot"></div><div><div class="tl-label">' + s + '</div>' + (time ? '<div class="tl-time">' + time + '</div>' : '') + '</div></div>';
+  });
+  html += '</div></div>';
+
+  html += '<div class="card">';
+  var rows = [];
+  if(rec.quote_num) rows.push(["Reference", esc(rec.quote_num)]);
+  if(rec.load_type) rows.push(["Freight", esc(rec.load_type)]);
+  if(rec.weight) rows.push(["Weight", esc(rec.weight)]);
+  if(rec.pickup_confirmed_at) rows.push(["Picked Up", fmtTime(rec.pickup_confirmed_at)]);
+  rows.forEach(function(r){
+    html += '<div class="detail-row"><span class="detail-lbl">' + r[0] + '</span><span class="detail-val">' + r[1] + '</span></div>';
+  });
+  html += '</div>';
+
+  document.getElementById("content").innerHTML = html;
+}
+
+function load(){
+  var id = getParam("id");
+  if(!id){
+    document.getElementById("content").innerHTML = '<div class="error">No tracking ID provided.</div>';
+    return;
+  }
+  fetch(SB_URL + "/rest/v1/load_tracking?tracking_id=eq." + encodeURIComponent(id) + "&select=*", {
+    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(Array.isArray(data) && data.length){
+      render(data[0]);
+    } else {
+      document.getElementById("content").innerHTML = '<div class="error">Shipment not found. Check your link or contact your dispatcher.</div>';
+    }
+  })
+  .catch(function(){
+    document.getElementById("content").innerHTML = '<div class="error">Couldn\'t load shipment. Please try again shortly.</div>';
+  });
+}
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
