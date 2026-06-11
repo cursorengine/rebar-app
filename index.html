@@ -2008,7 +2008,10 @@ function dbToLocal(r) {
     doctype: r.doctype || "Quote",
     paid: r.paid || false,
     paiddate: r.paiddate || "",
-    created: r.created_at || new Date().toISOString()
+    created: r.created_at || new Date().toISOString(),
+    trackingId: r.tracking_id || "",
+    loadStatus: r.load_status || "",
+    pickupConfirmedAt: r.pickup_confirmed_at || ""
   };
 }
 
@@ -2042,6 +2045,9 @@ function localToDb(q) {
     doctype: q.doctype || "Quote",
     paid: q.paid || false,
     paiddate: q.paiddate || null,
+    tracking_id: q.trackingId || null,
+    load_status: q.loadStatus || null,
+    pickup_confirmed_at: q.pickupConfirmedAt || null,
     updated_at: new Date().toISOString()
   };
 }
@@ -4099,8 +4105,10 @@ function saveLoadStatus(){
     if(ns === "Delivered") patch.delivered_at = new Date().toISOString();
     sbFetch("/rest/v1/load_tracking?tracking_id=eq."+q.trackingId, "PATCH", patch).catch(function(){});
   }
-  logActivity(id, "Load: "+ns, document.getElementById("ls-notes").value.trim());
-  sbFetch("/rest/v1/quotes?id=eq."+id,"PATCH",{updated_at:new Date().toISOString()}).catch(function(){});
+  // persist loadStatus back to quotes row so it survives reload
+  var qPatch = { load_status: ns, updated_at: new Date().toISOString() };
+  if(ns === "Paid"){ qPatch.paid = true; qPatch.paiddate = q.paiddate; }
+  sbFetch("/rest/v1/quotes?id=eq."+id, "PATCH", qPatch).catch(function(){});
   saveLocal(); renderLoads();
   closeM("m-load-status");
   showToast("Load updated: "+ns);
@@ -4131,7 +4139,8 @@ function confirmPickup(){
   if(!q.trackingId) q.trackingId = genTrackingId();
   var note = document.getElementById("ls-notes").value.trim();
   logActivity(id, "Pickup confirmed", note);
-  // persist tracking record to Supabase (best-effort, used by public tracking page)
+
+  // Persist tracking record — upsert so re-confirming always works
   var trackRec = {
     tracking_id: q.trackingId,
     quote_num: q.num || "",
@@ -4144,8 +4153,25 @@ function confirmPickup(){
     pickup_confirmed_at: q.pickupConfirmedAt,
     updated_at: new Date().toISOString()
   };
-  sbFetch("/rest/v1/load_tracking", "POST", trackRec).catch(function(){});
-  sbFetch("/rest/v1/quotes?id=eq."+id, "PATCH", {updated_at:new Date().toISOString()}).catch(function(){});
+  // Save trackingId + loadStatus back to the quotes row so it survives a reload
+  var quotePatch = {
+    tracking_id: q.trackingId,
+    load_status: q.loadStatus,
+    pickup_confirmed_at: q.pickupConfirmedAt,
+    updated_at: new Date().toISOString()
+  };
+  sbFetch("/rest/v1/load_tracking", "POST", trackRec)
+    .catch(function(err){
+      // Try upsert if insert failed (duplicate tracking_id)
+      return sbFetch("/rest/v1/load_tracking?tracking_id=eq." + q.trackingId, "PATCH", trackRec);
+    })
+    .then(function(){
+      sbFetch("/rest/v1/quotes?id=eq." + id, "PATCH", quotePatch).catch(function(){});
+    })
+    .catch(function(){
+      showToast("⚠️ Tracking write failed — check connection");
+    });
+
   saveLocal(); renderLoads();
   closeM("m-load-status");
   // send tracking email if requested
