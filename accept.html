@@ -74,6 +74,9 @@ var ID = getParam("id");
 function headers(){ return { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" }; }
 
 function renderQuote(rec){
+  if(rec.carrier_name){ var _bn=document.querySelector(".brand-name"); if(_bn) _bn.textContent = rec.carrier_name; }
+  var _ph = rec.carrier_phone || "780.387.1747";
+  var _ftr = document.querySelector(".ftr"); if(_ftr) _ftr.innerHTML = 'Questions? Reply to your quote email or call ' + esc(_ph) + '.<br><span style="opacity:0.55">Powered by CommandDeck</span>';
   var html = '<div class="card">'
     + '<div class="hero"><div class="hero-lbl">Quote For</div><div class="hero-co">' + esc(rec.company || "Your Company") + '</div></div>'
     + '<div class="route">'

@@ -74,15 +74,21 @@ function fmtTime(iso){
 function esc(s){ return (s==null?"":(s+"")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
 function render(rec){
+  if(rec.carrier_name){ var _bn=document.querySelector(".brand-name"); if(_bn) _bn.textContent = rec.carrier_name; }
+  var _ph = rec.carrier_phone || "";
+  var _ftr = document.querySelector(".ftr"); if(_ftr) _ftr.innerHTML = (_ph ? 'Questions? Call ' + esc(_ph) + '.' : 'Questions? Reply to your quote email.') + '<br><span style="opacity:0.55">Powered by CommandDeck</span>';
   var status = rec.status || "Picked Up";
   // map Picked Up to In Transit visual progress
   var currentIdx = STEPS.indexOf(status);
   if(status === "Picked Up") currentIdx = 1;
   if(status === "Delivered") currentIdx = 3;
   var statusDisplay = status === "Picked Up" ? "In Transit" : status;
+  var lastUpd = rec.updated_at ? fmtTime(rec.updated_at) : "";
 
   var html = '<div class="card">'
-    + '<div class="status-hero"><div class="status-label">Current Status</div><div class="status-big">' + esc(statusDisplay) + '</div></div>'
+    + '<div class="status-hero"><div class="status-label">Current Status</div><div class="status-big">' + esc(statusDisplay) + '</div>'
+    + (lastUpd ? '<div style="font-size:11px;color:#555;margin-top:6px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:0.06em">Last updated ' + esc(lastUpd) + '</div>' : '')
+    + '</div>'
     + '<div class="route">'
     + '<div class="route-city"><div class="route-city-name">' + esc(rec.pickup || "Origin") + '</div><div class="route-city-lbl">From</div></div>'
     + '<div class="route-arrow">&rarr;</div>'
@@ -110,6 +116,21 @@ function render(rec){
   });
   html += '</div>';
 
+  // Proof of delivery + driver note (shown when present)
+  var pods = Array.isArray(rec.pod_urls) ? rec.pod_urls : [];
+  if(pods.length || rec.driver_note){
+    html += '<div class="card"><div class="status-label" style="margin-bottom:10px">Proof of Delivery</div>';
+    if(rec.driver_note){
+      html += '<div style="font-size:13px;color:#bbb;line-height:1.6;margin-bottom:'+(pods.length?'12px':'0')+'">'+esc(rec.driver_note)+'</div>';
+    }
+    if(pods.length){
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      pods.forEach(function(u){ html += '<a href="'+esc(u)+'" target="_blank"><img src="'+esc(u)+'" style="width:84px;height:84px;object-fit:cover;border:1px solid #333;border-radius:3px"></a>'; });
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
   document.getElementById("content").innerHTML = html;
 }
 
@@ -119,13 +140,15 @@ function load(){
     document.getElementById("content").innerHTML = '<div class="error">No tracking ID provided.</div>';
     return;
   }
-  fetch(SB_URL + "/rest/v1/load_tracking?tracking_id=eq." + encodeURIComponent(id) + "&select=*", {
-    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }
+  fetch(SB_URL + "/rest/v1/rpc/get_tracking", {
+    method: "POST",
+    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_tracking_id: id })
   })
   .then(function(r){ return r.json(); })
   .then(function(data){
-    if(Array.isArray(data) && data.length){
-      render(data[0]);
+    if(data && data.tracking_id){
+      render(data);
     } else {
       document.getElementById("content").innerHTML = '<div class="error">Shipment not found. Check your link or contact your dispatcher.</div>';
     }
