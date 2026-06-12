@@ -121,10 +121,10 @@ function respond(decision){
   if(db) db.disabled = true;
   if(ab && decision === "Accepted") ab.textContent = "Submitting...";
   if(db && decision === "Declined") db.textContent = "Submitting...";
-  fetch(SB_URL + "/rest/v1/quote_acceptance?accept_id=eq." + encodeURIComponent(ID), {
-    method: "PATCH",
+  fetch(SB_URL + "/rest/v1/rpc/respond_to_quote", {
+    method: "POST",
     headers: headers(),
-    body: JSON.stringify({ status: decision, responded_at: new Date().toISOString() })
+    body: JSON.stringify({ p_accept_id: ID, p_decision: decision })
   })
   .then(function(r){
     if(!r.ok) throw new Error("save " + r.status);
@@ -142,10 +142,10 @@ function load(){
     document.getElementById("content").innerHTML = '<div class="error">No quote link provided.</div>';
     return;
   }
-  fetch(SB_URL + "/rest/v1/quote_acceptance?accept_id=eq." + encodeURIComponent(ID) + "&select=*", { headers: headers() })
+  fetch(SB_URL + "/rest/v1/rpc/get_acceptance", { method: "POST", headers: headers(), body: JSON.stringify({ p_accept_id: ID }) })
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if(Array.isArray(data) && data.length){ REC = data[0]; renderQuote(REC); }
+      if(data && data.accept_id){ REC = data; renderQuote(REC); }
       else { document.getElementById("content").innerHTML = '<div class="error">Quote not found. Check your link or contact us.</div>'; }
     })
     .catch(function(){
