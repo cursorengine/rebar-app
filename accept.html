@@ -51,13 +51,14 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:
 <body>
 <div class="wrap">
   <div class="brand">
-    <div class="brand-name">CommandDeck Transport</div>
+    <img class="brand-logo" id="brand-logo" style="display:none;max-height:60px;max-width:240px;object-fit:contain;margin:0 auto 6px">
+    <div class="brand-name">Freight Quote Approval</div>
     <div class="brand-sub">Freight Quote Approval</div>
   </div>
   <div id="content">
     <div class="loading"><div class="loading-spin"></div>Loading your quote...</div>
   </div>
-  <div class="ftr">Questions? Reply to your quote email or call 780.387.1747.</div>
+  <div class="ftr">Questions? Reply to your quote email.</div>
 </div>
 
 <script>
@@ -74,9 +75,20 @@ var ID = getParam("id");
 function headers(){ return { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" }; }
 
 function renderQuote(rec){
-  if(rec.carrier_name){ var _bn=document.querySelector(".brand-name"); if(_bn) _bn.textContent = rec.carrier_name; }
-  var _ph = rec.carrier_phone || "780.387.1747";
-  var _ftr = document.querySelector(".ftr"); if(_ftr) _ftr.innerHTML = 'Questions? Reply to your quote email or call ' + esc(_ph) + '.<br><span style="opacity:0.55">Powered by CommandDeck</span>';
+  var nameEl = document.querySelector(".brand-name");
+  var logoEl = document.getElementById("brand-logo");
+  if(rec.carrier_logo && logoEl){
+    logoEl.src = rec.carrier_logo;
+    logoEl.style.display = "block";
+    if(nameEl) nameEl.style.display = "none";
+  } else if(rec.carrier_name && nameEl){
+    nameEl.textContent = rec.carrier_name;
+    nameEl.style.display = "block";
+  } else if(nameEl){
+    nameEl.textContent = "Freight Quote Approval";
+  }
+  var _ph = rec.carrier_phone || "";
+  var _ftr = document.querySelector(".ftr"); if(_ftr) _ftr.innerHTML = 'Questions? Reply to your quote email' + (_ph ? ' or call ' + esc(_ph) : '') + '.<br><span style="opacity:0.55">Powered by CommandDeck</span>';
   var html = '<div class="card">'
     + '<div class="hero"><div class="hero-lbl">Quote For</div><div class="hero-co">' + esc(rec.company || "Your Company") + '</div></div>'
     + '<div class="route">'
