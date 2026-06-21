@@ -35,6 +35,7 @@ alter table public.load_tracking add column if not exists delivered_at timestamp
 
 -- The dispatcher caches the driver token on the quote so the link survives a reload.
 alter table public.quotes add column if not exists driver_token text;
+alter table public.quotes add column if not exists bol jsonb;
 
 -- Fast + unique lookups by the driver's secret token.
 create unique index if not exists load_tracking_driver_token_idx

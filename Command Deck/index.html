@@ -185,11 +185,11 @@ a{color:inherit}
    a full-viewport-width element in from translateX(±100%), which on mobile
    painted an entire screen off-axis and caused the horizontal "glitch" jump.
    Keeping the offset tiny (28px) + GPU compositing removes it entirely. */
-@keyframes vSlideR{from{transform:translate3d(28px,0,0);opacity:0}to{transform:translate3d(0,0,0);opacity:1}}
-@keyframes vSlideL{from{transform:translate3d(-28px,0,0);opacity:0}to{transform:translate3d(0,0,0);opacity:1}}
-.view.va-r,.view.va-l{will-change:transform,opacity;backface-visibility:hidden;overflow-x:clip}
-.view.va-r{animation:vSlideR 0.22s cubic-bezier(0.22,0.61,0.36,1)}
-.view.va-l{animation:vSlideL 0.22s cubic-bezier(0.22,0.61,0.36,1)}
+/* Tab transition: pure fade with a tiny VERTICAL rise only — no horizontal
+   movement at all, so a tab switch can never shift content sideways (this was
+   the mobile glitch: views slid in horizontally and the offscreen paint jumped). */
+@keyframes vFade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.view.va-r,.view.va-l{will-change:opacity,transform;backface-visibility:hidden;animation:vFade 0.18s ease-out}
 @media(prefers-reduced-motion:reduce){.view.va-r,.view.va-l{animation:none}}
 
 /* STATS */
@@ -237,6 +237,7 @@ a{color:inherit}
 /* DOCTYPE BADGE */
 .dt-i{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:1px 5px;background:rgba(52,152,219,0.18);color:#3498db;margin-left:5px;vertical-align:middle}
 .dt-q{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:1px 5px;background:rgba(255,255,255,0.07);color:#555;margin-left:5px;vertical-align:middle}
+.dt-b{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:1px 5px;background:rgba(241,196,15,0.18);color:#f1c40f;margin-left:5px;vertical-align:middle}
 /* MARGIN COL */
 td.margin{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;text-align:right;white-space:nowrap}
 /* CLEAR FILTERS BTN */
@@ -795,6 +796,7 @@ body.delmode .del-col{display:table-cell}
     <button class="doc-tab active" data-doc="" onclick="filterDoc('')">All</button>
     <button class="doc-tab" data-doc="Quote" onclick="filterDoc('Quote')">Quotes</button>
     <button class="doc-tab" data-doc="Invoice" onclick="filterDoc('Invoice')">Invoices</button>
+    <button class="doc-tab" data-doc="BOL" onclick="filterDoc('BOL')">BOLs</button>
     <button class="doc-tab" data-doc="trash" onclick="filterDoc('trash')">Trash</button>
   </div>
   <div class="toolbar">
@@ -989,12 +991,12 @@ body.delmode .del-col{display:table-cell}
         <div class="qmeta-item"><div class="qmeta-lbl">Status</div>
           <select class="qmeta-sel" id="q-status"><option>Pending</option><option>Sent</option><option>Accepted</option><option>Declined</option></select>
         </div>
-        <select id="q-doctype" style="display:none"><option>Quote</option><option>Invoice</option></select>
+        <select id="q-doctype" style="display:none"><option>Quote</option><option>Invoice</option><option>BOL</option></select>
         <div class="qmeta-item"><div class="qmeta-lbl">Reference / PO</div><input class="qmeta-val" id="q-ref" placeholder="PO #" style="width:110px"></div>
       </div>
       <div class="q2col">
         <div>
-          <div class="qsec">Bill To</div>
+          <div class="qsec" id="qsec-billto">Bill To</div>
           <div class="qf"><div class="qf-lbl">Company / Name</div><input class="qf-in" id="b-co" placeholder="Customer name"></div>
           <div class="qf"><div class="qf-lbl">Contact Name</div><input class="qf-in" id="b-contact" placeholder="Contact person"></div>
           <div class="qf"><div class="qf-lbl">Phone</div><input class="qf-in" id="b-phone" type="tel" placeholder="780.000.0000"></div>
@@ -1016,8 +1018,28 @@ body.delmode .del-col{display:table-cell}
           <div class="qf"><div class="qf-lbl">Estimated Weight</div><input class="qf-in" id="s-weight" placeholder="e.g. 20,000 lbs"></div>
         </div>
       </div>
-      <div class="qsec">Pricing</div>
-      <div class="qli-wrap"><table class="qli-tbl">
+      <div class="qsec bol-only" style="display:none">Consignee (Deliver To) &amp; Carrier</div>
+      <div class="q2col bol-only" style="display:none">
+        <div>
+          <div class="qf"><div class="qf-lbl">Consignee / Receiver</div><input class="qf-in" id="bol-consignee" placeholder="Receiving company"></div>
+          <div class="qf"><div class="qf-lbl">Consignee Address</div><input class="qf-in" id="bol-consignee-addr" placeholder="City, Province"></div>
+          <div class="qf"><div class="qf-lbl">Consignee Contact</div><input class="qf-in" id="bol-consignee-contact" placeholder="Name / phone"></div>
+        </div>
+        <div>
+          <div class="qf"><div class="qf-lbl">Carrier</div><input class="qf-in" id="bol-carrier" value="ReBar Transportation Services Ltd"></div>
+          <div class="qf"><div class="qf-lbl">Freight Charge Terms</div><select class="qf-sel" id="bol-terms"><option>Prepaid</option><option>Collect</option><option>Third Party</option></select></div>
+          <div class="qf"><div class="qf-lbl">Declared Value</div><input class="qf-in" id="bol-value" placeholder="$ (optional)"></div>
+        </div>
+      </div>
+      <div class="qsec bol-only" style="display:none">Freight Description</div>
+      <div class="qli-wrap bol-only" style="display:none"><table class="qli-tbl">
+        <thead><tr><th style="width:14%">Pieces</th><th style="width:44%">Commodity Description</th><th class="r" style="width:21%">Weight</th><th class="r" style="width:21%">Class / NMFC</th></tr></thead>
+        <tbody>
+          <tr><td><input id="bol-pieces" placeholder="e.g. 12 skids"></td><td><input id="bol-desc" placeholder="Description of articles / marks"></td><td><input class="r" id="bol-fweight" placeholder="lbs"></td><td><input class="r" id="bol-class" placeholder="e.g. 70"></td></tr>
+        </tbody>
+      </table></div>
+      <div class="qsec quote-only">Pricing</div>
+      <div class="qli-wrap quote-only"><table class="qli-tbl">
         <thead><tr><th style="width:34%">Description</th><th style="width:20%">Details</th><th class="r" style="width:12%">Qty</th><th class="r" style="width:13%">Rate $</th><th class="r" style="width:13%">Amt $</th><th class="li-dc"></th></tr></thead>
         <tbody id="litbody">
           <tr><td><input placeholder="Base haul rate"></td><td><input placeholder="Flat/mile"></td><td><input class="r" placeholder="1"></td><td><input class="r" placeholder="0.00"></td><td><input class="r" value="0.00" readonly style="font-weight:600"></td><td class="li-dc"><button class="li-db" onclick="delLI(this)">x</button></td></tr>
@@ -1025,8 +1047,8 @@ body.delmode .del-col{display:table-cell}
           <tr><td><input placeholder="Detention/wait"></td><td><input placeholder="Per hour"></td><td><input class="r" placeholder="0"></td><td><input class="r" placeholder="0.00"></td><td><input class="r" value="0.00" readonly style="font-weight:600"></td><td class="li-dc"><button class="li-db" onclick="delLI(this)">x</button></td></tr>
         </tbody>
       </table></div>
-      <button class="add-li" onclick="addLI()">+ Add Line Item</button>
-      <div class="qtotals">
+      <button class="add-li quote-only" onclick="addLI()">+ Add Line Item</button>
+      <div class="qtotals quote-only">
         <div class="qtbox">
           <div class="qtrow"><span>Subtotal</span><input class="qt-in" id="t-sub" readonly placeholder="$0.00"></div>
           <div class="qtrow"><span>GST (5%)</span><input class="qt-in" id="t-gst" readonly placeholder="$0.00"></div>
@@ -1040,9 +1062,14 @@ body.delmode .del-col{display:table-cell}
       <div class="qtermbox"><textarea class="qta" id="q-notes" placeholder="Special requirements, load instructions, access details..."></textarea></div>
       <div class="qsec">Terms &amp; Conditions</div>
       <div class="qtermbox"><textarea class="qta" id="q-terms">Payment due within 15 days of delivery. This quote is valid for 7 days from date issued. Rates subject to change if load details differ from above. Fuel surcharges may apply based on current rates at time of pickup. ReBar Transportation Services Ltd reserves the right to refuse any load that does not meet safety standards. All loads subject to availability.</textarea></div>
-      <div class="qsig">
+      <div class="qsig quote-only">
         <div><div class="qsig-line"></div><div class="qsig-lbl">Authorized - ReBar Transportation Services Ltd</div></div>
         <div><div class="qsig-line"></div><div class="qsig-lbl">Customer Acceptance &amp; Date</div></div>
+      </div>
+      <div class="qsig bol-only" style="display:none;grid-template-columns:1fr 1fr 1fr">
+        <div><div class="qsig-line"></div><div class="qsig-lbl">Shipper Signature &amp; Date</div></div>
+        <div><div class="qsig-line"></div><div class="qsig-lbl">Carrier / Driver Signature &amp; Date</div></div>
+        <div><div class="qsig-line"></div><div class="qsig-lbl">Consignee Signature &amp; Date</div></div>
       </div>
     </div>
     <div class="pdf-ftr">
@@ -1282,7 +1309,7 @@ body.delmode .del-col{display:table-cell}
       </div>
       <div class="fgrp">
         <label class="flbl">Document Type</label>
-        <select class="fsel" id="m-doctype"><option>Quote</option><option>Invoice</option></select>
+        <select class="fsel" id="m-doctype"><option>Quote</option><option>Invoice</option><option>BOL</option></select>
       </div>
     </div>
     <div class="fgrp">
@@ -2035,6 +2062,7 @@ function dbToLocal(r) {
     created: r.created_at || new Date().toISOString(),
     trackingId: r.tracking_id || "",
     driverToken: r.driver_token || "",
+    bol: r.bol || null,
     loadStatus: r.load_status || "",
     pickupConfirmedAt: r.pickup_confirmed_at || ""
   };
@@ -2072,6 +2100,7 @@ function localToDb(q) {
     paiddate: q.paiddate || null,
     tracking_id: q.trackingId || null,
     driver_token: q.driverToken || null,
+    bol: q.bol || null,
     load_status: q.loadStatus || null,
     pickup_confirmed_at: q.pickupConfirmedAt || null,
     updated_at: new Date().toISOString()
@@ -2403,6 +2432,7 @@ function renderTbl() {
     if(activeDocFilter === "trash") { md = q.deleted === true; }
     else if(activeDocFilter === "Quote") { md = !q.deleted && (q.doctype === "Quote" || !q.doctype); }
     else if(activeDocFilter === "Invoice") { md = !q.deleted && q.doctype === "Invoice"; }
+    else if(activeDocFilter === "BOL") { md = !q.deleted && q.doctype === "BOL"; }
     else { md = !q.deleted; }
     return ms && md && (!sf || q.status === sf) && inTime(q, tf);
   });
@@ -2423,6 +2453,7 @@ function renderTbl() {
     if(emptT){
       if(activeDocFilter === "trash"){ emptT.textContent = "Trash Is Empty"; if(emptS) emptS.textContent = "Deleted items appear here"; }
       else if(activeDocFilter === "Invoice"){ emptT.textContent = "No Invoices Found"; if(emptS) emptS.textContent = "Switch a quote to invoice mode to create one"; }
+      else if(activeDocFilter === "BOL"){ emptT.textContent = "No Bills of Lading"; if(emptS) emptS.textContent = "Switch a load to BOL mode in the Builder"; }
       else if(activeDocFilter === "Quote"){ emptT.textContent = "No Quotes Found"; if(emptS) emptS.textContent = "Tap \"+ New\" to log your first haul"; }
       else { emptT.textContent = "Nothing Here Yet"; if(emptS) emptS.textContent = "Add your first quote to get started"; }
     }
@@ -2443,7 +2474,7 @@ function renderTbl() {
         else if (diffDays === 0) fuDot = '<span class="fu-dot today" title="Follow-up today"></span>';
         else if (diffDays <= 3) fuDot = '<span class="fu-dot soon" title="Follow-up in ' + diffDays + (diffDays === 1 ? ' day' : ' days') + '"></span>';
       }
-      var dtBadge = q.doctype === 'Invoice' ? '<span class="dt-i">INV</span>' : '<span class="dt-q">QT</span>';
+      var dtBadge = q.doctype === 'Invoice' ? '<span class="dt-i">INV</span>' : (q.doctype === 'BOL' ? '<span class="dt-b">BOL</span>' : '<span class="dt-q">QT</span>');
       var marginHtml = '';
       var tot = parseFloat(q.total) || 0;
       var cst = parseFloat(q.cost) || 0;
@@ -2775,6 +2806,7 @@ function openInBuilder(id) {
   document.getElementById("q-doctype").value = q.doctype || "Quote";
   document.getElementById("doctype-toggle").textContent = "Mode: " + (q.doctype || "Quote");
   updateDocType();
+  fillBOL(q.bol);
   document.getElementById("s-pickup").value = q.pickup || "";
   document.getElementById("s-delivery").value = q.delivery || "";
   document.getElementById("s-date").value = q.pdate || "";
@@ -3061,6 +3093,7 @@ function saveToTracker() {
     addr: document.getElementById("b-addr").value.trim(),
     ref: document.getElementById("b-ref").value.trim() || document.getElementById("q-ref").value.trim(),
     doctype: document.getElementById("q-doctype").value,
+    bol: (document.getElementById("q-doctype").value === "BOL") ? readBOL() : null,
     pickup: document.getElementById("s-pickup").value.trim(),
     delivery: document.getElementById("s-delivery").value.trim(),
     load: document.getElementById("s-load").value,
@@ -3105,7 +3138,7 @@ function saveToTracker() {
 // PRINT - iframe method (no popups needed)
 function toggleDocType() {
   var sel = document.getElementById("q-doctype");
-  sel.value = (sel.value === "Quote") ? "Invoice" : "Quote";
+  sel.value = (sel.value === "Quote") ? "Invoice" : (sel.value === "Invoice" ? "BOL" : "Quote");
   document.getElementById("doctype-toggle").textContent = "Mode: " + sel.value;
   // FEATURE 7: auto sequential invoice number
   if(sel.value === "Invoice"){
@@ -3114,15 +3147,47 @@ function toggleDocType() {
       numEl.value = nextInvoiceNum();
     }
   }
+  if(sel.value === "BOL"){
+    var bnum = document.getElementById("q-num");
+    if(bnum && (!bnum.value || bnum.value.indexOf("RB-")===0 || bnum.value.indexOf("INV-")===0)){
+      bnum.value = "BOL-" + new Date().toISOString().slice(2,10).replace(/-/g,"") + "-" + String(quotes.length+1).padStart(2,"0");
+    }
+  }
   updateDocType();
   showToast("Switched to " + sel.value + " mode");
 }
 
+function readBOL(){
+  function v(id){ var e=document.getElementById(id); return e?e.value:""; }
+  return { consignee:v("bol-consignee"), consigneeAddr:v("bol-consignee-addr"),
+    consigneeContact:v("bol-consignee-contact"), carrier:v("bol-carrier"),
+    terms:v("bol-terms"), value:v("bol-value"), pieces:v("bol-pieces"),
+    desc:v("bol-desc"), fweight:v("bol-fweight"), cls:v("bol-class") };
+}
+function fillBOL(b){
+  b = b || {};
+  function s(id,val){ var e=document.getElementById(id); if(e) e.value = val||""; }
+  s("bol-consignee",b.consignee); s("bol-consignee-addr",b.consigneeAddr);
+  s("bol-consignee-contact",b.consigneeContact);
+  s("bol-carrier", b.carrier || "ReBar Transportation Services Ltd");
+  s("bol-terms", b.terms || "Prepaid"); s("bol-value",b.value);
+  s("bol-pieces",b.pieces); s("bol-desc",b.desc); s("bol-fweight",b.fweight); s("bol-class",b.cls);
+}
 function updateDocType() {
   var type = document.getElementById("q-doctype").value;
   var titleEl = document.querySelector(".pdf-title");
   var grandLabel = document.querySelector(".qtrow.grand span");
-  if (type === "Invoice") {
+  var _isBOL = (type === "BOL");
+  // Show/hide BOL-only vs quote/invoice-only blocks via INLINE display so the
+  // state is captured by #qdoc.innerHTML and carries into the print/email iframe.
+  document.querySelectorAll(".bol-only").forEach(function(el){ el.style.display = _isBOL ? "" : "none"; });
+  document.querySelectorAll(".quote-only").forEach(function(el){ el.style.display = _isBOL ? "none" : ""; });
+  var _billto = document.getElementById("qsec-billto");
+  if(_billto) _billto.textContent = _isBOL ? "Shipper (From)" : "Bill To";
+  if (type === "BOL") {
+    if (titleEl) titleEl.textContent = "Bill of Lading";
+    document.getElementById("q-terms").value = "RECEIVED, subject to the classifications and lawfully filed tariffs in effect on the date of issue. This is a NON-NEGOTIABLE Bill of Lading. The property described above is received in apparent good order, except as noted. Carrier liability is limited unless a higher value is declared by the shipper. The shipper certifies the goods are properly classified, described, packaged, marked and labeled, and in proper condition for transportation.";
+  } else if (type === "Invoice") {
     titleEl.textContent = "Invoice";
     if (grandLabel) grandLabel.textContent = "Amount Due";
     document.getElementById("q-terms").value = "Payment due within 15 days of invoice date. Please include the invoice/reference number with your payment. E-transfer to rebartransport@hotmail.com or cheque payable to ReBar Transportation Services Ltd. A 2% monthly interest charge applies to overdue balances. Thank you for your business.";
@@ -3201,8 +3266,8 @@ function doEmail() {
           var body = greeting;
           body += "\n\nPlease find the attached " + doctype + " #" + num + " from ReBar Transportation Services Ltd.";
           if (pickup && delivery) body += "\n\nRoute: " + pickup + " to " + delivery;
-          body += "\nTotal: " + grand;
-          body += "\n\nThis " + doctype.toLowerCase() + " is valid for 7 days. To accept, reply to this email or call 780.387.1747.";
+          if(doctype !== "BOL") body += "\nTotal: " + grand;
+          if(doctype !== "BOL") body += "\n\nThis " + doctype.toLowerCase() + " is valid for 7 days. To accept, reply to this email or call 780.387.1747.";
           body += "\n\nThank you,\nReg Nicolas\nReBar Transportation Services Ltd\n780.387.1747 | rebartransport.ca";
 
           var subject = doctype + " #" + num + " - ReBar Transportation" + (co ? " for " + co : "");

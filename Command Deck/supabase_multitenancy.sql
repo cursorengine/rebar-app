@@ -35,14 +35,30 @@ alter table public.quote_requests   add column if not exists user_id uuid;
 
 
 -- ---------------------------------------------------------------------------
--- SECTION 2 — Backfill existing rows to you.  *** EDIT THE UID BELOW ***
+-- SECTION 2 — Backfill existing rows to you.
+-- Auto-detects your account: if you have exactly ONE user it uses that one,
+-- so you normally do NOT have to edit anything. If you have multiple accounts,
+-- paste the correct UID between the quotes in `override` below
+-- (Supabase > Authentication > Users > copy UID). Leaving it blank = auto.
 -- ---------------------------------------------------------------------------
 do $$
-declare owner_uid uuid := 'PASTE-YOUR-USER-UID-HERE';
+declare
+  override text := '066700df-2d92-4f66-a9f9-e1394445e15e';   -- primary account (owns existing data)
+  owner_uid uuid;
+  n_users   int;
 begin
-  if owner_uid is null then
-    raise exception 'Set owner_uid to your account UID (Supabase > Authentication > Users).';
+  if length(trim(override)) > 0 then
+    owner_uid := trim(override)::uuid;
+  else
+    select count(*) into n_users from auth.users;
+    if n_users = 0 then
+      raise exception 'No users exist yet — create/sign in to your account first, then re-run.';
+    elsif n_users > 1 then
+      raise exception 'Multiple accounts found — paste the correct UID into `override` (Supabase > Authentication > Users).';
+    end if;
+    select id into owner_uid from auth.users limit 1;
   end if;
+
   update public.quotes           set user_id = owner_uid where user_id is null;
   update public.quote_acceptance set user_id = owner_uid where user_id is null;
   update public.load_tracking    set user_id = owner_uid where user_id is null;
