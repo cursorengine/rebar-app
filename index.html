@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- CommandDeck build: 2026-06-21d notif+template-fixes -->
+<!-- CommandDeck build: 2026-06-21e doc-redesign -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CommandDeck</title>
@@ -968,14 +968,14 @@ body.delmode .del-col{display:table-cell}
     <button class="btn btn-sm" id="doctype-toggle" onclick="toggleDocType()" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.4)">Mode: Quote</button>
     <button class="btn btn-ghost btn-sm" onclick="addLI()">+ Line</button>
     <button class="btn btn-ghost btn-sm" onclick="saveToTracker()">Save</button>
-    <button class="btn btn-ghost btn-sm" onclick="doEmail()">&#9993; Email</button>
-    <button class="btn btn-chrome btn-sm" onclick="doPrint()">Print PDF</button>
+    <button class="btn btn-ghost btn-sm" onclick="cdEmail()">&#9993; Email</button>
+    <button class="btn btn-chrome btn-sm" onclick="cdPrint()">Print PDF</button>
     <button class="btn btn-ghost btn-sm" id="bbar-more" onclick="toggleBuildMenu(event)">More &#9662;</button>
   </div>
   <div id="build-menu" class="build-menu">
     <button class="ham-item" onclick="openRateCalc();closeBuildMenu()" style="color:#f1c40f">Rate Calculator</button>
     <button class="ham-item" onclick="saveTemplate();closeBuildMenu()">Save as Template</button>
-    <button class="ham-item" onclick="printBlank();closeBuildMenu()" style="color:#3498db">Print Blank Template</button>
+    <button class="ham-item" onclick="cdPrintBlank();closeBuildMenu()" style="color:#3498db">Print Blank Template</button>
     <div style="padding:8px 16px"><select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value);closeBuildMenu()" style="width:100%;font-size:11px"><option value="">Load Template...</option></select></div>
     <button class="ham-item" onclick="clearQ();closeBuildMenu()" style="color:#e74c3c">Clear</button>
   </div>
@@ -3447,6 +3447,153 @@ function printBlank(){
     });
   },300);
 }
+/* ===== CommandDeck professional print/PDF documents (branded boxed) ===== */
+var CD_FONT = '<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">';
+var CD_CSS = "@page{size:letter portrait;margin:0}"
+ + "*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}"
+ + "body{font-family:'Barlow',Arial,sans-serif;color:#111;background:#fff;font-size:11px}"
+ + ".cd-hdr{background:#0a0a0a;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:13px 22px}"
+ + ".cd-logo{height:34px;object-fit:contain}"
+ + ".cd-hr{text-align:right}"
+ + ".cd-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:#f0f0f0;line-height:1}"
+ + ".cd-c{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.08em;color:#cfcfcf;margin-top:3px}"
+ + ".cd-accent{height:3px;background:linear-gradient(90deg,#c8c8c8,#f0f0f0,#888,#c8c8c8)}"
+ + ".cd-body{padding:14px 20px 0}"
+ + ".cd-meta{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #222;border-bottom:0;margin-bottom:9px}"
+ + ".cd-mc{border-right:1px solid #d8d8d8;border-bottom:1px solid #222;padding:5px 9px;min-height:36px}"
+ + ".cd-lbl{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#888}"
+ + ".cd-val{font-size:11.5px;color:#111;font-weight:600;min-height:15px;padding-top:3px;white-space:pre-wrap;word-break:break-word}"
+ + ".cd-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}"
+ + ".cd-box{border:1px solid #222}"
+ + ".cd-bh{background:#0a0a0a;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:4px 9px}"
+ + ".cd-f{padding:4px 9px;border-bottom:1px solid #ededed}"
+ + ".cd-f:last-child{border-bottom:0}"
+ + ".cd-tbl{width:100%;border-collapse:collapse;margin-bottom:9px}"
+ + ".cd-tbl th{background:#0a0a0a;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 7px;text-align:left;border:1px solid #0a0a0a}"
+ + ".cd-tbl td{border:1px solid #cfcfcf;padding:5px 7px;height:26px;font-size:11px;vertical-align:top}"
+ + ".cd-tbl th.r,.cd-tbl td.r{text-align:right}"
+ + ".cd-tot{width:250px;margin-left:auto;border:1px solid #222;margin-bottom:9px}"
+ + ".cd-trow{display:flex;justify-content:space-between;padding:4px 9px;border-bottom:1px solid #e6e6e6;font-size:11px;color:#444}"
+ + ".cd-trow.g{background:#0a0a0a;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;border:0;letter-spacing:.04em}"
+ + ".cd-decl{font-size:9px;color:#555;line-height:1.55;border:1px solid #cfcfcf;padding:7px 9px;margin-bottom:9px}"
+ + ".cd-note{border:1px solid #cfcfcf;min-height:46px;padding:6px 9px;margin-bottom:9px}"
+ + ".cd-sig{display:grid;gap:20px;margin:6px 0 12px}"
+ + ".cd-sl{border-bottom:1px solid #111;height:30px}"
+ + ".cd-st{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-top:3px}"
+ + ".cd-ftr{background:#0a0a0a;color:#9a9a9a;font-family:'Barlow Condensed',sans-serif;font-size:8px;letter-spacing:.08em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:8px 22px}";
+
+function cdHeader(title){
+  var logo=(document.querySelector(".pdf-logo")||{}).src||"";
+  return '<div class="cd-hdr"><img class="cd-logo" src="'+logo+'"><div class="cd-hr"><div class="cd-title">'+esc(title)+'</div>'
+   +'<div class="cd-c">rebartransport@hotmail.com</div><div class="cd-c">780.387.1747 &nbsp;&middot;&nbsp; rebartransport.ca</div></div></div><div class="cd-accent"></div>';
+}
+function cdFooter(){
+  return '<div class="cd-ftr"><span>ReBar Transportation Services Ltd &middot; Millet, Alberta</span><span>780.387.1747 &middot; rebartransport@hotmail.com &middot; rebartransport.ca</span></div>';
+}
+function cdMC(lbl,val){ return '<div class="cd-mc"><div class="cd-lbl">'+esc(lbl)+'</div><div class="cd-val">'+esc(val||"")+'</div></div>'; }
+function cdF(lbl,val){ return '<div class="cd-f"><div class="cd-lbl">'+esc(lbl)+'</div><div class="cd-val">'+esc(val||"")+'</div></div>'; }
+
+function cdGather(){
+  function g(id){ var e=document.getElementById(id); return e?(e.value||""):""; }
+  var rows=[]; var tb=document.getElementById("litbody");
+  if(tb){ Array.prototype.forEach.call(tb.rows,function(r){ var ins=r.querySelectorAll("input"); if(ins.length>=5) rows.push({desc:ins[0].value,det:ins[1].value,qty:ins[2].value,rate:ins[3].value,amt:ins[4].value}); }); }
+  return {
+    doctype:g("q-doctype")||"Quote", num:g("q-num"), date:g("q-date"), expiry:g("q-expiry"), status:g("q-status"), ref:g("q-ref")||g("b-ref"), gst:g("q-gst"),
+    co:g("b-co"), contact:g("b-contact"), phone:g("b-phone"), email:g("b-email"), addr:g("b-addr"),
+    pickup:g("s-pickup"), delivery:g("s-delivery"), pdate:g("s-date"), ptime:g("s-time"), ddate:g("s-ddate"), dtime:g("s-dtime"), load:g("s-load"), weight:g("s-weight"),
+    items:rows, sub:g("t-sub"), gstAmt:g("t-gst"), adj:g("t-adj"), grand:g("t-grand"), notes:g("q-notes"), terms:g("q-terms"),
+    bol:{ consignee:g("bol-consignee"), consigneeAddr:g("bol-consignee-addr"), consigneeContact:g("bol-consignee-contact"), carrier:g("bol-carrier"),
+      fterms:g("bol-terms"), value:g("bol-value"), cod:g("bol-cod"), trailer:g("bol-trailer"), seal:g("bol-seal"), tdg:g("bol-tdg"), un:g("bol-un"),
+      pieces:g("bol-pieces"), fdesc:g("bol-desc"), fweight:g("bol-fweight"), cls:g("bol-class") }
+  };
+}
+
+function cdQuoteBody(d,blank){
+  var inv=d.doctype==="Invoice"; var v=function(x){ return blank?"":x; };
+  var meta='<div class="cd-meta">'+cdMC(inv?"Invoice #":"Quote #",v(d.num))+cdMC("Date Issued",v(d.date))+cdMC(inv?"Payment Due":"Valid Until",v(d.expiry))+cdMC("Status",v(d.status))+cdMC("Reference / PO",v(d.ref))+cdMC("GST / BN #",v(d.gst))+'</div>';
+  var billto='<div class="cd-box"><div class="cd-bh">Bill To</div>'+cdF("Company / Name",v(d.co))+cdF("Contact",v(d.contact))+cdF("Phone",v(d.phone))+cdF("Email",v(d.email))+cdF("Address",v(d.addr))+'</div>';
+  var ship='<div class="cd-box"><div class="cd-bh">Shipment</div>'+cdF("Pickup",v(d.pickup))+cdF("Delivery",v(d.delivery))+cdF("Pickup Date / Time",v((d.pdate||"")+(d.ptime?" "+d.ptime:"")))+cdF("Delivery Date / Time",v((d.ddate||"")+(d.dtime?" "+d.dtime:"")))+cdF("Load Type",v(d.load))+cdF("Weight",v(d.weight))+'</div>';
+  var rows="";
+  if(blank){ for(var i=0;i<6;i++) rows+='<tr><td></td><td></td><td class="r"></td><td class="r"></td><td class="r"></td></tr>'; }
+  else { (d.items||[]).forEach(function(it){ if(!(it.desc||it.det||it.amt)) return; rows+='<tr><td>'+esc(it.desc)+'</td><td>'+esc(it.det)+'</td><td class="r">'+esc(it.qty)+'</td><td class="r">'+esc(it.rate)+'</td><td class="r">'+esc(it.amt)+'</td></tr>'; }); if(!rows) rows='<tr><td></td><td></td><td class="r"></td><td class="r"></td><td class="r"></td></tr>'; }
+  var tbl='<table class="cd-tbl"><thead><tr><th>Description</th><th>Details</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  var tot='<div class="cd-tot"><div class="cd-trow"><span>Subtotal</span><span>'+esc(v(d.sub))+'</span></div><div class="cd-trow"><span>GST (5%)</span><span>'+esc(v(d.gstAmt))+'</span></div><div class="cd-trow"><span>Discount</span><span>'+esc(v(d.adj))+'</span></div><div class="cd-trow g"><span>'+(inv?"Amount Due":"Total")+'</span><span>'+esc(v(d.grand))+'</span></div></div>';
+  var notes='<div class="cd-box"><div class="cd-bh">Notes &amp; Special Instructions</div><div class="cd-note">'+esc(v(d.notes))+'</div></div>';
+  var terms='<div class="cd-box"><div class="cd-bh">Terms &amp; Conditions</div><div class="cd-decl" style="border:0;margin:0">'+esc(d.terms)+'</div></div>';
+  var sig='<div class="cd-sig" style="grid-template-columns:1fr 1fr"><div><div class="cd-sl"></div><div class="cd-st">Authorized — ReBar Transportation Services Ltd</div></div><div><div class="cd-sl"></div><div class="cd-st">Customer Acceptance &amp; Date</div></div></div>';
+  return '<div>'+cdHeader(inv?"Invoice":"Freight Quote")+'<div class="cd-body">'+meta+'<div class="cd-grid">'+billto+ship+'</div>'+tbl+tot+notes+terms+sig+'</div>'+cdFooter()+'</div>';
+}
+
+function cdBolBody(d,blank){
+  var v=function(x){ return blank?"":x; }; var b=d.bol||{};
+  var meta='<div class="cd-meta">'+cdMC("Bill of Lading #",v(d.num))+cdMC("Date",v(d.date))+cdMC("Carrier P.O. / Ref",v(d.ref))+cdMC("Trailer / Unit #",v(b.trailer))+cdMC("Seal #",v(b.seal))+cdMC("Freight Charge Terms",v(b.fterms))+'</div>';
+  var shipper='<div class="cd-box"><div class="cd-bh">Shipper (From)</div>'+cdF("Company / Name",v(d.co))+cdF("Contact",v(d.contact))+cdF("Phone",v(d.phone))+cdF("Address",v(d.addr))+'</div>';
+  var consignee='<div class="cd-box"><div class="cd-bh">Consignee (Deliver To)</div>'+cdF("Consignee / Receiver",v(b.consignee))+cdF("Address",v(b.consigneeAddr))+cdF("Contact",v(b.consigneeContact))+cdF("Carrier",v(b.carrier))+'</div>';
+  var route='<div class="cd-box"><div class="cd-bh">Route &amp; Charges</div><div style="display:grid;grid-template-columns:1fr 1fr"><div style="border-right:1px solid #ededed">'+cdF("Origin (Pickup)",v(d.pickup))+cdF("Pickup Date",v(d.pdate))+cdF("Declared Value",v(b.value))+'</div><div>'+cdF("Destination (Delivery)",v(d.delivery))+cdF("C.O.D. Amount",v(b.cod))+cdF("Dangerous Goods (TDG)",v((b.tdg||"")+(b.un?" — "+b.un:"")))+'</div></div></div>';
+  var rows="";
+  if(blank){ for(var i=0;i<6;i++) rows+='<tr><td></td><td></td><td class="r"></td><td class="r"></td></tr>'; }
+  else { rows='<tr><td>'+esc(b.pieces)+'</td><td>'+esc(b.fdesc)+'</td><td class="r">'+esc(b.fweight||d.weight)+'</td><td class="r">'+esc(b.cls)+'</td></tr>'; for(var j=0;j<3;j++) rows+='<tr><td></td><td></td><td class="r"></td><td class="r"></td></tr>'; }
+  var tbl='<table class="cd-tbl"><thead><tr><th style="width:14%">Pieces</th><th style="width:50%">Commodity Description</th><th class="r" style="width:18%">Weight</th><th class="r" style="width:18%">Class / NMFC</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  var decl='<div class="cd-decl">'+esc(d.terms)+'</div>';
+  var sig='<div class="cd-sig" style="grid-template-columns:1fr 1fr 1fr"><div><div class="cd-sl"></div><div class="cd-st">Shipper Signature &amp; Date</div></div><div><div class="cd-sl"></div><div class="cd-st">Carrier / Driver Signature &amp; Date</div></div><div><div class="cd-sl"></div><div class="cd-st">Consignee Signature &amp; Date</div></div></div>';
+  return '<div>'+cdHeader("Bill of Lading")+'<div class="cd-body">'+meta+'<div class="cd-grid">'+shipper+consignee+'</div>'+route+tbl+decl+sig+'</div>'+cdFooter()+'</div>';
+}
+
+function cdBuildHTML(blank){
+  var dt=(document.getElementById("q-doctype")||{}).value||"Quote";
+  var d=cdGather();
+  var body=(dt==="BOL")?cdBolBody(d,blank):cdQuoteBody(d,blank);
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">'+CD_FONT+'<style>'+CD_CSS+'</style></head><body>'+body+'</body></html>';
+}
+function cdPrint(){
+  var html=cdBuildHTML(false);
+  var f=document.createElement("iframe"); f.style.cssText="position:fixed;left:-9999px;top:-9999px;width:800px;height:1100px;border:0;";
+  document.body.appendChild(f); var doc=f.contentDocument||f.contentWindow.document; doc.open(); doc.write(html); doc.close();
+  f.onload=function(){ f.contentWindow.focus(); f.contentWindow.print(); setTimeout(function(){ try{document.body.removeChild(f);}catch(e){} },2000); };
+}
+function cdPrintBlank(){
+  var dt=((document.getElementById("q-doctype")||{}).value||"Quote").toLowerCase();
+  cdToPdf(cdBuildHTML(true), dt+"-blank-template.pdf", true, null);
+}
+function cdEmail(){
+  var dt=(document.getElementById("q-doctype")||{}).value||"Quote";
+  var num=(document.getElementById("q-num")||{}).value||"";
+  var co=(document.getElementById("b-co")||{}).value||"";
+  var contact=(document.getElementById("b-contact")||{}).value||"";
+  var toEmail=(document.getElementById("b-email")||{}).value||"";
+  cdToPdf(cdBuildHTML(false), dt.toLowerCase()+"-"+(num||"doc")+".pdf", false, function(){
+    var greeting=contact?("Hi "+contact+","):"Hi,";
+    var body=greeting+"\n\nPlease find the attached "+dt+" #"+num+" from ReBar Transportation Services Ltd.";
+    if(dt!=="BOL") body+="\n\nTo accept, reply to this email or call 780.387.1747.";
+    body+="\n\nThank you,\nReg Nicolas\nReBar Transportation Services Ltd\n780.387.1747 | rebartransport.ca";
+    var subject=dt+" #"+num+" - ReBar Transportation"+(co?(" for "+co):"");
+    window.location.href="mailto:"+encodeURIComponent(toEmail)+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+  });
+}
+function cdToPdf(html, filename, onePage, cb){
+  showToast("Generating PDF...");
+  var f=document.createElement("iframe"); f.style.cssText="position:fixed;left:-9999px;top:-9999px;width:800px;height:1100px;border:0;visibility:hidden;";
+  document.body.appendChild(f); var doc=f.contentDocument||f.contentWindow.document; doc.open(); doc.write(html); doc.close();
+  setTimeout(function(){
+    function ls(u,c){ if(u.indexOf("jspdf")!==-1&&window.jspdf){c();return;} if(u.indexOf("html2canvas")!==-1&&window.html2canvas){c();return;} var s=document.createElement("script"); s.src=u; s.onload=c; document.head.appendChild(s); }
+    ls("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",function(){
+      ls("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",function(){
+        showToast("Rendering...");
+        window.html2canvas(f.contentDocument.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:"#ffffff",width:800,windowWidth:800}).then(function(canvas){
+          var img=canvas.toDataURL("image/jpeg",0.92);
+          var pdf=new window.jspdf.jsPDF({unit:"pt",format:"letter",orientation:"portrait"});
+          var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+          if(onePage){ var r=Math.min(pw/canvas.width, ph/canvas.height); var w=canvas.width*r, h=canvas.height*r; pdf.addImage(img,"JPEG",(pw-w)/2,0,w,h); }
+          else { var iw=pw, ih=canvas.height*pw/canvas.width, y=0; while(y<ih){ if(y>0) pdf.addPage(); pdf.addImage(img,"JPEG",0,-y,iw,ih); y+=ph; } }
+          pdf.save(filename); try{document.body.removeChild(f);}catch(e){}
+          if(cb) cb(); else showToast("PDF ready");
+        }).catch(function(){ try{document.body.removeChild(f);}catch(e){} showToast("PDF render failed"); });
+      });
+    });
+  },300);
+}
+
+
 function doPrint() {
   var content = document.getElementById("qdoc").innerHTML;
   var iframe = document.createElement("iframe");
