@@ -169,9 +169,15 @@ function renderPodGrid(){
 }
 function removePod(i){ podFiles.splice(i,1); renderPodGrid(); }
 
+function randToken(n){
+  var c = "abcdefghijklmnopqrstuvwxyz0123456789", s = "";
+  var rnd = (window.crypto && window.crypto.getRandomValues) ? window.crypto.getRandomValues(new Uint32Array(n)) : null;
+  for(var i=0;i<n;i++){ var r = rnd ? rnd[i] : Math.floor(Math.random()*0xFFFFFFFF); s += c[r % c.length]; }
+  return s;
+}
 function uploadOne(p){
   var ext = (p.file.name.split(".").pop() || "jpg").toLowerCase();
-  var path = encodeURIComponent(REC.tracking_id) + "/" + Date.now() + "_" + Math.random().toString(36).slice(2,8) + "." + ext;
+  var path = encodeURIComponent(REC.tracking_id) + "/" + Date.now() + "_" + randToken(6) + "." + ext;
   return fetch(SB_URL + "/storage/v1/object/pod/" + path, {
     method:"POST",
     headers:{ "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Content-Type":p.file.type||"application/octet-stream", "x-upsert":"true" },
