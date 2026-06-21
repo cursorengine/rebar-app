@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- CommandDeck build: 2026-06-21 BOL+fade -->
+<!-- CommandDeck build: 2026-06-21b templates+GST+BOLfields -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CommandDeck</title>
@@ -975,6 +975,7 @@ body.delmode .del-col{display:table-cell}
   <div id="build-menu" class="build-menu">
     <button class="ham-item" onclick="openRateCalc();closeBuildMenu()" style="color:#f1c40f">Rate Calculator</button>
     <button class="ham-item" onclick="saveTemplate();closeBuildMenu()">Save as Template</button>
+    <button class="ham-item" onclick="printBlank();closeBuildMenu()" style="color:#3498db">Print Blank Template</button>
     <div style="padding:8px 16px"><select class="tb-sel" id="tmpl-sel" onchange="loadTemplate(this.value);closeBuildMenu()" style="width:100%;font-size:11px"><option value="">Load Template...</option></select></div>
     <button class="ham-item" onclick="clearQ();closeBuildMenu()" style="color:#e74c3c">Clear</button>
   </div>
@@ -994,6 +995,7 @@ body.delmode .del-col{display:table-cell}
         </div>
         <select id="q-doctype" style="display:none"><option>Quote</option><option>Invoice</option><option>BOL</option></select>
         <div class="qmeta-item"><div class="qmeta-lbl">Reference / PO</div><input class="qmeta-val" id="q-ref" placeholder="PO #" style="width:110px"></div>
+        <div class="qmeta-item"><div class="qmeta-lbl">GST / BN #</div><input class="qmeta-val" id="q-gst" style="width:130px"></div>
       </div>
       <div class="q2col">
         <div>
@@ -1025,11 +1027,16 @@ body.delmode .del-col{display:table-cell}
           <div class="qf"><div class="qf-lbl">Consignee / Receiver</div><input class="qf-in" id="bol-consignee" placeholder="Receiving company"></div>
           <div class="qf"><div class="qf-lbl">Consignee Address</div><input class="qf-in" id="bol-consignee-addr" placeholder="City, Province"></div>
           <div class="qf"><div class="qf-lbl">Consignee Contact</div><input class="qf-in" id="bol-consignee-contact" placeholder="Name / phone"></div>
+          <div class="qf"><div class="qf-lbl">Trailer / Unit #</div><input class="qf-in" id="bol-trailer" placeholder="Unit number"></div>
+          <div class="qf"><div class="qf-lbl">Seal #</div><input class="qf-in" id="bol-seal" placeholder="Seal number"></div>
         </div>
         <div>
           <div class="qf"><div class="qf-lbl">Carrier</div><input class="qf-in" id="bol-carrier" value="ReBar Transportation Services Ltd"></div>
           <div class="qf"><div class="qf-lbl">Freight Charge Terms</div><select class="qf-sel" id="bol-terms"><option>Prepaid</option><option>Collect</option><option>Third Party</option></select></div>
           <div class="qf"><div class="qf-lbl">Declared Value</div><input class="qf-in" id="bol-value" placeholder="$ (optional)"></div>
+          <div class="qf"><div class="qf-lbl">C.O.D. Amount</div><input class="qf-in" id="bol-cod" placeholder="$ if collect on delivery"></div>
+          <div class="qf"><div class="qf-lbl">Dangerous Goods (TDG)</div><select class="qf-sel" id="bol-tdg"><option>No</option><option>Yes</option></select></div>
+          <div class="qf"><div class="qf-lbl">UN # (if dangerous)</div><input class="qf-in" id="bol-un" placeholder="e.g. UN1203"></div>
         </div>
       </div>
       <div class="qsec bol-only" style="display:none">Freight Description</div>
@@ -2808,6 +2815,7 @@ function openInBuilder(id) {
   document.getElementById("doctype-toggle").textContent = "Mode: " + (q.doctype || "Quote");
   updateDocType();
   fillBOL(q.bol);
+  try { var _g2 = localStorage.getItem("rebar_gstbn"); var _ge2 = document.getElementById("q-gst"); if(_g2 && _ge2 && !_ge2.value) _ge2.value = _g2; } catch(e){}
   document.getElementById("s-pickup").value = q.pickup || "";
   document.getElementById("s-delivery").value = q.delivery || "";
   document.getElementById("s-date").value = q.pdate || "";
@@ -3077,11 +3085,13 @@ function initBuilder() {
   document.getElementById("q-num").value = genNum();
   document.getElementById("q-date").value = today;
   document.getElementById("q-expiry").value = exp.toISOString().slice(0,10);
+  try { var _g = localStorage.getItem("rebar_gstbn"); var _ge = document.getElementById("q-gst"); if(_g && _ge && !_ge.value) _ge.value = _g; } catch(e){}
 }
 
 function saveToTracker() {
   var co = document.getElementById("b-co").value.trim();
   if (!co) { showToast("Enter customer name first"); return; }
+  try { var _gv = document.getElementById("q-gst"); if(_gv) localStorage.setItem("rebar_gstbn", _gv.value); } catch(e){}
   var grand = document.getElementById("t-grand").value.replace(/[$,]/g,"");
   var q = {
     id: null,
@@ -3163,7 +3173,8 @@ function readBOL(){
   return { consignee:v("bol-consignee"), consigneeAddr:v("bol-consignee-addr"),
     consigneeContact:v("bol-consignee-contact"), carrier:v("bol-carrier"),
     terms:v("bol-terms"), value:v("bol-value"), pieces:v("bol-pieces"),
-    desc:v("bol-desc"), fweight:v("bol-fweight"), cls:v("bol-class") };
+    desc:v("bol-desc"), fweight:v("bol-fweight"), cls:v("bol-class"),
+    trailer:v("bol-trailer"), seal:v("bol-seal"), cod:v("bol-cod"), tdg:v("bol-tdg"), un:v("bol-un") };
 }
 function fillBOL(b){
   b = b || {};
@@ -3173,6 +3184,7 @@ function fillBOL(b){
   s("bol-carrier", b.carrier || "ReBar Transportation Services Ltd");
   s("bol-terms", b.terms || "Prepaid"); s("bol-value",b.value);
   s("bol-pieces",b.pieces); s("bol-desc",b.desc); s("bol-fweight",b.fweight); s("bol-class",b.cls);
+  s("bol-trailer",b.trailer); s("bol-seal",b.seal); s("bol-cod",b.cod); s("bol-tdg",b.tdg||"No"); s("bol-un",b.un);
 }
 function updateDocType() {
   var type = document.getElementById("q-doctype").value;
@@ -3357,6 +3369,55 @@ function loadTemplate(idx) {
   showToast("Template loaded: " + t.name);
 }
 
+function printBlank(){
+  var doctype = (document.getElementById("q-doctype")||{}).value || "Quote";
+  try { var gv=document.getElementById("q-gst"); if(gv) localStorage.setItem("rebar_gstbn", gv.value); } catch(e){}
+  showToast("Building blank " + doctype + " template...");
+  var clone = document.getElementById("qdoc").cloneNode(true);
+  // Strip placeholders + clear values so the printed form is truly blank.
+  // Keep the carrier name and the standard terms text.
+  clone.querySelectorAll("input").forEach(function(el){
+    el.removeAttribute("placeholder");
+    if(el.id === "bol-carrier") return;
+    el.value = ""; el.setAttribute("value","");
+  });
+  clone.querySelectorAll("textarea").forEach(function(el){
+    el.removeAttribute("placeholder");
+    if(el.id === "q-terms") return;
+    el.textContent = ""; el.value = "";
+  });
+  clone.querySelectorAll("select").forEach(function(el){ el.removeAttribute("placeholder"); });
+  // Collapse the forced page-2 break so it flows as one continuous sheet.
+  clone.querySelectorAll(".qpage2").forEach(function(el){ el.style.pageBreakBefore="auto"; el.style.breakBefore="auto"; el.style.paddingTop="8px"; });
+  var iframe=document.createElement("iframe");
+  iframe.style.cssText="position:fixed;top:-9999px;left:-9999px;width:800px;height:1100px;border:none;visibility:hidden;";
+  document.body.appendChild(iframe);
+  var idoc=iframe.contentDocument||iframe.contentWindow.document;
+  var fontLink='<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">';
+  var css=document.querySelector("style").textContent;
+  idoc.open();
+  idoc.write('<!DOCTYPE html><html><head><meta charset="UTF-8">'+fontLink+'<style>'+css+' .li-dc,.li-db,.add-li{display:none!important} .qf-in,.qli-tbl td input,.qmeta-val,.qt-in,.qta,.qf-sel{border:none!important} *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important} .qpage2{page-break-before:auto!important;break-before:auto!important}</style></head><body style="background:#fff;margin:0">'+clone.innerHTML+'</body></html>');
+  idoc.close();
+  setTimeout(function(){
+    function loadScript(url,cb){ if(url.includes("jspdf")&&window.jspdf){cb();return;} if(url.includes("html2canvas")&&window.html2canvas){cb();return;} var s=document.createElement("script"); s.src=url; s.onload=cb; document.head.appendChild(s); }
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",function(){
+      loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",function(){
+        showToast("Rendering...");
+        window.html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:"#ffffff",width:800,windowWidth:800}).then(function(canvas){
+          var imgData=canvas.toDataURL("image/jpeg",0.92);
+          var pdf=new window.jspdf.jsPDF({unit:"pt",format:"letter",orientation:"portrait"});
+          var pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+          var ratio=Math.min(pageW/canvas.width, pageH/canvas.height);  // fit WHOLE doc on ONE page
+          var w=canvas.width*ratio, h=canvas.height*ratio;
+          pdf.addImage(imgData,"JPEG",(pageW-w)/2,0,w,h);
+          pdf.save(doctype.toLowerCase()+"-blank-template.pdf");
+          document.body.removeChild(iframe);
+          showToast("Blank " + doctype + " template ready");
+        }).catch(function(){ try{document.body.removeChild(iframe);}catch(e){} showToast("Template render failed"); });
+      });
+    });
+  },300);
+}
 function doPrint() {
   var content = document.getElementById("qdoc").innerHTML;
   var iframe = document.createElement("iframe");
