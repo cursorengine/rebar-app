@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- CommandDeck build: 2026-06-21c template-polish -->
+<!-- CommandDeck build: 2026-06-21d notif+template-fixes -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CommandDeck</title>
@@ -3383,14 +3383,22 @@ function printBlank(){
   // Strip placeholders + clear values (keep carrier name + standard terms text).
   clone.querySelectorAll("input").forEach(function(el){
     el.removeAttribute("placeholder");
-    if(el.id === "bol-carrier") return;
     el.value=""; el.setAttribute("value","");
   });
+  var _liveTerms = (document.getElementById("q-terms")||{}).value || "";
   clone.querySelectorAll("textarea").forEach(function(el){
     el.removeAttribute("placeholder");
     if(el.id === "q-terms") return;
     el.textContent=""; el.value="";
   });
+  var _terms = clone.querySelector("#q-terms");
+  if(_terms){
+    var _td = document.createElement("div");
+    _td.className = "qta";
+    _td.style.cssText = "white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;line-height:1.6;font-size:11px;color:#555;min-height:50px";
+    _td.textContent = _liveTerms;
+    _terms.parentNode.replaceChild(_td, _terms);
+  }
   // Blank the selects so no default option text prints (Pending / Select... / No).
   clone.querySelectorAll("select").forEach(function(el){
     if(el.id === "q-doctype") return;
@@ -3935,6 +3943,20 @@ function buildNotifications(){
   var active = quotes.filter(function(q){ return !q.deleted; });
   var items = [];
 
+  // New inbound web quote requests — these light the bell, so list them here too.
+  if(typeof quoteRequests !== "undefined" && quoteRequests){
+    quoteRequests.filter(function(r){ return (r.status || "new") === "new"; }).forEach(function(r){
+      items.push({
+        id: "req-" + r.id,
+        group: "New Requests",
+        dot: "green",
+        title: (r.company || r.name || "New quote request") + (r.load_type ? " \u2014 " + r.load_type : ""),
+        sub: (r.pickup || "?") + " \u2192 " + (r.delivery || "?"),
+        action: function(){ switchView("requests"); }
+      });
+    });
+  }
+
   // Overdue invoices (30+ days unpaid)
   var overdue = active.filter(function(q){
     return q.doctype === "Invoice" && !q.paid && invoiceOverdueDays(q) > 0;
@@ -4028,8 +4050,7 @@ function buildNotifications(){
 
 function refreshNotifBadge(){
   var items = buildNotifications();
-  var reqCount = typeof quoteRequests !== "undefined" ? quoteRequests.filter(function(r){ return (r.status||"new")==="new"; }).length : 0;
-  var totalCount = items.length + reqCount;
+  var totalCount = items.length;
   var badge = document.getElementById("notif-badge");
   var btn = document.getElementById("notif-btn");
   if(!badge) return;
