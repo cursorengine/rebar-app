@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>Driver — Update Load · CommandDeck Transport</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--card:#141414;--border:rgba(255,255,255,0.08);--green:#2ecc71;--blue:#3498db;--amber:#f1c40f;--red:#e74c3c;--chrome:linear-gradient(135deg,#c8c8c8,#f0f0f0,#a8a8a8)}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+.wrap{width:100%;max-width:520px}
+.brand{text-align:center;margin-bottom:24px}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;font-style:italic;text-transform:uppercase;letter-spacing:0.04em;background:var(--chrome);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#444;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--border);padding:20px;margin-bottom:14px}
+.lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#555;margin-bottom:8px}
+.route{display:flex;align-items:center;justify-content:center;gap:12px;margin:6px 0 14px;flex-wrap:wrap}
+.route-city{text-align:center}
+.route-city-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff}
+.route-city-lbl{font-size:10px;color:#555;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px}
+.route-arrow{color:#444;font-size:20px}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+.detail-row:last-child{border:none}
+.detail-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#444;padding-top:2px}
+.detail-val{color:#ccc;text-align:right}
+.steps{display:flex;gap:8px;margin-top:6px}
+.step{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:14px 6px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:#888;cursor:pointer;text-align:center;transition:all 0.12s}
+.step.sel{background:var(--blue);border-color:var(--blue);color:#04203a}
+.step.done{border-color:var(--green);color:var(--green)}
+.note{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.16);color:#fff;padding:12px;font-family:'Barlow',sans-serif;font-size:14px;resize:vertical;min-height:64px;margin-top:6px}
+.note::placeholder{color:#555}
+.pod-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border:1px dashed rgba(255,255,255,0.2);background:rgba(255,255,255,0.02);color:#888;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-size:13px;cursor:pointer;margin-top:6px}
+.pod-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pod-thumb{width:72px;height:72px;object-fit:cover;border:1px solid #333;border-radius:3px}
+.btn{width:100%;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;padding:17px;border:none;cursor:pointer;transition:filter 0.15s,transform 0.1s;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);background:linear-gradient(135deg,#2ecc71,#27a35d);color:#04240f}
+.btn:active{transform:scale(0.98)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.result{text-align:center;padding:24px 12px}
+.result-icon{font-size:40px;margin-bottom:10px}
+.result-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;margin-bottom:6px;color:var(--green)}
+.result-sub{font-size:13px;color:#888;line-height:1.6}
+.loading,.error{text-align:center;padding:48px 16px;color:#555}
+.loading-spin{width:28px;height:28px;border:2px solid #222;border-top-color:#888;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ftr{text-align:center;font-size:11px;color:#333;margin-top:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em}
+.uploading{font-size:12px;color:var(--amber);text-align:center;margin-top:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-name">CommandDeck Transport</div>
+    <div class="brand-sub">Driver · Load Update</div>
+  </div>
+  <div id="content">
+    <div class="loading"><div class="loading-spin"></div>Loading your load...</div>
+  </div>
+  <div class="ftr">Trouble updating? Call your dispatcher.</div>
+</div>
+
+<script>
+var SB_URL = "https://mgdiyhyzbuzkspojsrql.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZGl5aHl6YnV6a3Nwb2pzcnFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTQzMzYsImV4cCI6MjA5NjE3MDMzNn0.Bfr_TaR-g3u2L2qcAqUgtp6cXSmmsIxFjrsDBw3WBpo";
+
+function getParam(n){ var m = new RegExp("[?&]"+n+"=([^&]+)").exec(window.location.search); return m ? decodeURIComponent(m[1]) : ""; }
+function esc(s){ return (s==null?"":(s+"")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+function headers(){ return { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" }; }
+function rpc(name, body){
+  return fetch(SB_URL + "/rest/v1/rpc/" + name, { method:"POST", headers:headers(), body:JSON.stringify(body||{}) })
+    .then(function(r){ return r.text().then(function(t){ var d=null; try{d=JSON.parse(t);}catch(e){} if(!r.ok) throw new Error((d&&(d.message||d.hint))||("HTTP "+r.status)); return d; }); });
+}
+
+var TOKEN = getParam("t");
+var REC = null;
+var STEPS = ["Picked Up","In Transit","Delivered"];
+var selStatus = null;
+var podFiles = [];   // {file, dataUrl}
+
+function fmtTime(iso){ if(!iso) return ""; var d=new Date(iso); return d.toLocaleDateString("en-CA",{month:"short",day:"numeric"})+" · "+d.toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"}); }
+
+function load(){
+  if(!TOKEN){ document.getElementById("content").innerHTML = '<div class="error">No driver link provided.</div>'; return; }
+  rpc("get_driver_load", { p_token: TOKEN })
+    .then(function(d){
+      if(!d){ document.getElementById("content").innerHTML = '<div class="error">Load not found. Check your link or call dispatch.</div>'; return; }
+      REC = d;
+      selStatus = (STEPS.indexOf(d.status) > -1) ? d.status : (d.status === "Booked" ? "Picked Up" : d.status);
+      render();
+    })
+    .catch(function(){ document.getElementById("content").innerHTML = '<div class="error">Couldn\'t load this load. Try again shortly.</div>'; });
+}
+
+function curIdx(){ return STEPS.indexOf(REC.status); }
+
+function render(){
+  var rec = REC;
+  if(rec.carrier_name){ var _bn=document.querySelector(".brand-name"); if(_bn) _bn.textContent = rec.carrier_name; }
+  var _ph = rec.carrier_phone || "";
+  var _ftr = document.querySelector(".ftr"); if(_ftr) _ftr.innerHTML = (_ph ? 'Trouble updating? Call dispatch at ' + esc(_ph) + '.' : 'Trouble updating? Call your dispatcher.') + '<br><span style="opacity:0.55">Powered by CommandDeck</span>';
+  var rows = [];
+  if(rec.quote_num) rows.push(["Reference", esc(rec.quote_num)]);
+  if(rec.company)   rows.push(["Customer", esc(rec.company)]);
+  if(rec.load_type) rows.push(["Freight", esc(rec.load_type)]);
+  if(rec.weight)    rows.push(["Weight", esc(rec.weight)]);
+
+  var html = '<div class="card">'
+    + '<div class="lbl" style="text-align:center">Your Load</div>'
+    + '<div class="route">'
+    + '<div class="route-city"><div class="route-city-name">'+esc(rec.pickup||"Origin")+'</div><div class="route-city-lbl">From</div></div>'
+    + '<div class="route-arrow">&rarr;</div>'
+    + '<div class="route-city"><div class="route-city-name">'+esc(rec.delivery||"Destination")+'</div><div class="route-city-lbl">To</div></div>'
+    + '</div>';
+  rows.forEach(function(r){ html += '<div class="detail-row"><span class="detail-lbl">'+r[0]+'</span><span class="detail-val">'+r[1]+'</span></div>'; });
+  html += '</div>';
+
+  // status picker
+  var ci = curIdx();
+  html += '<div class="card"><div class="lbl">Mark Status</div><div class="steps" id="steps">';
+  STEPS.forEach(function(s,i){
+    var cls = "step";
+    if(s === selStatus) cls += " sel";
+    else if(ci > -1 && i < ci) cls += " done";
+    html += '<div class="'+cls+'" onclick="pickStatus(\''+s+'\')">'+s+'</div>';
+  });
+  html += '</div>';
+
+  // note + POD
+  html += '<textarea class="note" id="drv-note" placeholder="Note for dispatch (optional)">'+esc(rec.driver_note||"")+'</textarea>';
+  html += '<label class="pod-add"><span>&#128247; Add proof-of-delivery photo</span>'
+        + '<input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none" onchange="addPod(event)"></label>';
+  html += '<div class="pod-grid" id="pod-grid"></div>';
+
+  // already-on-file POD
+  if(Array.isArray(rec.pod_urls) && rec.pod_urls.length){
+    html += '<div class="lbl" style="margin-top:14px">On File</div><div class="pod-grid">';
+    rec.pod_urls.forEach(function(u){ html += '<a href="'+esc(u)+'" target="_blank"><img class="pod-thumb" src="'+esc(u)+'"></a>'; });
+    html += '</div>';
+  }
+
+  html += '<div id="up-msg"></div>';
+  html += '<button class="btn" id="submit-btn" style="margin-top:14px" onclick="submitUpdate()">Submit Update</button>';
+  html += '</div>';
+
+  document.getElementById("content").innerHTML = html;
+  renderPodGrid();
+}
+
+function pickStatus(s){ selStatus = s; render(); }
+
+function addPod(e){
+  var files = Array.prototype.slice.call(e.target.files || []);
+  files.forEach(function(file){
+    if(file.size > 10*1024*1024){ alert("Photo too large (max 10MB): "+file.name); return; }
+    var reader = new FileReader();
+    reader.onload = function(){ podFiles.push({file:file, dataUrl:reader.result}); renderPodGrid(); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPodGrid(){
+  var g = document.getElementById("pod-grid"); if(!g) return;
+  g.innerHTML = podFiles.map(function(p,i){
+    return p.dataUrl.indexOf("data:image") === 0
+      ? '<img class="pod-thumb" src="'+p.dataUrl+'" onclick="removePod('+i+')" title="Tap to remove">'
+      : '<div class="pod-thumb" style="display:flex;align-items:center;justify-content:center;color:#888;font-size:11px" onclick="removePod('+i+')">PDF</div>';
+  }).join("");
+}
+function removePod(i){ podFiles.splice(i,1); renderPodGrid(); }
+
+function randToken(n){
+  var c = "abcdefghijklmnopqrstuvwxyz0123456789", s = "";
+  var rnd = (window.crypto && window.crypto.getRandomValues) ? window.crypto.getRandomValues(new Uint32Array(n)) : null;
+  for(var i=0;i<n;i++){ var r = rnd ? rnd[i] : Math.floor(Math.random()*0xFFFFFFFF); s += c[r % c.length]; }
+  return s;
+}
+function uploadOne(p){
+  var ext = (p.file.name.split(".").pop() || "jpg").toLowerCase();
+  var path = encodeURIComponent(REC.tracking_id) + "/" + Date.now() + "_" + randToken(6) + "." + ext;
+  return fetch(SB_URL + "/storage/v1/object/pod/" + path, {
+    method:"POST",
+    headers:{ "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Content-Type":p.file.type||"application/octet-stream", "x-upsert":"true" },
+    body:p.file
+  }).then(function(r){
+    if(!r.ok) throw new Error("upload "+r.status);
+    return SB_URL + "/storage/v1/object/public/pod/" + path;
+  });
+}
+
+function submitUpdate(){
+  if(!selStatus){ alert("Pick a status first."); return; }
+  var btn = document.getElementById("submit-btn");
+  var note = (document.getElementById("drv-note")||{}).value || "";
+  btn.disabled = true; btn.textContent = "Submitting...";
+  var msg = document.getElementById("up-msg");
+
+  var chain = Promise.resolve([]);
+  if(podFiles.length){
+    if(msg) msg.innerHTML = '<div class="uploading">Uploading '+podFiles.length+' photo'+(podFiles.length>1?"s":"")+'...</div>';
+    chain = Promise.all(podFiles.map(uploadOne));
+  }
+  chain.then(function(urls){
+    return rpc("driver_update_load", { p_token: TOKEN, p_status: selStatus, p_note: note, p_pod_urls: urls });
+  }).then(function(d){
+    REC = d || REC;
+    podFiles = [];
+    document.getElementById("content").innerHTML = resultCard(selStatus, REC);
+  }).catch(function(){
+    btn.disabled = false; btn.textContent = "Submit Update";
+    if(msg) msg.innerHTML = '<div class="uploading" style="color:#e74c3c">Couldn\'t submit — check signal and try again.</div>';
+  });
+}
+
+function resultCard(status, rec){
+  var line = status === "Delivered"
+    ? "Delivery recorded. Dispatch and the customer have been updated."
+    : "Status updated to " + esc(status) + ". Dispatch and the customer can see it live.";
+  var pod = "";
+  if(rec && Array.isArray(rec.pod_urls) && rec.pod_urls.length){
+    pod = '<div class="pod-grid" style="justify-content:center;margin-top:14px">'
+        + rec.pod_urls.map(function(u){ return '<img class="pod-thumb" src="'+esc(u)+'">'; }).join("")
+        + '</div>';
+  }
+  return '<div class="card"><div class="result"><div class="result-icon">&#10003;</div>'
+    + '<div class="result-title">Update Sent</div>'
+    + '<div class="result-sub">'+line+'</div>'+pod+'</div></div>';
+}
+
+load();
+</script>
+</body>
+</html>
