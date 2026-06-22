@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- CommandDeck build: 2026-06-21e doc-redesign -->
+<!-- CommandDeck build: 2026-06-21e doc-redesign-std -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CommandDeck</title>
@@ -3492,6 +3492,7 @@ function cdFooter(){
 }
 function cdMC(lbl,val){ return '<div class="cd-mc"><div class="cd-lbl">'+esc(lbl)+'</div><div class="cd-val">'+esc(val||"")+'</div></div>'; }
 function cdF(lbl,val){ return '<div class="cd-f"><div class="cd-lbl">'+esc(lbl)+'</div><div class="cd-val">'+esc(val||"")+'</div></div>'; }
+function cdAmt(val,blank,white){ return blank ? '<span style="display:inline-block;min-width:84px;border-bottom:1px solid '+(white?"#bbb":"#9a9a9a")+'">&nbsp;</span>' : esc(val||""); }
 
 function cdGather(){
   function g(id){ var e=document.getElementById(id); return e?(e.value||""):""; }
@@ -3517,11 +3518,12 @@ function cdQuoteBody(d,blank){
   if(blank){ for(var i=0;i<6;i++) rows+='<tr><td></td><td></td><td class="r"></td><td class="r"></td><td class="r"></td></tr>'; }
   else { (d.items||[]).forEach(function(it){ if(!(it.desc||it.det||it.amt)) return; rows+='<tr><td>'+esc(it.desc)+'</td><td>'+esc(it.det)+'</td><td class="r">'+esc(it.qty)+'</td><td class="r">'+esc(it.rate)+'</td><td class="r">'+esc(it.amt)+'</td></tr>'; }); if(!rows) rows='<tr><td></td><td></td><td class="r"></td><td class="r"></td><td class="r"></td></tr>'; }
   var tbl='<table class="cd-tbl"><thead><tr><th>Description</th><th>Details</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>';
-  var tot='<div class="cd-tot"><div class="cd-trow"><span>Subtotal</span><span>'+esc(v(d.sub))+'</span></div><div class="cd-trow"><span>GST (5%)</span><span>'+esc(v(d.gstAmt))+'</span></div><div class="cd-trow"><span>Discount</span><span>'+esc(v(d.adj))+'</span></div><div class="cd-trow g"><span>'+(inv?"Amount Due":"Total")+'</span><span>'+esc(v(d.grand))+'</span></div></div>';
+  var tot='<div class="cd-tot"><div class="cd-trow"><span>Subtotal</span><span>'+cdAmt(d.sub,blank)+'</span></div><div class="cd-trow"><span>GST (5%)</span><span>'+cdAmt(d.gstAmt,blank)+'</span></div><div class="cd-trow"><span>Discount</span><span>'+cdAmt(d.adj,blank)+'</span></div><div class="cd-trow g"><span>'+(inv?"Amount Due":"Total")+'</span><span>'+cdAmt(d.grand,blank,true)+'</span></div></div>';
+  var remit=inv?'<div class="cd-box"><div class="cd-bh">Payment / Remit To</div><div class="cd-f" style="border:0"><div class="cd-val" style="font-weight:500">E-transfer to rebartransport@hotmail.com &middot; Cheque payable to ReBar Transportation Services Ltd, Millet, AB</div></div></div>':'';
   var notes='<div class="cd-box"><div class="cd-bh">Notes &amp; Special Instructions</div><div class="cd-note">'+esc(v(d.notes))+'</div></div>';
   var terms='<div class="cd-box"><div class="cd-bh">Terms &amp; Conditions</div><div class="cd-decl" style="border:0;margin:0">'+esc(d.terms)+'</div></div>';
-  var sig='<div class="cd-sig" style="grid-template-columns:1fr 1fr"><div><div class="cd-sl"></div><div class="cd-st">Authorized — ReBar Transportation Services Ltd</div></div><div><div class="cd-sl"></div><div class="cd-st">Customer Acceptance &amp; Date</div></div></div>';
-  return '<div>'+cdHeader(inv?"Invoice":"Freight Quote")+'<div class="cd-body">'+meta+'<div class="cd-grid">'+billto+ship+'</div>'+tbl+tot+notes+terms+sig+'</div>'+cdFooter()+'</div>';
+  var sig='<div class="cd-sig" style="grid-template-columns:1fr 1fr"><div><div class="cd-sl"></div><div class="cd-st">Authorized \u2014 ReBar Transportation Services Ltd</div></div><div><div class="cd-sl"></div><div class="cd-st">Customer Acceptance &amp; Date</div></div></div>';
+  return '<div>'+cdHeader(inv?"Invoice":"Freight Quote")+'<div class="cd-body">'+meta+'<div class="cd-grid">'+billto+ship+'</div>'+tbl+tot+remit+notes+terms+sig+'</div>'+cdFooter()+'</div>';
 }
 
 function cdBolBody(d,blank){
@@ -3529,14 +3531,17 @@ function cdBolBody(d,blank){
   var meta='<div class="cd-meta">'+cdMC("Bill of Lading #",v(d.num))+cdMC("Date",v(d.date))+cdMC("Carrier P.O. / Ref",v(d.ref))+cdMC("Trailer / Unit #",v(b.trailer))+cdMC("Seal #",v(b.seal))+cdMC("Freight Charge Terms",v(b.fterms))+'</div>';
   var shipper='<div class="cd-box"><div class="cd-bh">Shipper (From)</div>'+cdF("Company / Name",v(d.co))+cdF("Contact",v(d.contact))+cdF("Phone",v(d.phone))+cdF("Address",v(d.addr))+'</div>';
   var consignee='<div class="cd-box"><div class="cd-bh">Consignee (Deliver To)</div>'+cdF("Consignee / Receiver",v(b.consignee))+cdF("Address",v(b.consigneeAddr))+cdF("Contact",v(b.consigneeContact))+cdF("Carrier",v(b.carrier))+'</div>';
-  var route='<div class="cd-box"><div class="cd-bh">Route &amp; Charges</div><div style="display:grid;grid-template-columns:1fr 1fr"><div style="border-right:1px solid #ededed">'+cdF("Origin (Pickup)",v(d.pickup))+cdF("Pickup Date",v(d.pdate))+cdF("Declared Value",v(b.value))+'</div><div>'+cdF("Destination (Delivery)",v(d.delivery))+cdF("C.O.D. Amount",v(b.cod))+cdF("Dangerous Goods (TDG)",v((b.tdg||"")+(b.un?" — "+b.un:"")))+'</div></div></div>';
+  var route='<div class="cd-box"><div class="cd-bh">Route &amp; Charges</div><div style="display:grid;grid-template-columns:1fr 1fr"><div style="border-right:1px solid #ededed">'+cdF("Origin (Pickup)",v(d.pickup))+cdF("Pickup Date",v(d.pdate))+cdF("Declared Value",v(b.value))+'</div><div>'+cdF("Destination (Delivery)",v(d.delivery))+cdF("C.O.D. Amount",v(b.cod))+cdF("Dangerous Goods (TDG)",v((b.tdg||"")+(b.un?" \u2014 "+b.un:"")))+'</div></div></div>';
   var rows="";
   if(blank){ for(var i=0;i<6;i++) rows+='<tr><td></td><td></td><td class="r"></td><td class="r"></td></tr>'; }
   else { rows='<tr><td>'+esc(b.pieces)+'</td><td>'+esc(b.fdesc)+'</td><td class="r">'+esc(b.fweight||d.weight)+'</td><td class="r">'+esc(b.cls)+'</td></tr>'; for(var j=0;j<3;j++) rows+='<tr><td></td><td></td><td class="r"></td><td class="r"></td></tr>'; }
   var tbl='<table class="cd-tbl"><thead><tr><th style="width:14%">Pieces</th><th style="width:50%">Commodity Description</th><th class="r" style="width:18%">Weight</th><th class="r" style="width:18%">Class / NMFC</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  var line='<span style="display:inline-block;min-width:64px;border-bottom:1px solid #999">&nbsp;</span>';
+  var ftot='<div style="display:flex;justify-content:flex-end;gap:26px;margin:-4px 2px 9px;font-family:\'Barlow Condensed\',sans-serif;font-size:10px;font-weight:700;letter-spacing:.06em;color:#333"><span>TOTAL PIECES: '+(blank?line:esc(b.pieces||""))+'</span><span>TOTAL WEIGHT: '+(blank?line:esc(b.fweight||d.weight||""))+'</span></div>';
+  var notes='<div class="cd-box"><div class="cd-bh">Special Instructions</div><div class="cd-note" style="min-height:38px">'+esc(v(d.notes))+'</div></div>';
   var decl='<div class="cd-decl">'+esc(d.terms)+'</div>';
   var sig='<div class="cd-sig" style="grid-template-columns:1fr 1fr 1fr"><div><div class="cd-sl"></div><div class="cd-st">Shipper Signature &amp; Date</div></div><div><div class="cd-sl"></div><div class="cd-st">Carrier / Driver Signature &amp; Date</div></div><div><div class="cd-sl"></div><div class="cd-st">Consignee Signature &amp; Date</div></div></div>';
-  return '<div>'+cdHeader("Bill of Lading")+'<div class="cd-body">'+meta+'<div class="cd-grid">'+shipper+consignee+'</div>'+route+tbl+decl+sig+'</div>'+cdFooter()+'</div>';
+  return '<div>'+cdHeader("Bill of Lading")+'<div class="cd-body">'+meta+'<div class="cd-grid">'+shipper+consignee+'</div>'+route+tbl+ftot+notes+decl+sig+'</div>'+cdFooter()+'</div>';
 }
 
 function cdBuildHTML(blank){
@@ -6527,24 +6532,6 @@ function aqMarkQuoted() {
 }
 
 function esc(s){ return (s == null ? "" : (s + "")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-
-function toggleTheme(){
-  var isLight = document.body.classList.toggle('light-mode');
-  localStorage.setItem('cd_theme', isLight ? 'light' : 'dark');
-  var moon = document.getElementById('theme-icon-moon');
-  var sun  = document.getElementById('theme-icon-sun');
-  if(moon) moon.style.display = isLight ? 'none' : '';
-  if(sun)  sun.style.display  = isLight ? ''     : 'none';
-}
-(function(){
-  if(localStorage.getItem('cd_theme') === 'light'){
-    document.body.classList.add('light-mode');
-    var moon = document.getElementById('theme-icon-moon');
-    var sun  = document.getElementById('theme-icon-sun');
-    if(moon) moon.style.display = 'none';
-    if(sun)  sun.style.display  = '';
-  }
-})();
 
 // ── IMAGE LIGHTBOX (in-app viewer for BOL photos & receipts) ──
 var _lbImgs = [], _lbIdx = 0;
