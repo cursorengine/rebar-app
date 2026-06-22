@@ -6528,6 +6528,24 @@ function aqMarkQuoted() {
 
 function esc(s){ return (s == null ? "" : (s + "")).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+function toggleTheme(){
+  var isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('cd_theme', isLight ? 'light' : 'dark');
+  var moon = document.getElementById('theme-icon-moon');
+  var sun  = document.getElementById('theme-icon-sun');
+  if(moon) moon.style.display = isLight ? 'none' : '';
+  if(sun)  sun.style.display  = isLight ? ''     : 'none';
+}
+(function(){
+  if(localStorage.getItem('cd_theme') === 'light'){
+    document.body.classList.add('light-mode');
+    var moon = document.getElementById('theme-icon-moon');
+    var sun  = document.getElementById('theme-icon-sun');
+    if(moon) moon.style.display = 'none';
+    if(sun)  sun.style.display  = '';
+  }
+})();
+
 // ── IMAGE LIGHTBOX (in-app viewer for BOL photos & receipts) ──
 var _lbImgs = [], _lbIdx = 0;
 function isPdfUrl(u){ return /\.pdf(\?|#|$)/i.test(u || ""); }
